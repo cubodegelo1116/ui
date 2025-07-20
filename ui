@@ -10,6 +10,26 @@ local PlayerMouse = Player:GetMouse()
 
 local redzlib = {
 	Themes = {
+
+              PeachPuff = {
+                         ["Color Hub 1"] = ColorSequence.new({
+                                 ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 218, 185)), -- Peachpuff claro
+                                 ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 203, 164))  -- Um tom mais escuro
+                         }),
+                         ["Window Background"] = Color3.fromRGB(255, 218, 185),
+                         ["Window Border"] = Color3.fromRGB(255, 200, 160),
+                         ["Button"] = Color3.fromRGB(255, 203, 164),
+                         ["Button Text"] = Color3.fromRGB(80, 40, 40),
+                         ["Section"] = Color3.fromRGB(250, 200, 180),
+                         ["Text"] = Color3.fromRGB(60, 30, 30),
+                         ["Accent"] = Color3.fromRGB(255, 170, 140),
+                     ["Toggle On"] = Color3.fromRGB(255, 160, 120),
+["Toggle Off"] = Color3.fromRGB(220, 190, 180),
+    ["Dropdown"] = Color3.fromRGB(255, 218, 185),
+    ["Dropdown Text"] = Color3.fromRGB(90, 45, 45),
+}
+
+
 		Darker = {
 			["Color Hub 1"] = ColorSequence.new({
 				ColorSequenceKeypoint.new(0.00, Color3.fromRGB(25, 25, 25)),
