@@ -22,19 +22,19 @@ local redzlib = {
             		["Color Text"] = Color3.fromRGB(80, 40, 40),
             		["Color Dark Text"] = Color3.fromRGB(60, 30, 30)
        		},
-		BlueMedium = {
-    			["Color Hub 1"] = ColorSequence.new({
-        			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(20, 30, 60)),
-        			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(40, 60, 100)),
-        			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(20, 30, 60))
-    		}),
-    			["Color Hub 2"] = Color3.fromRGB(30, 45, 80),        -- Fundo geral
-    			["Color Stroke"] = Color3.fromRGB(50, 75, 120),      -- Borda, contorno
-    			["Color Theme"] = Color3.fromRGB(70, 110, 180),      -- Cor principal, destaques (botões, sliders)
-    			["Color Text"] = Color3.fromRGB(200, 220, 255),      -- Texto principal (claro, legível)
-   			["Color Dark Text"] = Color3.fromRGB(160, 190, 230), -- Texto secundário
-		},
 
+	        BlueCartola = {
+            		["Color Hub 1"] = ColorSequence.new({
+                		ColorSequenceKeypoint.new(0.00, Color3.fromRGB(20, 30, 60),
+                		ColorSequenceKeypoint.new(0.50, Color3.fromRGB(40, 60, 100)),
+                		ColorSequenceKeypoint.new(1.00, Color3.fromRGB(20, 30, 60))
+            		}),
+            		["Color Hub 2"] = Color3.fromRGB(30, 45, 80),
+           	 	["Color Stroke"] = Color3.fromRGB(50, 75, 120),
+           		["Color Theme"] = Color3.fromRGB(70, 110, 180),
+            		["Color Text"] = Color3.fromRGB(200, 220, 255),
+            		["Color Dark Text"] = Color3.fromRGB(160, 190, 230)
+       		},
  
 		Darker = {
 			["Color Hub 1"] = ColorSequence.new({
