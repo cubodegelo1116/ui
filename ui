@@ -12,15 +12,15 @@ local redzlib = {
 	Themes = {
 		PeachPuff = {
     			["Color Hub 1"] = ColorSequence.new({
-        			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 218, 185)),
-        			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(255, 203, 164)),
-        			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 218, 185))
+        			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(250, 198, 163)),
+        			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(250, 198, 163)),
+        			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(250, 198, 163))
     		}),
     			["Color Hub 2"] = Color3.fromRGB(255, 200, 170),
-    			["Color Stroke"] = Color3.fromRGB(30, 50, 90),
+    			["Color Stroke"] = Color3.fromRGB(245, 203, 175),
    			["Color Theme"] = Color3.fromRGB(255, 200, 170),
-    			["Color Text"] = Color3.fromRGB(80, 40, 40),
-    			["Color Dark Text"] = Color3.fromRGB(60, 30, 30)
+    			["Color Text"] = Color3.fromRGB(0, 0, 0),
+    			["Color Dark Text"] = Color3.fromRGB(0, 0, 0)
 		},
 
 		BlueCartola = {
