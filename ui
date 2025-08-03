@@ -25,9 +25,9 @@ local redzlib = {
 
 		BlueCartola = {
     				["Color Hub 1"] = ColorSequence.new({
-        			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(10, 15, 30)),
-        			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(20, 35, 70)),
-        			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(10, 15, 30))
+        			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(7, 9, 40)),
+        			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(27, 28, 103)),
+        			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(7, 9, 40))
     		}),
     			["Color Hub 2"] = Color3.fromRGB(15, 25, 50),
     			["Color Stroke"] = Color3.fromRGB(20, 35, 70),
