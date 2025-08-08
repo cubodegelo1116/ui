@@ -44,10 +44,10 @@ local redzlib = {
         			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(30, 0, 0))      -- preto quase total
     		}),
     			["Color Hub 2"] = Color3.fromRGB(110, 0, 0),       -- vermelho escuro
-    			["Color Stroke"] = Color3.fromRGB(80, 0, 0),       -- borda vermelho queimado
+    			["Color Stroke"] = Color3.fromRGB(0, 0, 0),       -- borda vermelho queimado
     			["Color Theme"] = Color3.fromRGB(255, 0, 0),       -- vermelho brilhante principal
-    			["Color Text"] = Color3.fromRGB(255, 100, 100),    -- texto vermelho claro
-   				["Color Dark Text"] = Color3.fromRGB(150, 0, 0)    -- texto vermelho escuro
+    			["Color Text"] = Color3.fromRGB(0, 0, 0),    -- texto vermelho claro
+   				["Color Dark Text"] = Color3.fromRGB(0, 0, 0)    -- texto vermelho escuro
 		},
 
 
