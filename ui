@@ -36,6 +36,22 @@ local redzlib = {
     			["Color Dark Text"] = Color3.fromRGB(36, 62, 181)
 		},
 
+
+		c00l = {
+    				["Color Hub 1"] = ColorSequence.new({
+        			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(30, 0, 0)),     -- preto quase total com vermelho escuro
+        			ColorSequenceKeypoint.new(0.50, Color3.fromRGB(180, 0, 0)),    -- vermelho vivo
+        			ColorSequenceKeypoint.new(1.00, Color3.fromRGB(30, 0, 0))      -- preto quase total
+    		}),
+    			["Color Hub 2"] = Color3.fromRGB(110, 0, 0),       -- vermelho escuro
+    			["Color Stroke"] = Color3.fromRGB(80, 0, 0),       -- borda vermelho queimado
+    			["Color Theme"] = Color3.fromRGB(255, 0, 0),       -- vermelho brilhante principal
+    			["Color Text"] = Color3.fromRGB(255, 100, 100),    -- texto vermelho claro
+   				["Color Dark Text"] = Color3.fromRGB(150, 0, 0)    -- texto vermelho escuro
+		},
+
+
+
 		Darker = {
 			["Color Hub 1"] = ColorSequence.new({
 				ColorSequenceKeypoint.new(0.00, Color3.fromRGB(25, 25, 25)),
