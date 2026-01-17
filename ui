@@ -1696,20 +1696,20 @@ function redzlib:MakeWindow(Configs)
 	function Window:SetBackgroundImage(ImageId, ImageTransparency)
     if not MainFrame then return end
     
-    -- Define valores padrão
     ImageTransparency = ImageTransparency or 0.1
     
-    -- Remove a gradient anterior (opcional)
+    -- Remove o gradient antigo se existir
     local OldGradient = MainFrame:FindFirstChild("UIGradient")
     if OldGradient then
         OldGradient:Destroy()
     end
     
-    -- Define a imagem como background
+    -- Configura a imagem de fundo
     MainFrame.BackgroundTransparency = 1
     MainFrame.Image = ImageId
     MainFrame.ImageTransparency = ImageTransparency
-    MainFrame.ScaleType = Enum.ScaleType.Stretch
+    MainFrame.ScaleType = Enum.ScaleType.Stretch  -- ou Tile, Fit, etc.
+    MainFrame.ResampleMode = Enum.ResamplerMode.Pixelated  -- opcional, pra imagem mais nítida
     
     return MainFrame
 end
