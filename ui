@@ -1693,27 +1693,30 @@ function redzlib:MakeWindow(Configs)
 			Title.Text = Val1
 		end
 	end
-	function Window:SetBackgroundImage(ImageId, ImageTransparency)
+	function Window:SetBackgroundImage(ImageId, Transp)
     if not MainFrame then return end
+    print("imgcaregada")
+    Transp = Transp or 0.25
     
-    ImageTransparency = ImageTransparency or 0.2
+    -- Remove qualquer coisa velha
+    for _, child in pairs(MainFrame:GetChildren()) do
+        if child:IsA("UIGradient") or child.Name == "BgImg" then
+            child:Destroy()
+        end
+    end
     
-    -- Remove gradient antigo
-    local oldGrad = MainFrame:FindFirstChild("UIGradient")
-    if oldGrad then oldGrad:Destroy() end
+    local bg = Instance.new("ImageLabel")
+    bg.Name = "BgImg"
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.Position = UDim2.new(0, 0, 0, 0)
+    bg.BackgroundTransparency = 1
+    bg.Image = ImageId
+    bg.ImageTransparency = Transp
+    bg.ScaleType = Enum.ScaleType.Stretch
+    bg.ZIndex = -10
+    bg.Parent = MainFrame
     
-    -- Força preload pra garantir que a imagem carrega
     game:GetService("ContentProvider"):PreloadAsync({ImageId})
-    
-    -- Configura tudo certinho
-    MainFrame.BackgroundTransparency = 1
-    MainFrame.Image = ImageId
-    MainFrame.ImageTransparency = ImageTransparency
-    MainFrame.ScaleType = Enum.ScaleType.Fit       -- Fit geralmente funciona melhor que Stretch em hubs
-    MainFrame.ResampleMode = Enum.ResamplerMode.Default
-    
-    -- Garante que não tem cor de fundo atrapalhando
-    MainFrame.BackgroundColor3 = Color3.new(0,0,0)
 end
 	function Window:Dialog(Configs)
 		if MainFrame:FindFirstChild("Dialog") then return end
