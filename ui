@@ -994,7 +994,7 @@ local SetProps, SetChildren, InsertTheme, Create do
 		end
 	end
 	
-	pcall(Save, "redz library V5.json")
+	pcall(Save, "redz library VMI.json")
 end
 
 local Funcs = {} do
@@ -1415,7 +1415,7 @@ function redzlib:SetTheme(NewTheme)
 	if not VerifyTheme(NewTheme) then return end
 	
 	redzlib.Save.Theme = NewTheme
-	SaveJson("redz library V5.json", redzlib.Save)
+	SaveJson("redz library VMI.json", redzlib.Save)
 	Theme = redzlib.Themes[NewTheme]
 	
 --	Comnection:FireConnection("ThemeChanged", NewTheme)
@@ -1585,13 +1585,13 @@ function redzlib:MakeWindow(Configs)
 	ConnectSave(ControlSize1, function()
 		if not Minimized then
 			redzlib.Save.UISize = {MainFrame.Size.X.Offset, MainFrame.Size.Y.Offset}
-			SaveJson("redz library V5.json", redzlib.Save)
+			SaveJson("redz library VMI.json", redzlib.Save)
 		end
 	end)
 	
 	ConnectSave(ControlSize2, function()
 		redzlib.Save.TabSize = MainScroll.Size.X.Offset
-		SaveJson("redz library V5.json", redzlib.Save)
+		SaveJson("redz library VMI.json", redzlib.Save)
 	end)
 	
 	local ButtonsFolder = Create("Folder", TopBar, {
@@ -1693,6 +1693,26 @@ function redzlib:MakeWindow(Configs)
 			Title.Text = Val1
 		end
 	end
+	function Window:SetBackgroundImage(ImageId, ImageTransparency)
+    if not MainFrame then return end
+    
+    -- Define valores padrão
+    ImageTransparency = ImageTransparency or 0.1
+    
+    -- Remove a gradient anterior (opcional)
+    local OldGradient = MainFrame:FindFirstChild("UIGradient")
+    if OldGradient then
+        OldGradient:Destroy()
+    end
+    
+    -- Define a imagem como background
+    MainFrame.BackgroundTransparency = 1
+    MainFrame.Image = ImageId
+    MainFrame.ImageTransparency = ImageTransparency
+    MainFrame.ScaleType = Enum.ScaleType.Stretch
+    
+    return MainFrame
+end
 	function Window:Dialog(Configs)
 		if MainFrame:FindFirstChild("Dialog") then return end
 		if Minimized then
