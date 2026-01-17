@@ -1695,28 +1695,33 @@ function redzlib:MakeWindow(Configs)
 	end
 	function Window:SetBackgroundImage(ImageId, Transp)
     if not MainFrame then return end
-    print("imgcaregada")
-    Transp = Transp or 0.25
     
-    -- Remove qualquer coisa velha
-    for _, child in pairs(MainFrame:GetChildren()) do
-        if child:IsA("UIGradient") or child.Name == "BgImg" then
-            child:Destroy()
+    Transp = Transp or 0.20  -- valor foda pra ver tudo
+    
+    -- Mata qualquer lixo velho
+    for _, v in pairs(MainFrame:GetChildren()) do
+        if v:IsA("UIGradient") or v.Name == "MiFundoBrabo" then
+            v:Destroy()
         end
     end
     
-    local bg = Instance.new("ImageLabel")
-    bg.Name = "BgImg"
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.Position = UDim2.new(0, 0, 0, 0)
-    bg.BackgroundTransparency = 1
-    bg.Image = ImageId
-    bg.ImageTransparency = Transp
-    bg.ScaleType = Enum.ScaleType.Stretch
-    bg.ZIndex = -10
-    bg.Parent = MainFrame
+    local img = Instance.new("ImageLabel")
+    img.Name = "MiFundoBrabo"
+    img.Size = UDim2.new(1, 0, 1, 0)
+    img.Position = UDim2.new(0, 0, 0, 0)
+    img.BackgroundTransparency = 1
+    img.Image = ImageId
+    img.ImageTransparency = Transp
+    img.ScaleType = Enum.ScaleType.Stretch  -- estica do caralho aqui
+    img.ZIndex = 1
+    img.Parent = MainFrame
     
-    game:GetService("ContentProvider"):PreloadAsync({ImageId})
+    -- Preload na porrada
+    pcall(function()
+        game:GetService("ContentProvider"):PreloadAsync({ImageId})
+    end)
+    
+    print("Mi Hub: Fundo esticado com " .. ImageId .. " | Transp: " .. Transp)
 end
 	function Window:Dialog(Configs)
 		if MainFrame:FindFirstChild("Dialog") then return end
