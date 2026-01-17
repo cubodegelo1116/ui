@@ -1136,7 +1136,7 @@ local GetFlag, SetFlag, CheckFlag do
 end
 
 local ScreenGui = Create("ScreenGui", CoreGui, {
-	Name = "redz Library V5",
+	Name = "redz Library VMI",
 }, {
 	Create("UIScale", {
 		Scale = UIScale,
@@ -1444,7 +1444,7 @@ function redzlib:SetScale(NewScale)
 end
 
 function redzlib:MakeWindow(Configs)
-	local WTitle = Configs[1] or Configs.Name or Configs.Title or "redz Library V5"
+	local WTitle = Configs[1] or Configs.Name or Configs.Title or "redz Library VMI"
 	local WMiniText = Configs[2] or Configs.SubTitle or "by : redz9999"
 	
 	Settings.ScriptFile = Configs[3] or Configs.SaveFolder or false
@@ -1696,22 +1696,24 @@ function redzlib:MakeWindow(Configs)
 	function Window:SetBackgroundImage(ImageId, ImageTransparency)
     if not MainFrame then return end
     
-    ImageTransparency = ImageTransparency or 0.1
+    ImageTransparency = ImageTransparency or 0.2
     
-    -- Remove o gradient antigo se existir
-    local OldGradient = MainFrame:FindFirstChild("UIGradient")
-    if OldGradient then
-        OldGradient:Destroy()
-    end
+    -- Remove gradient antigo
+    local oldGrad = MainFrame:FindFirstChild("UIGradient")
+    if oldGrad then oldGrad:Destroy() end
     
-    -- Configura a imagem de fundo
+    -- Força preload pra garantir que a imagem carrega
+    game:GetService("ContentProvider"):PreloadAsync({ImageId})
+    
+    -- Configura tudo certinho
     MainFrame.BackgroundTransparency = 1
     MainFrame.Image = ImageId
     MainFrame.ImageTransparency = ImageTransparency
-    MainFrame.ScaleType = Enum.ScaleType.Stretch  -- ou Tile, Fit, etc.
-    MainFrame.ResampleMode = Enum.ResamplerMode.Pixelated  -- opcional, pra imagem mais nítida
+    MainFrame.ScaleType = Enum.ScaleType.Fit       -- Fit geralmente funciona melhor que Stretch em hubs
+    MainFrame.ResampleMode = Enum.ResamplerMode.Default
     
-    return MainFrame
+    -- Garante que não tem cor de fundo atrapalhando
+    MainFrame.BackgroundColor3 = Color3.new(0,0,0)
 end
 	function Window:Dialog(Configs)
 		if MainFrame:FindFirstChild("Dialog") then return end
