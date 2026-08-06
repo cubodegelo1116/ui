@@ -34,7 +34,7 @@ GreenDark = {
     ["Color Theme"] = Color3.fromRGB(0, 255, 128),       -- Toggle continua neon, agora destaca mais
     ["Color Text"] = Color3.fromRGB(235, 255, 240),
     ["Color Dark Text"] = Color3.fromRGB(130, 160, 145)
-}
+},
 
 		BlueCartola = {
     				["Color Hub 1"] = ColorSequence.new({
