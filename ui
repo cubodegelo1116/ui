@@ -29,11 +29,11 @@ GreenDark = {
         ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 200, 90)),
         ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 170))
     }),
-    ["Color Hub 2"] = Color3.fromRGB(8, 10, 9),          -- Fundo BEM mais escuro (quase preto puro)
-    ["Color Stroke"] = Color3.fromRGB(0, 60, 35),        -- Borda escura sutil (não mais neon puro)
-    ["Color Theme"] = Color3.fromRGB(0, 255, 128),       -- Toggle continua neon, agora destaca mais
-    ["Color Text"] = Color3.fromRGB(235, 255, 240),
-    ["Color Dark Text"] = Color3.fromRGB(130, 160, 145)
+    ["Color Hub 2"] = Color3.fromRGB(5, 6, 6),           -- Fundo ainda mais escuro (quase preto absoluto)
+    ["Color Stroke"] = Color3.fromRGB(0, 45, 25),        -- Borda mais discreta
+    ["Color Theme"] = Color3.fromRGB(0, 255, 128),       -- Neon continua vibrante (contraste)
+    ["Color Text"] = Color3.fromRGB(220, 240, 225),      -- Texto levemente mais suave
+    ["Color Dark Text"] = Color3.fromRGB(100, 130, 115)  -- Texto secundário mais apagado
 },
 
 		BlueCartola = {
