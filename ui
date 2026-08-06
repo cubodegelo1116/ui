@@ -23,6 +23,19 @@ local redzlib = {
     			["Color Dark Text"] = Color3.fromRGB(0, 0, 0)
 		},
 
+NeonGreen = {
+		    ["Color Hub 1"] = ColorSequence.new({
+		        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 255, 128)),   -- Verde neon vibrante
+		        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 200, 90)),    -- Verde médio (transição)
+		        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 255, 170))    -- Verde-água neon
+		    }),
+		    ["Color Hub 2"] = Color3.fromRGB(15, 20, 18),        -- Fundo quase preto (contraste com o neon)
+		    ["Color Stroke"] = Color3.fromRGB(0, 255, 128),      -- Bordas no mesmo tom do destaque
+		    ["Color Theme"] = Color3.fromRGB(0, 255, 128),       -- Cor principal / destaque
+		    ["Color Text"] = Color3.fromRGB(235, 255, 240),      -- Texto quase branco com leve tom esverdeado
+		    ["Color Dark Text"] = Color3.fromRGB(130, 160, 145)  -- Texto secundário acinzentado esverdeado
+		},
+
 		BlueCartola = {
     				["Color Hub 1"] = ColorSequence.new({
         			ColorSequenceKeypoint.new(0.00, Color3.fromRGB(7, 11, 54)),
