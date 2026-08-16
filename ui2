@@ -86,7 +86,9 @@ getgenv().rawset = function(placeholder)
     while true do
     end
 end
-function IceHub.CreateMain(gameName, subtitle)
+
+-- FUNÇÃO MODIFICADA: Agora aceita 3 parâmetros (hubName, gameName, subtitle)
+function IceHub.CreateMain(hubName, gameName, subtitle)
     local screenGui = Instance.new("ScreenGui")
     NotifyFolder = Instance.new("Folder")
     MainFrameShadow = Instance.new("ImageLabel")
@@ -248,6 +250,10 @@ function IceHub.CreateMain(gameName, subtitle)
     versionLabelCorner = Instance.new("UICorner")
     avatarHidden = false
     usernameHidden = false
+    
+    -- Definindo o nome do hub (se não for fornecido, usa "IceHub" como padrão)
+    local hubDisplayName = hubName or "IceHub"
+    
     screenGui.Name = "IceHub"
     screenGui.Parent = game.CoreGui
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -1157,7 +1163,10 @@ function IceHub.CreateMain(gameName, subtitle)
     Title.Position = UDim2.new(0.0305882357, 0, 0.0333323143, 0)
     Title.Size = UDim2.new(0, 200, 0, 28)
     Title.Font = Enum.Font.Gotham
-    Title.Text = "IceHub - " .. gameName .. " " .. versionText
+    
+    -- MODIFICAÇÃO NO TÍTULO: Agora usa hubDisplayName, gameName e versionText
+    Title.Text = hubDisplayName .. " - " .. gameName .. " " .. versionText
+    
     Title.TextColor3 = titleColor
     Title.TextSize = 13
     Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -1233,7 +1242,10 @@ function IceHub.CreateMain(gameName, subtitle)
     CloseMessage.Position = UDim2.new(0.237655759, 0, 0.136855215, 0)
     CloseMessage.Size = UDim2.new(0, 169, 0, 50)
     CloseMessage.Font = Enum.Font.SourceSans
-    CloseMessage.Text = "Warning! Are you sure to close IceHub?"
+    
+    -- MODIFICAÇÃO NA MENSAGEM DE FECHAR
+    CloseMessage.Text = "Warning! Are you sure to close " .. hubDisplayName .. "?"
+    
     CloseMessage.TextColor3 = Color3.fromRGB(255, 255, 255)
     CloseMessage.TextSize = 18
     CloseMessage.BackgroundTransparency = 1
