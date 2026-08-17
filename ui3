@@ -3,6 +3,22 @@ local UI = {}
 function UI.CreateWindow(title)
 	local UIS = game:GetService("UserInputService")
 
+	-- Tema (pode mudar)
+	local Theme = {
+		Background = Color3.fromRGB(30, 30, 30),
+		TitleBar = Color3.fromRGB(40, 40, 40),
+		TabBackground = Color3.fromRGB(25, 25, 25),
+		TabSelected = Color3.fromRGB(45, 45, 45),
+		Button = Color3.fromRGB(50, 50, 50),
+		Text = Color3.fromRGB(255, 255, 255),
+		TextDark = Color3.fromRGB(200, 200, 200),
+		Accent = Color3.fromRGB(0, 140, 255),
+		ToggleOn = Color3.fromRGB(0, 170, 0),
+		ToggleOff = Color3.fromRGB(70, 70, 70),
+		Border = Color3.fromRGB(60, 60, 60),
+		Cooldown = Color3.fromRGB(70, 40, 40),
+	}
+
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "UI"
 	ScreenGui.ResetOnSpawn = false
@@ -11,15 +27,20 @@ function UI.CreateWindow(title)
 	local Main = Instance.new("Frame")
 	Main.Size = UDim2.new(0, 500, 0, 350)
 	Main.Position = UDim2.new(0.5, -250, 0.5, -175)
-	Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	Main.BackgroundColor3 = Theme.Background
 	Main.BorderSizePixel = 0
 	Main.Active = true
 	Main.Parent = ScreenGui
 
+	local MainStroke = Instance.new("UIStroke")
+	MainStroke.Color = Theme.Border
+	MainStroke.Thickness = 1
+	MainStroke.Parent = Main
+
 	-- Title Bar
 	local TitleBar = Instance.new("Frame")
 	TitleBar.Size = UDim2.new(1, 0, 0, 30)
-	TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	TitleBar.BackgroundColor3 = Theme.TitleBar
 	TitleBar.BorderSizePixel = 0
 	TitleBar.Parent = Main
 
@@ -28,7 +49,7 @@ function UI.CreateWindow(title)
 	Title.Position = UDim2.new(0, 10, 0, 0)
 	Title.BackgroundTransparency = 1
 	Title.Text = title
-	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Title.TextColor3 = Theme.Text
 	Title.TextSize = 14
 	Title.Font = Enum.Font.SourceSansBold
 	Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -37,10 +58,10 @@ function UI.CreateWindow(title)
 	local Close = Instance.new("TextButton")
 	Close.Size = UDim2.new(0, 30, 0, 30)
 	Close.Position = UDim2.new(1, -30, 0, 0)
-	Close.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	Close.BackgroundColor3 = Theme.TitleBar
 	Close.BorderSizePixel = 0
 	Close.Text = "X"
-	Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Close.TextColor3 = Theme.Text
 	Close.TextSize = 14
 	Close.Font = Enum.Font.SourceSansBold
 	Close.Parent = TitleBar
@@ -76,7 +97,7 @@ function UI.CreateWindow(title)
 	local Resize = Instance.new("TextButton")
 	Resize.Size = UDim2.new(0, 16, 0, 16)
 	Resize.Position = UDim2.new(1, -16, 1, -16)
-	Resize.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	Resize.BackgroundColor3 = Theme.Border
 	Resize.BorderSizePixel = 0
 	Resize.Text = ""
 	Resize.Parent = Main
@@ -109,14 +130,14 @@ function UI.CreateWindow(title)
 	local TabFrame = Instance.new("Frame")
 	TabFrame.Size = UDim2.new(0, 100, 1, -30)
 	TabFrame.Position = UDim2.new(0, 0, 0, 30)
-	TabFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	TabFrame.BackgroundColor3 = Theme.TabBackground
 	TabFrame.BorderSizePixel = 0
 	TabFrame.Parent = Main
 
 	local Content = Instance.new("Frame")
 	Content.Size = UDim2.new(1, -100, 1, -30)
 	Content.Position = UDim2.new(0, 100, 0, 30)
-	Content.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	Content.BackgroundColor3 = Theme.Background
 	Content.BorderSizePixel = 0
 	Content.Parent = Main
 
@@ -124,68 +145,75 @@ function UI.CreateWindow(title)
 	local CurrentTab = nil
 
 	local function CreateTab(name)
-	local TabBtn = Instance.new("TextButton")
-	TabBtn.Size = UDim2.new(1, 0, 0, 30)
-	TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-	TabBtn.BorderSizePixel = 0
-	TabBtn.Text = name
-	TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-	TabBtn.TextSize = 13
-	TabBtn.Font = Enum.Font.SourceSans
-	TabBtn.Parent = TabFrame
+		local TabBtn = Instance.new("TextButton")
+		TabBtn.Size = UDim2.new(1, 0, 0, 30)
+		TabBtn.BackgroundColor3 = Theme.TabBackground
+		TabBtn.BorderSizePixel = 0
+		TabBtn.Text = name
+		TabBtn.TextColor3 = Theme.TextDark
+		TabBtn.TextSize = 13
+		TabBtn.Font = Enum.Font.SourceSans
+		TabBtn.Parent = TabFrame
 
-	local Page = Instance.new("ScrollingFrame")
-	Page.Size = UDim2.new(1, 0, 1, 0)
-	Page.BackgroundTransparency = 1
-	Page.BorderSizePixel = 0
-	Page.ScrollBarThickness = 4
-	Page.Visible = false
-	Page.Parent = Content
+		local Page = Instance.new("ScrollingFrame")
+		Page.Size = UDim2.new(1, 0, 1, 0)
+		Page.BackgroundTransparency = 1
+		Page.BorderSizePixel = 0
+		Page.ScrollBarThickness = 4
+		Page.Visible = false
+		Page.Parent = Content
 
-	local Layout = Instance.new("UIListLayout")
-	Layout.Padding = UDim.new(0, 6)
-	Layout.Parent = Page
+		local Layout = Instance.new("UIListLayout")
+		Layout.Padding = UDim.new(0, 6)
+		Layout.Parent = Page
 
-	local Padding = Instance.new("UIPadding")
-	Padding.PaddingTop = UDim.new(0, 8)
-	Padding.PaddingLeft = UDim.new(0, 8)
-	Padding.PaddingRight = UDim.new(0, 8)
-	Padding.Parent = Page
+		local Padding = Instance.new("UIPadding")
+		Padding.PaddingTop = UDim.new(0, 8)
+		Padding.PaddingLeft = UDim.new(0, 8)
+		Padding.PaddingRight = UDim.new(0, 8)
+		Padding.Parent = Page
 
-	TabBtn.MouseButton1Click:Connect(function()
-		if CurrentTab then
-			CurrentTab.Page.Visible = false
-			CurrentTab.Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+		TabBtn.MouseButton1Click:Connect(function()
+			if CurrentTab then
+				CurrentTab.Page.Visible = false
+				CurrentTab.Btn.BackgroundColor3 = Theme.TabBackground
+			end
+			Page.Visible = true
+			TabBtn.BackgroundColor3 = Theme.TabSelected
+			CurrentTab = {Btn = TabBtn, Page = Page}
+		end)
+
+		table.insert(Tabs, {Btn = TabBtn, Page = Page})
+
+		for i, t in ipairs(Tabs) do
+			t.Btn.Position = UDim2.new(0, 0, 0, (i-1)*30)
 		end
-		Page.Visible = true
-		TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-		CurrentTab = {Btn = TabBtn, Page = Page}
-	end)
 
-	table.insert(Tabs, {Btn = TabBtn, Page = Page})
+		if #Tabs == 1 then
+			Page.Visible = true
+			TabBtn.BackgroundColor3 = Theme.TabSelected
+			CurrentTab = {Btn = TabBtn, Page = Page}
+		end
 
-	for i, t in ipairs(Tabs) do
-		t.Btn.Position = UDim2.new(0, 0, 0, (i-1)*30)
+		return Page
 	end
 
-	if #Tabs == 1 then
-		Page.Visible = true
-		TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-		CurrentTab = {Btn = TabBtn, Page = Page}
-	end
-
-	return Page
-end
 	local function AddButton(page, text, callback)
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 0, 28)
-		Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
-		Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
 		Btn.Font = Enum.Font.SourceSans
 		Btn.Parent = page
+
+		local Stroke = Instance.new("UIStroke")
+		Stroke.Color = Theme.Border
+		Stroke.Thickness = 1
+		Stroke.Parent = Btn
+
 		Btn.MouseButton1Click:Connect(callback or function() end)
 		return Btn
 	end
@@ -200,7 +228,7 @@ end
 		Label.Size = UDim2.new(1, -50, 1, 0)
 		Label.BackgroundTransparency = 1
 		Label.Text = text
-		Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
 		Label.Font = Enum.Font.SourceSans
 		Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -209,15 +237,20 @@ end
 		local Toggle = Instance.new("TextButton")
 		Toggle.Size = UDim2.new(0, 40, 0, 20)
 		Toggle.Position = UDim2.new(1, -40, 0.5, -10)
-		Toggle.BackgroundColor3 = default and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(70, 70, 70)
+		Toggle.BackgroundColor3 = default and Theme.ToggleOn or Theme.ToggleOff
 		Toggle.BorderSizePixel = 0
 		Toggle.Text = ""
 		Toggle.Parent = Frame
 
+		local Stroke = Instance.new("UIStroke")
+		Stroke.Color = Theme.Border
+		Stroke.Thickness = 1
+		Stroke.Parent = Toggle
+
 		local state = default or false
 		Toggle.MouseButton1Click:Connect(function()
 			state = not state
-			Toggle.BackgroundColor3 = state and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(70, 70, 70)
+			Toggle.BackgroundColor3 = state and Theme.ToggleOn or Theme.ToggleOff
 			if callback then callback(state) end
 		end)
 		return Toggle
@@ -233,7 +266,7 @@ end
 		Label.Size = UDim2.new(1, 0, 0, 18)
 		Label.BackgroundTransparency = 1
 		Label.Text = text .. ": " .. tostring(default)
-		Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
 		Label.Font = Enum.Font.SourceSans
 		Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -242,13 +275,18 @@ end
 		local Bar = Instance.new("Frame")
 		Bar.Size = UDim2.new(1, 0, 0, 6)
 		Bar.Position = UDim2.new(0, 0, 0, 26)
-		Bar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		Bar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 		Bar.BorderSizePixel = 0
 		Bar.Parent = Frame
 
+		local BarStroke = Instance.new("UIStroke")
+		BarStroke.Color = Theme.Border
+		BarStroke.Thickness = 1
+		BarStroke.Parent = Bar
+
 		local Fill = Instance.new("Frame")
 		Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-		Fill.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
+		Fill.BackgroundColor3 = Theme.Accent
 		Fill.BorderSizePixel = 0
 		Fill.Parent = Bar
 
@@ -269,7 +307,7 @@ end
 		Label.Size = UDim2.new(1, 0, 0, 20)
 		Label.BackgroundTransparency = 1
 		Label.Text = text
-		Label.TextColor3 = Color3.fromRGB(220, 220, 220)
+		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
 		Label.Font = Enum.Font.SourceSans
 		Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -282,7 +320,7 @@ end
 		Label.Size = UDim2.new(1, 0, 0, 40)
 		Label.BackgroundTransparency = 1
 		Label.Text = text
-		Label.TextColor3 = Color3.fromRGB(180, 180, 180)
+		Label.TextColor3 = Theme.TextDark
 		Label.TextSize = 12
 		Label.Font = Enum.Font.SourceSans
 		Label.TextXAlignment = Enum.TextXAlignment.Left
@@ -300,32 +338,42 @@ end
 
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 1, 0)
-		Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text .. ": " .. (options[1] or "")
-		Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
 		Btn.Font = Enum.Font.SourceSans
 		Btn.Parent = Frame
+
+		local Stroke = Instance.new("UIStroke")
+		Stroke.Color = Theme.Border
+		Stroke.Thickness = 1
+		Stroke.Parent = Btn
 
 		local open = false
 		local List = Instance.new("Frame")
 		List.Size = UDim2.new(1, 0, 0, #options * 24)
 		List.Position = UDim2.new(0, 0, 1, 2)
-		List.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+		List.BackgroundColor3 = Theme.TitleBar
 		List.BorderSizePixel = 0
 		List.Visible = false
 		List.ZIndex = 5
 		List.Parent = Frame
 
+		local ListStroke = Instance.new("UIStroke")
+		ListStroke.Color = Theme.Border
+		ListStroke.Thickness = 1
+		ListStroke.Parent = List
+
 		for i, opt in ipairs(options) do
 			local OptBtn = Instance.new("TextButton")
 			OptBtn.Size = UDim2.new(1, 0, 0, 24)
 			OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*24)
-			OptBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			OptBtn.BackgroundColor3 = Theme.TitleBar
 			OptBtn.BorderSizePixel = 0
 			OptBtn.Text = opt
-			OptBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			OptBtn.TextColor3 = Theme.Text
 			OptBtn.TextSize = 12
 			OptBtn.Font = Enum.Font.SourceSans
 			OptBtn.ZIndex = 6
@@ -349,20 +397,25 @@ end
 	local function AddCooldownButton(page, text, cooldown, callback)
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 0, 28)
-		Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
-		Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
 		Btn.Font = Enum.Font.SourceSans
 		Btn.Parent = page
+
+		local Stroke = Instance.new("UIStroke")
+		Stroke.Color = Theme.Border
+		Stroke.Thickness = 1
+		Stroke.Parent = Btn
 
 		local onCooldown = false
 		Btn.MouseButton1Click:Connect(function()
 			if onCooldown then return end
 			onCooldown = true
 			Btn.Text = tostring(cooldown)
-			Btn.BackgroundColor3 = Color3.fromRGB(70, 40, 40)
+			Btn.BackgroundColor3 = Theme.Cooldown
 			if callback then callback() end
 
 			task.spawn(function()
@@ -371,11 +424,30 @@ end
 					task.wait(1)
 				end
 				Btn.Text = text
-				Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+				Btn.BackgroundColor3 = Theme.Button
 				onCooldown = false
 			end)
 		end)
 		return Btn
+	end
+
+	-- Função pra mudar cores
+	local function SetTheme(newTheme)
+		for k, v in pairs(newTheme) do
+			if Theme[k] then
+				Theme[k] = v
+			end
+		end
+
+		Main.BackgroundColor3 = Theme.Background
+		MainStroke.Color = Theme.Border
+		TitleBar.BackgroundColor3 = Theme.TitleBar
+		Title.TextColor3 = Theme.Text
+		Close.BackgroundColor3 = Theme.TitleBar
+		Close.TextColor3 = Theme.Text
+		TabFrame.BackgroundColor3 = Theme.TabBackground
+		Content.BackgroundColor3 = Theme.Background
+		Resize.BackgroundColor3 = Theme.Border
 	end
 
 	return {
@@ -387,6 +459,8 @@ end
 		AddParagraph = AddParagraph,
 		AddDropdown = AddDropdown,
 		AddCooldownButton = AddCooldownButton,
+		SetTheme = SetTheme,
+		Theme = Theme,
 		Main = Main
 	}
 end
