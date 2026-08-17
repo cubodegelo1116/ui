@@ -1,0 +1,15 @@
+local SettingsTab = Window:CreateTab("Settings")
+
+SettingsTab:AddParagraph(
+    "Aparencia",
+    "Escolha um tema para a interface."
+)
+
+local ThemeDropdown = SettingsTab:AddDropdown(
+    "Tema",
+    {"Default", "Ocean", "Purple", "Red"},
+    function(theme)
+        Window.SetTheme(theme)
+        print("[Settings] Tema:", theme)
+    end
+)
