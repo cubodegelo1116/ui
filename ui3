@@ -19,6 +19,8 @@ local MAX_WINDOW_WIDTH = 900
 local MIN_WINDOW_HEIGHT = 250
 local MAX_WINDOW_HEIGHT = 700
 local DROPDOWN_ITEM_HEIGHT = 28
+local DROPDOWN_MAX_HEIGHT = 180
+
 
 local UserInputService = game:GetService("UserInputService")
 
@@ -888,14 +890,22 @@ function UI.CreateWindow(title, subtitle)
 		local open = false
 
 		-- Dropdown list
-		local List = Instance.new("Frame")
-		List.Name = "DropdownList"
-		List.BackgroundColor3 = Theme.TitleBar
-		List.BorderSizePixel = 0
-		List.Visible = false
-		List.ZIndex = 50
-		List.Parent = ScreenGui
-		List:SetAttribute("ThemeRole", "TitleBar")
+local List = Instance.new("ScrollingFrame")
+List.Name = "DropdownList"
+List.BackgroundColor3 = Theme.TitleBar
+List.BorderSizePixel = 0
+List.Visible = false
+List.ZIndex = 50
+List.Parent = ScreenGui
+
+List.ScrollBarThickness = 4
+List.ScrollBarImageColor3 = Theme.Border
+List.ScrollingDirection = Enum.ScrollingDirection.Y
+List.CanvasSize = UDim2.new(0, 0, 0, 0)
+List.AutomaticCanvasSize = Enum.AutomaticSize.Y
+List.ClipsDescendants = true
+
+List:SetAttribute("ThemeRole", "TitleBar")
 
 		local ListCorner = Instance.new("UICorner")
 		ListCorner.CornerRadius = UDim.new(0, 6)
@@ -907,14 +917,15 @@ function UI.CreateWindow(title, subtitle)
 		ListStroke.Parent = List
 		ListStroke:SetAttribute("ThemeRole", "Border")
 
-		local ListLayout = Instance.new("UIListLayout")
-		ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		ListLayout.Parent = List
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0, 0)
+ListLayout.Parent = List
 
-		local ListPadding = Instance.new("UIPadding")
-		ListPadding.PaddingTop = UDim.new(0, 2)
-		ListPadding.PaddingBottom = UDim.new(0, 2)
-		ListPadding.Parent = List
+local ListPadding = Instance.new("UIPadding")
+ListPadding.PaddingTop = UDim.new(0, 2)
+ListPadding.PaddingBottom = UDim.new(0, 2)
+ListPadding.Parent = List
 
 		-- Update button text
 		local function UpdateButtonText()
@@ -969,12 +980,17 @@ function UI.CreateWindow(title, subtitle)
 				end)
 			end
 
-			List.Size = UDim2.new(
-				0,
-				Btn.AbsoluteSize.X,
-				0,
-				math.max(#currentOptions * DROPDOWN_ITEM_HEIGHT + 4, DROPDOWN_ITEM_HEIGHT)
-			)
+			local listHeight = math.min(
+	#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
+	DROPDOWN_MAX_HEIGHT
+)
+
+List.Size = UDim2.new(
+	0,
+	Btn.AbsoluteSize.X,
+	0,
+	listHeight
+)
 		end
 
 		-- Initialize
@@ -990,12 +1006,17 @@ function UI.CreateWindow(title, subtitle)
 				local absSize = Btn.AbsoluteSize
 
 				List.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
-				List.Size = UDim2.new(
-					0,
-					absSize.X,
-					0,
-					math.max(#currentOptions * DROPDOWN_ITEM_HEIGHT + 4, DROPDOWN_ITEM_HEIGHT)
-				)
+				local listHeight = math.min(
+	#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
+	DROPDOWN_MAX_HEIGHT
+)
+
+List.Size = UDim2.new(
+	0,
+	absSize.X,
+	0,
+	listHeight
+)
 				List.Visible = true
 			else
 				List.Visible = false
