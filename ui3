@@ -417,78 +417,99 @@ function UI.CreateWindow(title)
 	end
 
 	local function AddDropdown(page, text, options, callback)
-		local Frame = Instance.new("Frame")
-		Frame.Size = UDim2.new(1, 0, 0, 32)
-		Frame.BackgroundTransparency = 1
-		Frame.Parent = page
+	local Frame = Instance.new("Frame")
+	Frame.Size = UDim2.new(1, 0, 0, 32)
+	Frame.BackgroundTransparency = 1
+	Frame.Parent = page
 
-		local Btn = Instance.new("TextButton")
-		Btn.Size = UDim2.new(1, 0, 1, 0)
-		Btn.BackgroundColor3 = Theme.Button
-		Btn.BorderSizePixel = 0
-		Btn.Text = "  " .. text .. ": " .. (options[1] or "")
-		Btn.TextColor3 = Theme.Text
-		Btn.TextSize = 13
-		Btn.Font = Enum.Font.Gotham
-		Btn.TextXAlignment = Enum.TextXAlignment.Left
-		Btn.AutoButtonColor = false
-		Btn.Parent = Frame
+	local Btn = Instance.new("TextButton")
+	Btn.Size = UDim2.new(1, 0, 1, 0)
+	Btn.BackgroundColor3 = Theme.Button
+	Btn.BorderSizePixel = 0
+	Btn.Text = "  " .. text .. ": " .. (options[1] or "")
+	Btn.TextColor3 = Theme.Text
+	Btn.TextSize = 13
+	Btn.Font = Enum.Font.Gotham
+	Btn.TextXAlignment = Enum.TextXAlignment.Left
+	Btn.AutoButtonColor = false
+	Btn.Parent = Frame
 
-		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 6)
-		Corner.Parent = Btn
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 6)
+	Corner.Parent = Btn
 
-		local Stroke = Instance.new("UIStroke")
-		Stroke.Color = Theme.Border
-		Stroke.Thickness = 1
-		Stroke.Parent = Btn
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Color = Theme.Border
+	Stroke.Thickness = 1
+	Stroke.Parent = Btn
 
-		local open = false
-		local List = Instance.new("Frame")
-		List.Size = UDim2.new(1, 0, 0, #options * 28)
-		List.Position = UDim2.new(0, 0, 1, 4)
-		List.BackgroundColor3 = Theme.TitleBar
-		List.BorderSizePixel = 0
-		List.Visible = false
-		List.ZIndex = 10
-		List.Parent = Frame
+	local open = false
 
-		local ListCorner = Instance.new("UICorner")
-		ListCorner.CornerRadius = UDim.new(0, 6)
-		ListCorner.Parent = List
+	-- Lista fica no ScreenGui pra não ser afetada pelo layout
+	local List = Instance.new("Frame")
+	List.Size = UDim2.new(0, 200, 0, #options * 28)
+	List.BackgroundColor3 = Theme.TitleBar
+	List.BorderSizePixel = 0
+	List.Visible = false
+	List.ZIndex = 50
+	List.Parent = ScreenGui
 
-		local ListStroke = Instance.new("UIStroke")
-		ListStroke.Color = Theme.Border
-		ListStroke.Thickness = 1
-		ListStroke.Parent = List
+	local ListCorner = Instance.new("UICorner")
+	ListCorner.CornerRadius = UDim.new(0, 6)
+	ListCorner.Parent = List
 
-		for i, opt in ipairs(options) do
-			local OptBtn = Instance.new("TextButton")
-			OptBtn.Size = UDim2.new(1, 0, 0, 28)
-			OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*28)
-			OptBtn.BackgroundTransparency = 1
-			OptBtn.Text = "  " .. opt
-			OptBtn.TextColor3 = Theme.Text
-			OptBtn.TextSize = 13
-			OptBtn.Font = Enum.Font.Gotham
-			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
-			OptBtn.ZIndex = 11
-			OptBtn.Parent = List
+	local ListStroke = Instance.new("UIStroke")
+	ListStroke.Color = Theme.Border
+	ListStroke.Thickness = 1
+	ListStroke.Parent = List
 
-			OptBtn.MouseButton1Click:Connect(function()
-				Btn.Text = "  " .. text .. ": " .. opt
-				List.Visible = false
-				open = false
-				if callback then callback(opt) end
-			end)
-		end
+	for i, opt in ipairs(options) do
+		local OptBtn = Instance.new("TextButton")
+		OptBtn.Size = UDim2.new(1, 0, 0, 28)
+		OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*28)
+		OptBtn.BackgroundTransparency = 1
+		OptBtn.Text = "  " .. opt
+		OptBtn.TextColor3 = Theme.Text
+		OptBtn.TextSize = 13
+		OptBtn.Font = Enum.Font.Gotham
+		OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+		OptBtn.ZIndex = 51
+		OptBtn.Parent = List
 
-		Btn.MouseButton1Click:Connect(function()
-			open = not open
-			List.Visible = open
+		OptBtn.MouseButton1Click:Connect(function()
+			Btn.Text = "  " .. text .. ": " .. opt
+			List.Visible = false
+			open = false
+			if callback then callback(opt) end
 		end)
-		return Btn
 	end
+
+	Btn.MouseButton1Click:Connect(function()
+		open = not open
+		if open then
+			-- posiciona a lista embaixo do botão
+			local absPos = Btn.AbsolutePosition
+			local absSize = Btn.AbsoluteSize
+			List.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
+			List.Size = UDim2.new(0, absSize.X, 0, #options * 28)
+			List.Visible = true
+		else
+			List.Visible = false
+		end
+	end)
+
+	-- fecha se clicar fora
+	UIS.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and open then
+			task.wait()
+			if not List:IsAncestorOf(game:GetService("Players").LocalPlayer:GetMouse().Target) then
+				-- fallback simples
+			end
+		end
+	end)
+
+	return Btn
+end
 
 	local function AddCooldownButton(page, text, cooldown, callback)
 		local Btn = Instance.new("TextButton")
