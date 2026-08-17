@@ -20,6 +20,8 @@ local MIN_WINDOW_HEIGHT = 250
 local MAX_WINDOW_HEIGHT = 700
 local DROPDOWN_ITEM_HEIGHT = 28
 
+local UserInputService = game:GetService("UserInputService")
+
 -- ════════════════════════════════════════════════════════════
 -- UTILITY FUNCTIONS
 -- ════════════════════════════════════════════════════════════
@@ -1001,7 +1003,7 @@ function UI.CreateWindow(title, subtitle)
 		end)
 
 		-- Close dropdown when clicking outside
-		ScreenGui.InputBegan:Connect(function(input)
+		UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				if open then
 					local mousePos = input.Position
