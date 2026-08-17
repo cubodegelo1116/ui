@@ -914,55 +914,47 @@ function AddDropdown(page, text, options, callback)
 	-- API DO DROPDOWN
 	--==================================================
 
-	function Btn:SetOptions(newOptions)
+local DropdownAPI = {}
 
-		if typeof(newOptions) ~= "table" then
-			return
-		end
+function DropdownAPI.SetOptions(newOptions)
+    if typeof(newOptions) ~= "table" then
+        return
+    end
 
-		currentOptions = newOptions
+    currentOptions = newOptions
 
-		-- mantém seleção se ainda existir
-		if currentValue and table.find(currentOptions, currentValue) then
-			-- mantém
-		else
-			currentValue = currentOptions[1]
-		end
+    if currentValue and table.find(currentOptions, currentValue) then
+        -- mantém seleção
+    else
+        currentValue = currentOptions[1]
+    end
 
-		UpdateButtonText()
-		RebuildOptions()
+    UpdateButtonText()
+    RebuildOptions()
+end
 
-	end
+function DropdownAPI.SetValue(value)
+    if not table.find(currentOptions, value) then
+        return false
+    end
 
-	function Btn:SetValue(value)
+    currentValue = value
+    UpdateButtonText()
 
-		if not table.find(currentOptions, value) then
-			return false
-		end
+    if callback then
+        callback(value)
+    end
 
-		currentValue = value
+    return true
+end
 
-		UpdateButtonText()
+function DropdownAPI.GetValue()
+    return currentValue
+end
 
-		if callback then
-			callback(value)
-		end
-
-		return true
-
-	end
-
-	function Btn:GetValue()
-
-		return currentValue
-
-	end
-
-	function Btn:GetOptions()
-
-		return currentOptions
-
-	end
+function DropdownAPI.GetOptions()
+    return currentOptions
+end
 
 	return Btn
 
