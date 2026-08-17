@@ -735,81 +735,121 @@ Subtitle.Parent = TitleBar
 	-- DROPDOWN
 	--==================================================
 
-	function AddDropdown(page, text, options, callback)
-		local Frame = Instance.new("Frame")
+--==================================================
+-- DROPDOWN
+--==================================================
 
-		Frame.Size = UDim2.new(1, 0, 0, 32)
-		Frame.BackgroundTransparency = 1
-		Frame.Parent = page
+function AddDropdown(page, text, options, callback)
 
-		local Btn = Instance.new("TextButton")
+	local Frame = Instance.new("Frame")
 
-		Btn.Size = UDim2.new(1, 0, 1, 0)
-		Btn.BackgroundColor3 = Theme.Button
-		Btn.BorderSizePixel = 0
-		Btn.Text = "  " .. text .. ": " .. (options[1] or "")
-		Btn.TextColor3 = Theme.Text
-		Btn.TextSize = 13
-		Btn.Font = Enum.Font.Gotham
-		Btn.TextXAlignment = Enum.TextXAlignment.Left
-		Btn.AutoButtonColor = false
-		Btn.Parent = Frame
+	Frame.Size = UDim2.new(1, 0, 0, 32)
+	Frame.BackgroundTransparency = 1
+	Frame.Parent = page
 
-		Btn:SetAttribute("ThemeRole", "Button")
+	local Btn = Instance.new("TextButton")
 
-		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 6)
-		Corner.Parent = Btn
+	Btn.Size = UDim2.new(1, 0, 1, 0)
+	Btn.BackgroundColor3 = Theme.Button
+	Btn.BorderSizePixel = 0
+	Btn.TextColor3 = Theme.Text
+	Btn.TextSize = 13
+	Btn.Font = Enum.Font.Gotham
+	Btn.TextXAlignment = Enum.TextXAlignment.Left
+	Btn.AutoButtonColor = false
+	Btn.Parent = Frame
 
-		local Stroke = Instance.new("UIStroke")
-		Stroke.Color = Theme.Border
-		Stroke.Thickness = 1
-		Stroke.Parent = Btn
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(0, 6)
+	Corner.Parent = Btn
 
-		Stroke:SetAttribute("ThemeRole", "Border")
+	local Stroke = Instance.new("UIStroke")
+	Stroke.Color = Theme.Border
+	Stroke.Thickness = 1
+	Stroke.Parent = Btn
 
-		local open = false
+	--==================================================
+	-- ESTADO
+	--==================================================
 
-		local List = Instance.new("Frame")
+	local currentOptions = options or {}
+	local currentValue = currentOptions[1]
+	local open = false
 
-		List.Size = UDim2.new(0, 200, 0, #options * 28)
-		List.BackgroundColor3 = Theme.TitleBar
-		List.BorderSizePixel = 0
-		List.Visible = false
-		List.ZIndex = 50
-		List.Parent = ScreenGui
+	local List = Instance.new("Frame")
 
-		List:SetAttribute("ThemeRole", "TitleBar")
+	List.BackgroundColor3 = Theme.TitleBar
+	List.BorderSizePixel = 0
+	List.Visible = false
+	List.ZIndex = 50
+	List.Parent = ScreenGui
 
-		local ListCorner = Instance.new("UICorner")
-		ListCorner.CornerRadius = UDim.new(0, 6)
-		ListCorner.Parent = List
+	local ListCorner = Instance.new("UICorner")
+	ListCorner.CornerRadius = UDim.new(0, 6)
+	ListCorner.Parent = List
 
-		local ListStroke = Instance.new("UIStroke")
-		ListStroke.Color = Theme.Border
-		ListStroke.Thickness = 1
-		ListStroke.Parent = List
+	local ListStroke = Instance.new("UIStroke")
+	ListStroke.Color = Theme.Border
+	ListStroke.Thickness = 1
+	ListStroke.Parent = List
 
-		ListStroke:SetAttribute("ThemeRole", "Border")
+	local ListLayout = Instance.new("UIListLayout")
+	ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	ListLayout.Parent = List
 
-		for i, opt in ipairs(options) do
+	--==================================================
+	-- TEXTO
+	--==================================================
+
+	local function UpdateButtonText()
+
+		Btn.Text = "  " .. tostring(text) .. ": " .. tostring(currentValue or "")
+
+	end
+
+	UpdateButtonText()
+
+	--==================================================
+	-- CRIAR OPÇÕES
+	--==================================================
+
+	local function RebuildOptions()
+
+		for _, child in ipairs(List:GetChildren()) do
+			if child:IsA("TextButton") then
+				child:Destroy()
+			end
+		end
+
+		for i, opt in ipairs(currentOptions) do
+
 			local OptBtn = Instance.new("TextButton")
 
 			OptBtn.Size = UDim2.new(1, 0, 0, 28)
-			OptBtn.Position = UDim2.new(0, 0, 0, (i - 1) * 28)
 			OptBtn.BackgroundTransparency = 1
-			OptBtn.Text = "  " .. opt
+			OptBtn.Text = "  " .. tostring(opt)
 			OptBtn.TextColor3 = Theme.Text
 			OptBtn.TextSize = 13
 			OptBtn.Font = Enum.Font.Gotham
 			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+			OptBtn.AutoButtonColor = false
 			OptBtn.ZIndex = 51
+			OptBtn.LayoutOrder = i
 			OptBtn.Parent = List
 
-			OptBtn:SetAttribute("ThemeRole", "Text")
+			OptBtn.MouseEnter:Connect(function()
+				OptBtn.BackgroundColor3 = Theme.Button
+			end)
+
+			OptBtn.MouseLeave:Connect(function()
+				OptBtn.BackgroundTransparency = 1
+			end)
 
 			OptBtn.MouseButton1Click:Connect(function()
-				Btn.Text = "  " .. text .. ": " .. opt
+
+				currentValue = opt
+
+				UpdateButtonText()
 
 				List.Visible = false
 				open = false
@@ -817,38 +857,116 @@ Subtitle.Parent = TitleBar
 				if callback then
 					callback(opt)
 				end
+
 			end)
+
 		end
 
-		Btn.MouseButton1Click:Connect(function()
-			open = not open
+		List.Size = UDim2.new(
+			0,
+			Btn.AbsoluteSize.X,
+			0,
+			#currentOptions * 28
+		)
 
-			if open then
-				local absPos = Btn.AbsolutePosition
-				local absSize = Btn.AbsoluteSize
-
-				List.Position = UDim2.new(
-					0,
-					absPos.X,
-					0,
-					absPos.Y + absSize.Y + 4
-				)
-
-				List.Size = UDim2.new(
-					0,
-					absSize.X,
-					0,
-					#options * 28
-				)
-
-				List.Visible = true
-			else
-				List.Visible = false
-			end
-		end)
-
-		return Btn
 	end
+
+	RebuildOptions()
+
+	--==================================================
+	-- ABRIR / FECHAR
+	--==================================================
+
+	Btn.MouseButton1Click:Connect(function()
+
+		open = not open
+
+		if open then
+
+			local absPos = Btn.AbsolutePosition
+			local absSize = Btn.AbsoluteSize
+
+			List.Position = UDim2.new(
+				0,
+				absPos.X,
+				0,
+				absPos.Y + absSize.Y + 4
+			)
+
+			List.Size = UDim2.new(
+				0,
+				absSize.X,
+				0,
+				#currentOptions * 28
+			)
+
+			List.Visible = true
+
+		else
+
+			List.Visible = false
+
+		end
+
+	end)
+
+	--==================================================
+	-- API DO DROPDOWN
+	--==================================================
+
+	function Btn:SetOptions(newOptions)
+
+		if typeof(newOptions) ~= "table" then
+			return
+		end
+
+		currentOptions = newOptions
+
+		-- mantém seleção se ainda existir
+		if currentValue and table.find(currentOptions, currentValue) then
+			-- mantém
+		else
+			currentValue = currentOptions[1]
+		end
+
+		UpdateButtonText()
+		RebuildOptions()
+
+	end
+
+	function Btn:SetValue(value)
+
+		if not table.find(currentOptions, value) then
+			return false
+		end
+
+		currentValue = value
+
+		UpdateButtonText()
+
+		if callback then
+			callback(value)
+		end
+
+		return true
+
+	end
+
+	function Btn:GetValue()
+
+		return currentValue
+
+	end
+
+	function Btn:GetOptions()
+
+		return currentOptions
+
+	end
+
+	return Btn
+
+end
 
 	--==================================================
 	-- COOLDOWN BUTTON
