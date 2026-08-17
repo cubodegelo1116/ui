@@ -1,8 +1,8 @@
--- UILibrary.lua (versão simples)
-
 local UI = {}
 
 function UI.CreateWindow(title)
+	local UIS = game:GetService("UserInputService")
+
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "UI"
 	ScreenGui.ResetOnSpawn = false
@@ -13,6 +13,7 @@ function UI.CreateWindow(title)
 	Main.Position = UDim2.new(0.5, -250, 0.5, -175)
 	Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 	Main.BorderSizePixel = 0
+	Main.Active = true
 	Main.Parent = ScreenGui
 
 	-- Title Bar
@@ -48,7 +49,63 @@ function UI.CreateWindow(title)
 		ScreenGui:Destroy()
 	end)
 
-	-- Tabs (lado esquerdo)
+	-- Drag
+	local dragging, dragStart, startPos
+	TitleBar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = Main.Position
+		end
+	end)
+
+	TitleBar.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = false
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+
+	-- Resize
+	local Resize = Instance.new("TextButton")
+	Resize.Size = UDim2.new(0, 16, 0, 16)
+	Resize.Position = UDim2.new(1, -16, 1, -16)
+	Resize.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	Resize.BorderSizePixel = 0
+	Resize.Text = ""
+	Resize.Parent = Main
+
+	local resizing, resizeStart, startSize
+	Resize.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			resizing = true
+			resizeStart = input.Position
+			startSize = Main.Size
+		end
+	end)
+
+	Resize.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			resizing = false
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - resizeStart
+			local newX = math.clamp(startSize.X.Offset + delta.X, 300, 900)
+			local newY = math.clamp(startSize.Y.Offset + delta.Y, 200, 700)
+			Main.Size = UDim2.new(0, newX, 0, newY)
+		end
+	end)
+
+	-- Tabs
 	local TabFrame = Instance.new("Frame")
 	TabFrame.Size = UDim2.new(0, 100, 1, -30)
 	TabFrame.Position = UDim2.new(0, 0, 0, 30)
@@ -56,7 +113,6 @@ function UI.CreateWindow(title)
 	TabFrame.BorderSizePixel = 0
 	TabFrame.Parent = Main
 
-	-- Conteúdo
 	local Content = Instance.new("Frame")
 	Content.Size = UDim2.new(1, -100, 1, -30)
 	Content.Position = UDim2.new(0, 100, 0, 30)
@@ -107,20 +163,18 @@ function UI.CreateWindow(title)
 		end)
 
 		table.insert(Tabs, {Btn = TabBtn, Page = Page})
-		
-		-- posiciona os botões das tabs
+
 		for i, t in ipairs(Tabs) do
 			t.Btn.Position = UDim2.new(0, 0, 0, (i-1)*30)
 		end
 
 		if #Tabs == 1 then
-			TabBtn:MouseButton1Click() -- abre a primeira
+			TabBtn:MouseButton1Click()
 		end
 
 		return Page
 	end
 
-	-- Componentes simples
 	local function AddButton(page, text, callback)
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 0, 28)
@@ -131,7 +185,6 @@ function UI.CreateWindow(title)
 		Btn.TextSize = 13
 		Btn.Font = Enum.Font.SourceSans
 		Btn.Parent = page
-
 		Btn.MouseButton1Click:Connect(callback or function() end)
 		return Btn
 	end
@@ -166,7 +219,6 @@ function UI.CreateWindow(title)
 			Toggle.BackgroundColor3 = state and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(70, 70, 70)
 			if callback then callback(state) end
 		end)
-
 		return Toggle
 	end
 
@@ -194,22 +246,20 @@ function UI.CreateWindow(title)
 		Bar.Parent = Frame
 
 		local Fill = Instance.new("Frame")
-		Fill.Size = UDim2.new((default-min)/(max-min), 0, 1, 0)
+		Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
 		Fill.BackgroundColor3 = Color3.fromRGB(0, 140, 255)
 		Fill.BorderSizePixel = 0
 		Fill.Parent = Bar
 
-		-- clique simples (sem drag pra manter simples)
 		Bar.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				local percent = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-				local value = math.floor(min + (max-min)*percent)
+				local value = math.floor(min + (max - min) * percent)
 				Fill.Size = UDim2.new(percent, 0, 1, 0)
 				Label.Text = text .. ": " .. value
 				if callback then callback(value) end
 			end
 		end)
-
 		return Fill
 	end
 
@@ -241,7 +291,6 @@ function UI.CreateWindow(title)
 		return Label
 	end
 
-	-- Dropdown bem simples
 	local function AddDropdown(page, text, options, callback)
 		local Frame = Instance.new("Frame")
 		Frame.Size = UDim2.new(1, 0, 0, 28)
@@ -293,11 +342,9 @@ function UI.CreateWindow(title)
 			open = not open
 			List.Visible = open
 		end)
-
 		return Btn
 	end
 
-	-- Cooldown Button
 	local function AddCooldownButton(page, text, cooldown, callback)
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 0, 28)
@@ -315,7 +362,6 @@ function UI.CreateWindow(title)
 			onCooldown = true
 			Btn.Text = tostring(cooldown)
 			Btn.BackgroundColor3 = Color3.fromRGB(70, 40, 40)
-
 			if callback then callback() end
 
 			task.spawn(function()
@@ -328,7 +374,6 @@ function UI.CreateWindow(title)
 				onCooldown = false
 			end)
 		end)
-
 		return Btn
 	end
 
