@@ -1,44 +1,19 @@
-return function(Main)
-    local Settings = Main.CreateTab("Settings")
+local SettingsTab = {}
 
-    Settings.AddTextLabel("Settings")
+function SettingsTab:Create(Window)
+	local Settings = Window.CreateTab("Settings")
 
-    Settings.AddParagraph(
-        "Configurações",
-        "Personalize algumas opções da UI."
-    )
+	Settings.AddDropdown("Theme", {
+		"Default",
+		"Ocean",
+		"Purple",
+		"Red",
+		"Neon"
+	}, function(value)
+		Window.SetTheme(value)
+	end)
 
-    Settings.AddToggle("UI Enabled", true, function(value)
-        print("UI Enabled:", value)
-    end)
-
-    Settings.AddToggle("Notifications", true, function(value)
-        print("Notifications:", value)
-    end)
-
-    Settings.AddToggle("Sounds", true, function(value)
-        print("Sounds:", value)
-    end)
-
-    Settings.AddSlider("UI Transparency", 0, 100, 0, function(value)
-        print("Transparency:", value)
-    end)
-
-    Settings.AddDropdown("Theme", {
-        "Default",
-        "Dark",
-        "Purple",
-        "Red",
-        "Blue"
-    }, function(value)
-        print("Theme:", value)
-    end)
-
-    Settings.AddTextBox("Config Name", function(value)
-        print("Config:", value)
-    end)
-
-    Settings.AddButton("Reset Settings", function()
-        print("Settings resetadas")
-    end)
+	return Settings
 end
+
+return SettingsTab
