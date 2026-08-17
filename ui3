@@ -257,6 +257,9 @@ function UI.CreateWindow(title, subtitle)
 	TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 	TitleLabel.Parent = TitleBar
 	TitleLabel:SetAttribute("ThemeRole", "Text")
+	-- Remove a porra do contorno/highlight das palavras
+	TitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	TitleLabel.TextStrokeTransparency = 1
 
 	-- Subtitle text
 	local SubtitleLabel = Instance.new("TextLabel")
@@ -272,6 +275,9 @@ function UI.CreateWindow(title, subtitle)
 	SubtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 	SubtitleLabel.Parent = TitleBar
 	SubtitleLabel:SetAttribute("ThemeRole", "TextDark")
+	-- Remove a porra do contorno/highlight das palavras
+	SubtitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+	SubtitleLabel.TextStrokeTransparency = 1
 
 	-- ════════════════════════════════════════════════════════════
 	-- WINDOW CONTROLS (Minimize & Close)
@@ -289,6 +295,9 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = TitleBar
 		Btn:SetAttribute("ThemeRole", "TextDark")
+		-- Remove a porra do contorno/highlight das palavras
+		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Btn.TextStrokeTransparency = 1
 
 		Btn.MouseEnter:Connect(function()
 			Btn.TextColor3 = Theme.Text
@@ -491,6 +500,9 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 		Btn:SetAttribute("ThemeRole", "Button")
+		-- Remove a porra do contorno/highlight das palavras
+		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
@@ -543,6 +555,9 @@ function UI.CreateWindow(title, subtitle)
 		Label.TextYAlignment = Enum.TextYAlignment.Center
 		Label.Parent = Frame
 		Label:SetAttribute("ThemeRole", "Text")
+		-- Remove a porra do contorno/highlight das palavras
+		Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Label.TextStrokeTransparency = 1
 
 		local state = default
 
@@ -633,6 +648,9 @@ function UI.CreateWindow(title, subtitle)
 		Label.TextYAlignment = Enum.TextYAlignment.Center
 		Label.Parent = Frame
 		Label:SetAttribute("ThemeRole", "Text")
+		-- Remove a porra do contorno/highlight das palavras
+		Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Label.TextStrokeTransparency = 1
 
 		local Bar = Instance.new("Frame")
 		Bar.Size = UDim2.new(1, 0, 0, 8)
@@ -770,9 +788,9 @@ function UI.CreateWindow(title, subtitle)
 		Label.TextYAlignment = Enum.TextYAlignment.Center
 		Label.Parent = page
 		Label:SetAttribute("ThemeRole", "Text")
-
-		-- Remover qualquer borda que possa existir
-		Label.BorderSizePixel = 0
+		-- Remove a porra do contorno/highlight das palavras
+		Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Label.TextStrokeTransparency = 1
 
 		return Label
 	end
@@ -827,7 +845,9 @@ function UI.CreateWindow(title, subtitle)
 		TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 		TitleLabel.Parent = Box
 		TitleLabel:SetAttribute("ThemeRole", "Text")
-		TitleLabel.BorderSizePixel = 0
+		-- Remove a porra do contorno/highlight das palavras
+		TitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		TitleLabel.TextStrokeTransparency = 1
 
 		local TextLabel = Instance.new("TextLabel")
 		TextLabel.Size = UDim2.new(1, 0, 0, 0)
@@ -842,7 +862,9 @@ function UI.CreateWindow(title, subtitle)
 		TextLabel.TextWrapped = true
 		TextLabel.Parent = Box
 		TextLabel:SetAttribute("ThemeRole", "TextDark")
-		TextLabel.BorderSizePixel = 0
+		-- Remove a porra do contorno/highlight das palavras
+		TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		TextLabel.TextStrokeTransparency = 1
 
 		return Box
 	end
@@ -874,6 +896,9 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = Frame
 		Btn:SetAttribute("ThemeRole", "Button")
+		-- Remove a porra do contorno/highlight das palavras
+		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
@@ -967,7 +992,9 @@ function UI.CreateWindow(title, subtitle)
 				OptBtn.LayoutOrder = i
 				OptBtn.Parent = List
 				OptBtn:SetAttribute("ThemeRole", "Text")
-				OptBtn.BorderSizePixel = 0
+				-- Remove a porra do contorno/highlight das palavras
+				OptBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+				OptBtn.TextStrokeTransparency = 1
 
 				OptBtn.MouseEnter:Connect(function()
 					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.DropdownHover, BackgroundTransparency = 0}):Play()
@@ -1121,6 +1148,9 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 		Btn:SetAttribute("ThemeRole", "Button")
+		-- Remove a porra do contorno/highlight das palavras
+		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
@@ -1200,6 +1230,9 @@ function UI.CreateWindow(title, subtitle)
 		TextBox.ClearTextOnFocus = false
 		TextBox.Parent = Frame
 		TextBox:SetAttribute("ThemeRole", "Button")
+		-- Remove a porra do contorno/highlight das palavras
+		TextBox.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		TextBox.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
@@ -1255,6 +1288,9 @@ function UI.CreateWindow(title, subtitle)
 		TabBtn.AutoButtonColor = false
 		TabBtn.Parent = TabFrame
 		TabBtn:SetAttribute("ThemeRole", "TabBackground")
+		-- Remove a porra do contorno/highlight das palavras
+		TabBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		TabBtn.TextStrokeTransparency = 1
 
 		local TabBtnCorner = Instance.new("UICorner")
 		TabBtnCorner.CornerRadius = UDim.new(0, 6)
@@ -1413,7 +1449,6 @@ function UI.CreateWindow(title, subtitle)
 		Icon.ImageColor3 = Theme.Text
 		Icon.Parent = Ball
 		Icon:SetAttribute("ThemeRole", "Text")
-		Icon.BorderSizePixel = 0
 
 		local ballDragging = false
 		local ballStart
@@ -1492,7 +1527,9 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "Text" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.Text
-						object.BorderSizePixel = 0 -- Remove qualquer borda
+						-- Remove a porra do contorno/highlight das palavras
+						object.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+						object.TextStrokeTransparency = 1
 					elseif object:IsA("ImageLabel") or object:IsA("ImageButton") then
 						object.ImageColor3 = Theme.Text
 					end
@@ -1500,7 +1537,9 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "TextDark" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.TextDark
-						object.BorderSizePixel = 0 -- Remove qualquer borda
+						-- Remove a porra do contorno/highlight das palavras
+						object.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+						object.TextStrokeTransparency = 1
 					end
 
 				elseif role == "Accent" then
@@ -1544,6 +1583,9 @@ function UI.CreateWindow(title, subtitle)
 				else
 					tab.Button.TextColor3 = Theme.TextDark
 				end
+				-- Remove a porra do contorno/highlight das palavras
+				tab.Button.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+				tab.Button.TextStrokeTransparency = 1
 			end
 		end
 	end
