@@ -466,20 +466,59 @@ end
 		return Label
 	end
 
-	local function AddParagraph(page, text)
-		local Label = Instance.new("TextLabel")
-		Label.Size = UDim2.new(1, 0, 0, 40)
-		Label.BackgroundTransparency = 1
-		Label.Text = text
-		Label.TextColor3 = Theme.TextDark
-		Label.TextSize = 12
-		Label.Font = Enum.Font.Gotham
-		Label.TextXAlignment = Enum.TextXAlignment.Left
-		Label.TextYAlignment = Enum.TextYAlignment.Top
-		Label.TextWrapped = true
-		Label.Parent = page
-		return Label
-	end
+	local function AddParagraph(page, title, text)
+	local Box = Instance.new("Frame")
+	Box.Size = UDim2.new(1, 0, 0, 0) -- altura automática
+	Box.AutomaticSize = Enum.AutomaticSize.Y
+	Box.BackgroundColor3 = Theme.Button
+	Box.BorderSizePixel = 0
+	Box.Parent = page
+
+	local BoxCorner = Instance.new("UICorner")
+	BoxCorner.CornerRadius = UDim.new(0, 6)
+	BoxCorner.Parent = Box
+
+	local BoxStroke = Instance.new("UIStroke")
+	BoxStroke.Color = Theme.Border
+	BoxStroke.Thickness = 1
+	BoxStroke.Parent = Box
+
+	local Padding = Instance.new("UIPadding")
+	Padding.PaddingTop = UDim.new(0, 10)
+	Padding.PaddingBottom = UDim.new(0, 10)
+	Padding.PaddingLeft = UDim.new(0, 12)
+	Padding.PaddingRight = UDim.new(0, 12)
+	Padding.Parent = Box
+
+	local Layout = Instance.new("UIListLayout")
+	Layout.Padding = UDim.new(0, 4)
+	Layout.Parent = Box
+
+	local TitleLabel = Instance.new("TextLabel")
+	TitleLabel.Size = UDim2.new(1, 0, 0, 18)
+	TitleLabel.BackgroundTransparency = 1
+	TitleLabel.Text = title
+	TitleLabel.TextColor3 = Theme.Text
+	TitleLabel.TextSize = 13
+	TitleLabel.Font = Enum.Font.GothamMedium
+	TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TitleLabel.Parent = Box
+
+	local TextLabel = Instance.new("TextLabel")
+	TextLabel.Size = UDim2.new(1, 0, 0, 0)
+	TextLabel.AutomaticSize = Enum.AutomaticSize.Y
+	TextLabel.BackgroundTransparency = 1
+	TextLabel.Text = text
+	TextLabel.TextColor3 = Theme.TextDark
+	TextLabel.TextSize = 12
+	TextLabel.Font = Enum.Font.Gotham
+	TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+	TextLabel.TextYAlignment = Enum.TextYAlignment.Top
+	TextLabel.TextWrapped = true
+	TextLabel.Parent = Box
+
+	return Box
+end
 
 	local function AddDropdown(page, text, options, callback)
 		local Frame = Instance.new("Frame")
