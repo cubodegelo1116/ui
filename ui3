@@ -776,13 +776,16 @@ function AddDropdown(page, text, options, callback)
 	local currentValue = currentOptions[1]
 	local open = false
 
-	local List = Instance.new("Frame")
+local List = Instance.new("Frame")
 
-	List.BackgroundColor3 = Theme.TitleBar
-	List.BorderSizePixel = 0
-	List.Visible = false
-	List.ZIndex = 50
-	List.Parent = ScreenGui
+List.BackgroundColor3 = Theme.TitleBar
+List.BackgroundTransparency = 0
+List.BorderSizePixel = 0
+List.Visible = false
+List.ZIndex = 100
+List.Active = true
+List.ClipsDescendants = true
+List.Parent = ScreenGui
 
 	local ListCorner = Instance.new("UICorner")
 	ListCorner.CornerRadius = UDim.new(0, 6)
@@ -793,9 +796,10 @@ function AddDropdown(page, text, options, callback)
 	ListStroke.Thickness = 1
 	ListStroke.Parent = List
 
-	local ListLayout = Instance.new("UIListLayout")
-	ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	ListLayout.Parent = List
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0, 0)
+ListLayout.Parent = List
 
 	--==================================================
 	-- TEXTO
@@ -813,63 +817,69 @@ function AddDropdown(page, text, options, callback)
 	-- CRIAR OPÇÕES
 	--==================================================
 
-	local function RebuildOptions()
+local function RebuildOptions()
 
-		for _, child in ipairs(List:GetChildren()) do
-			if child:IsA("TextButton") then
-				child:Destroy()
+	for _, child in ipairs(List:GetChildren()) do
+		if child:IsA("TextButton") then
+			child:Destroy()
+		end
+	end
+
+	local count = 0
+
+	for _, opt in pairs(currentOptions) do
+
+		count += 1
+
+		local OptBtn = Instance.new("TextButton")
+
+		OptBtn.Size = UDim2.new(1, 0, 0, 28)
+		OptBtn.BackgroundColor3 = Theme.TitleBar
+		OptBtn.BackgroundTransparency = 0
+		OptBtn.BorderSizePixel = 0
+		OptBtn.Text = "  " .. tostring(opt)
+		OptBtn.TextColor3 = Theme.Text
+		OptBtn.TextSize = 13
+		OptBtn.Font = Enum.Font.Gotham
+		OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+		OptBtn.AutoButtonColor = false
+		OptBtn.ZIndex = 101
+		OptBtn.LayoutOrder = count
+		OptBtn.Parent = List
+
+		OptBtn.MouseEnter:Connect(function()
+			OptBtn.BackgroundColor3 = Theme.Button
+		end)
+
+		OptBtn.MouseLeave:Connect(function()
+			OptBtn.BackgroundColor3 = Theme.TitleBar
+		end)
+
+		OptBtn.MouseButton1Click:Connect(function()
+
+			currentValue = opt
+
+			UpdateButtonText()
+
+			List.Visible = false
+			open = false
+
+			if callback then
+				callback(opt)
 			end
-		end
 
-		for i, opt in ipairs(currentOptions) do
-
-			local OptBtn = Instance.new("TextButton")
-
-			OptBtn.Size = UDim2.new(1, 0, 0, 28)
-			OptBtn.BackgroundTransparency = 1
-			OptBtn.Text = "  " .. tostring(opt)
-			OptBtn.TextColor3 = Theme.Text
-			OptBtn.TextSize = 13
-			OptBtn.Font = Enum.Font.Gotham
-			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
-			OptBtn.AutoButtonColor = false
-			OptBtn.ZIndex = 51
-			OptBtn.LayoutOrder = i
-			OptBtn.Parent = List
-
-			OptBtn.MouseEnter:Connect(function()
-				OptBtn.BackgroundColor3 = Theme.Button
-			end)
-
-			OptBtn.MouseLeave:Connect(function()
-				OptBtn.BackgroundTransparency = 1
-			end)
-
-			OptBtn.MouseButton1Click:Connect(function()
-
-				currentValue = opt
-
-				UpdateButtonText()
-
-				List.Visible = false
-				open = false
-
-				if callback then
-					callback(opt)
-				end
-
-			end)
-
-		end
-
-		List.Size = UDim2.new(
-			0,
-			Btn.AbsoluteSize.X,
-			0,
-			#currentOptions * 28
-		)
+		end)
 
 	end
+
+	List.Size = UDim2.new(
+		0,
+		Btn.AbsoluteSize.X,
+		0,
+		count * 28
+	)
+
+end
 
 	RebuildOptions()
 
