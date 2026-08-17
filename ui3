@@ -956,7 +956,21 @@ function DropdownAPI.GetOptions()
     return currentOptions
 end
 
-	return Btn
+	DropdownAPI.Button = Btn
+DropdownAPI.Frame = Frame
+DropdownAPI.List = List
+
+function DropdownAPI.Destroy()
+    if Frame and Frame.Parent then
+        Frame:Destroy()
+    end
+
+    if List and List.Parent then
+        List:Destroy()
+    end
+end
+
+return DropdownAPI
 
 end
 
