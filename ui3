@@ -262,7 +262,7 @@ function UI.CreateWindow(title, subtitle)
 	SubtitleLabel.Size = UDim2.new(0, 200, 1, 0)
 	SubtitleLabel.Position = UDim2.new(0, 220, 0, 0)
 	SubtitleLabel.BackgroundTransparency = 1
-	SubtitleLabel.Text = subtitle and ("  • " .. subtitle) or ""
+	SubtitleLabel.Text = subtitle and (subtitle) or ""
 	SubtitleLabel.TextColor3 = Theme.TextDark
 	SubtitleLabel.TextSize = 12
 	SubtitleLabel.Font = Enum.Font.Gotham
