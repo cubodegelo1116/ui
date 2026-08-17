@@ -124,57 +124,58 @@ function UI.CreateWindow(title)
 	local CurrentTab = nil
 
 	local function CreateTab(name)
-		local TabBtn = Instance.new("TextButton")
-		TabBtn.Size = UDim2.new(1, 0, 0, 30)
-		TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-		TabBtn.BorderSizePixel = 0
-		TabBtn.Text = name
-		TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-		TabBtn.TextSize = 13
-		TabBtn.Font = Enum.Font.SourceSans
-		TabBtn.Parent = TabFrame
+	local TabBtn = Instance.new("TextButton")
+	TabBtn.Size = UDim2.new(1, 0, 0, 30)
+	TabBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	TabBtn.BorderSizePixel = 0
+	TabBtn.Text = name
+	TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+	TabBtn.TextSize = 13
+	TabBtn.Font = Enum.Font.SourceSans
+	TabBtn.Parent = TabFrame
 
-		local Page = Instance.new("ScrollingFrame")
-		Page.Size = UDim2.new(1, 0, 1, 0)
-		Page.BackgroundTransparency = 1
-		Page.BorderSizePixel = 0
-		Page.ScrollBarThickness = 4
-		Page.Visible = false
-		Page.Parent = Content
+	local Page = Instance.new("ScrollingFrame")
+	Page.Size = UDim2.new(1, 0, 1, 0)
+	Page.BackgroundTransparency = 1
+	Page.BorderSizePixel = 0
+	Page.ScrollBarThickness = 4
+	Page.Visible = false
+	Page.Parent = Content
 
-		local Layout = Instance.new("UIListLayout")
-		Layout.Padding = UDim.new(0, 6)
-		Layout.Parent = Page
+	local Layout = Instance.new("UIListLayout")
+	Layout.Padding = UDim.new(0, 6)
+	Layout.Parent = Page
 
-		local Padding = Instance.new("UIPadding")
-		Padding.PaddingTop = UDim.new(0, 8)
-		Padding.PaddingLeft = UDim.new(0, 8)
-		Padding.PaddingRight = UDim.new(0, 8)
-		Padding.Parent = Page
+	local Padding = Instance.new("UIPadding")
+	Padding.PaddingTop = UDim.new(0, 8)
+	Padding.PaddingLeft = UDim.new(0, 8)
+	Padding.PaddingRight = UDim.new(0, 8)
+	Padding.Parent = Page
 
-		TabBtn.MouseButton1Click:Connect(function()
-			if CurrentTab then
-				CurrentTab.Page.Visible = false
-				CurrentTab.Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-			end
-			Page.Visible = true
-			TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-			CurrentTab = {Btn = TabBtn, Page = Page}
-		end)
-
-		table.insert(Tabs, {Btn = TabBtn, Page = Page})
-
-		for i, t in ipairs(Tabs) do
-			t.Btn.Position = UDim2.new(0, 0, 0, (i-1)*30)
+	TabBtn.MouseButton1Click:Connect(function()
+		if CurrentTab then
+			CurrentTab.Page.Visible = false
+			CurrentTab.Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 		end
+		Page.Visible = true
+		TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		CurrentTab = {Btn = TabBtn, Page = Page}
+	end)
 
-		if #Tabs == 1 then
-			TabBtn:MouseButton1Click()
-		end
+	table.insert(Tabs, {Btn = TabBtn, Page = Page})
 
-		return Page
+	for i, t in ipairs(Tabs) do
+		t.Btn.Position = UDim2.new(0, 0, 0, (i-1)*30)
 	end
 
+	if #Tabs == 1 then
+		Page.Visible = true
+		TabBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		CurrentTab = {Btn = TabBtn, Page = Page}
+	end
+
+	return Page
+end
 	local function AddButton(page, text, callback)
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 0, 28)
