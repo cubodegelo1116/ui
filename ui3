@@ -55,12 +55,13 @@ function UI.CreateWindow(title)
 	TitleCorner.CornerRadius = UDim.new(0, 10)
 	TitleCorner.Parent = TitleBar
 
-	local TitleFix = Instance.new("Frame")
-	TitleFix.Size = UDim2.new(1, 0, 0, 12)
-	TitleFix.Position = UDim2.new(0, 0, 1, -12)
-	TitleFix.BackgroundColor3 = Theme.TitleBar
-	TitleFix.BorderSizePixel = 0
-	TitleFix.Parent = TitleBar
+	-- conserta os cantos de baixo da titlebar
+	local TitleBottom = Instance.new("Frame")
+	TitleBottom.Size = UDim2.new(1, 0, 0, 10)
+	TitleBottom.Position = UDim2.new(0, 0, 1, -10)
+	TitleBottom.BackgroundColor3 = Theme.TitleBar
+	TitleBottom.BorderSizePixel = 0
+	TitleBottom.Parent = TitleBar
 
 	local Title = Instance.new("TextLabel")
 	Title.Size = UDim2.new(1, -80, 1, 0)
@@ -83,24 +84,6 @@ function UI.CreateWindow(title)
 	Minimize.TextSize = 20
 	Minimize.Font = Enum.Font.GothamBold
 	Minimize.Parent = TitleBar
-
-	local minimized = false
-	local oldSize = Main.Size
-	Minimize.MouseButton1Click:Connect(function()
-		minimized = not minimized
-		if minimized then
-			oldSize = Main.Size
-			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, 36)
-			TabFrame.Visible = false
-			Content.Visible = false
-			Resize.Visible = false
-		else
-			Main.Size = oldSize
-			TabFrame.Visible = true
-			Content.Visible = true
-			Resize.Visible = true
-		end
-	end)
 
 	-- Close
 	local Close = Instance.new("TextButton")
@@ -138,12 +121,12 @@ function UI.CreateWindow(title)
 		end
 	end)
 
-	-- Resize (discreto)
+	-- Resize (bem discreto)
 	local Resize = Instance.new("TextButton")
 	Resize.Size = UDim2.new(0, 12, 0, 12)
 	Resize.Position = UDim2.new(1, -12, 1, -12)
 	Resize.BackgroundColor3 = Theme.Border
-	Resize.BackgroundTransparency = 0.55
+	Resize.BackgroundTransparency = 0.6
 	Resize.BorderSizePixel = 0
 	Resize.Text = ""
 	Resize.AutoButtonColor = false
@@ -183,12 +166,42 @@ function UI.CreateWindow(title)
 	TabFrame.BorderSizePixel = 0
 	TabFrame.Parent = Main
 
+	local TabCorner = Instance.new("UICorner")
+	TabCorner.CornerRadius = UDim.new(0, 10)
+	TabCorner.Parent = TabFrame
+
 	local Content = Instance.new("Frame")
 	Content.Size = UDim2.new(1, -110, 1, -36)
 	Content.Position = UDim2.new(0, 110, 0, 36)
 	Content.BackgroundColor3 = Theme.Background
 	Content.BorderSizePixel = 0
 	Content.Parent = Main
+
+	local ContentCorner = Instance.new("UICorner")
+	ContentCorner.CornerRadius = UDim.new(0, 10)
+	ContentCorner.Parent = Content
+
+	-- Minimize logic (agora limpo)
+	local minimized = false
+	local oldSize = Main.Size
+
+	Minimize.MouseButton1Click:Connect(function()
+		minimized = not minimized
+		if minimized then
+			oldSize = Main.Size
+			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, 36)
+			TabFrame.Visible = false
+			Content.Visible = false
+			Resize.Visible = false
+			TitleBottom.Visible = false
+		else
+			Main.Size = oldSize
+			TabFrame.Visible = true
+			Content.Visible = true
+			Resize.Visible = true
+			TitleBottom.Visible = true
+		end
+	end)
 
 	local Tabs = {}
 	local CurrentTab = nil
@@ -206,9 +219,9 @@ function UI.CreateWindow(title)
 		TabBtn.AutoButtonColor = false
 		TabBtn.Parent = TabFrame
 
-		local TabCorner = Instance.new("UICorner")
-		TabCorner.CornerRadius = UDim.new(0, 6)
-		TabCorner.Parent = TabBtn
+		local TabBtnCorner = Instance.new("UICorner")
+		TabBtnCorner.CornerRadius = UDim.new(0, 6)
+		TabBtnCorner.Parent = TabBtn
 
 		local Page = Instance.new("ScrollingFrame")
 		Page.Size = UDim2.new(1, 0, 1, 0)
@@ -544,13 +557,14 @@ function UI.CreateWindow(title)
 		return Btn
 	end
 
-	-- NOVA FUNÇÃO: Bolinha de minimizar
+	-- Bolinha de minimizar (com ImageSize)
 	local function AddMinimizeButton(config)
 		config = config or {}
-		local imageId = config.Image or "rbxassetid://7733960981" -- ícone padrão
+		local imageId = config.Image or "rbxassetid://7733960981"
 		local size = config.Size or 50
-		local corner = config.Corner or 1 -- 1 = círculo, 0.2 = arredondado, 0 = quadrado
-		local transparency = config.Transparency or 0.3
+		local imageSize = config.ImageSize or size * 0.55
+		local corner = config.Corner or 1
+		local transparency = config.Transparency or 0.25
 		local position = config.Position or UDim2.new(0, 20, 0.5, -size/2)
 
 		local Ball = Instance.new("ImageButton")
@@ -558,8 +572,7 @@ function UI.CreateWindow(title)
 		Ball.Position = position
 		Ball.BackgroundColor3 = Theme.TitleBar
 		Ball.BackgroundTransparency = transparency
-		Ball.Image = imageId
-		Ball.ImageColor3 = Theme.Text
+		Ball.Image = ""
 		Ball.BorderSizePixel = 0
 		Ball.Parent = ScreenGui
 
@@ -571,6 +584,14 @@ function UI.CreateWindow(title)
 		BallStroke.Color = Theme.Border
 		BallStroke.Thickness = 1.2
 		BallStroke.Parent = Ball
+
+		local Icon = Instance.new("ImageLabel")
+		Icon.Size = UDim2.new(0, imageSize, 0, imageSize)
+		Icon.Position = UDim2.new(0.5, -imageSize/2, 0.5, -imageSize/2)
+		Icon.BackgroundTransparency = 1
+		Icon.Image = imageId
+		Icon.ImageColor3 = Theme.Text
+		Icon.Parent = Ball
 
 		-- Drag da bolinha
 		local ballDragging, ballStart, ballPos
@@ -609,7 +630,7 @@ function UI.CreateWindow(title)
 		Main.BackgroundColor3 = Theme.Background
 		MainStroke.Color = Theme.Border
 		TitleBar.BackgroundColor3 = Theme.TitleBar
-		TitleFix.BackgroundColor3 = Theme.TitleBar
+		TitleBottom.BackgroundColor3 = Theme.TitleBar
 		Title.TextColor3 = Theme.Text
 		TabFrame.BackgroundColor3 = Theme.TabBackground
 		Content.BackgroundColor3 = Theme.Background
