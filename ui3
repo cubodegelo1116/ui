@@ -1,6 +1,6 @@
 local UI = {}
 
-function UI.CreateWindow(title)
+function UI.CreateWindow(title, subtitle)
 	local UIS = game:GetService("UserInputService")
 	local TweenService = game:GetService("TweenService")
 
@@ -123,16 +123,31 @@ function UI.CreateWindow(title)
 
 	TitleBottom:SetAttribute("ThemeRole", "TitleBar")
 
-	local Title = Instance.new("TextLabel")
-	Title.Size = UDim2.new(1, -80, 1, 0)
-	Title.Position = UDim2.new(0, 14, 0, 0)
-	Title.BackgroundTransparency = 1
-	Title.Text = title or "Cartola Hub"
-	Title.TextColor3 = Theme.Text
-	Title.TextSize = 15
-	Title.Font = Enum.Font.GothamMedium
-	Title.TextXAlignment = Enum.TextXAlignment.Left
-	Title.Parent = TitleBar
+--==================================================
+-- TITLE + SUBTITLE
+--==================================================
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(0, 180, 1, 0)
+Title.Position = UDim2.new(0, 14, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = title or "Cartola Hub"
+Title.TextColor3 = Theme.Text
+Title.TextSize = 15
+Title.Font = Enum.Font.GothamMedium
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 180, 1, 0)
+Subtitle.Position = UDim2.new(0, 14 + 180, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = subtitle and ("  " .. subtitle) or ""
+Subtitle.TextColor3 = Theme.TextDark
+Subtitle.TextSize = 12
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = TitleBar
 
 	Title:SetAttribute("ThemeRole", "Text")
 
