@@ -55,7 +55,6 @@ function UI.CreateWindow(title)
 	TitleCorner.CornerRadius = UDim.new(0, 10)
 	TitleCorner.Parent = TitleBar
 
-	-- corrige canto de baixo da titlebar
 	local TitleFix = Instance.new("Frame")
 	TitleFix.Size = UDim2.new(1, 0, 0, 12)
 	TitleFix.Position = UDim2.new(0, 0, 1, -12)
@@ -92,8 +91,14 @@ function UI.CreateWindow(title)
 		if minimized then
 			oldSize = Main.Size
 			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, 36)
+			TabFrame.Visible = false
+			Content.Visible = false
+			Resize.Visible = false
 		else
 			Main.Size = oldSize
+			TabFrame.Visible = true
+			Content.Visible = true
+			Resize.Visible = true
 		end
 	end)
 
@@ -133,18 +138,19 @@ function UI.CreateWindow(title)
 		end
 	end)
 
-	-- Resize
+	-- Resize (discreto)
 	local Resize = Instance.new("TextButton")
-	Resize.Size = UDim2.new(0, 14, 0, 14)
-	Resize.Position = UDim2.new(1, -14, 1, -14)
+	Resize.Size = UDim2.new(0, 12, 0, 12)
+	Resize.Position = UDim2.new(1, -12, 1, -12)
 	Resize.BackgroundColor3 = Theme.Border
+	Resize.BackgroundTransparency = 0.55
 	Resize.BorderSizePixel = 0
 	Resize.Text = ""
 	Resize.AutoButtonColor = false
 	Resize.Parent = Main
 
 	local ResizeCorner = Instance.new("UICorner")
-	ResizeCorner.CornerRadius = UDim.new(0, 4)
+	ResizeCorner.CornerRadius = UDim.new(0, 3)
 	ResizeCorner.Parent = Resize
 
 	local resizing, resizeStart, startSize
@@ -169,7 +175,7 @@ function UI.CreateWindow(title)
 		end
 	end)
 
-	-- Tabs (esquerda)
+	-- Tabs
 	local TabFrame = Instance.new("Frame")
 	TabFrame.Size = UDim2.new(0, 110, 1, -36)
 	TabFrame.Position = UDim2.new(0, 0, 0, 36)
@@ -330,10 +336,8 @@ function UI.CreateWindow(title)
 			state = not state
 			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
 			local goalColor = state and Theme.ToggleOn or Theme.ToggleOff
-
 			TweenService:Create(Circle, TweenInfo.new(0.15), {Position = goalPos}):Play()
 			TweenService:Create(Toggle, TweenInfo.new(0.15), {BackgroundColor3 = goalColor}):Play()
-
 			if callback then callback(state) end
 		end)
 		return Toggle
@@ -417,99 +421,86 @@ function UI.CreateWindow(title)
 	end
 
 	local function AddDropdown(page, text, options, callback)
-	local Frame = Instance.new("Frame")
-	Frame.Size = UDim2.new(1, 0, 0, 32)
-	Frame.BackgroundTransparency = 1
-	Frame.Parent = page
+		local Frame = Instance.new("Frame")
+		Frame.Size = UDim2.new(1, 0, 0, 32)
+		Frame.BackgroundTransparency = 1
+		Frame.Parent = page
 
-	local Btn = Instance.new("TextButton")
-	Btn.Size = UDim2.new(1, 0, 1, 0)
-	Btn.BackgroundColor3 = Theme.Button
-	Btn.BorderSizePixel = 0
-	Btn.Text = "  " .. text .. ": " .. (options[1] or "")
-	Btn.TextColor3 = Theme.Text
-	Btn.TextSize = 13
-	Btn.Font = Enum.Font.Gotham
-	Btn.TextXAlignment = Enum.TextXAlignment.Left
-	Btn.AutoButtonColor = false
-	Btn.Parent = Frame
+		local Btn = Instance.new("TextButton")
+		Btn.Size = UDim2.new(1, 0, 1, 0)
+		Btn.BackgroundColor3 = Theme.Button
+		Btn.BorderSizePixel = 0
+		Btn.Text = "  " .. text .. ": " .. (options[1] or "")
+		Btn.TextColor3 = Theme.Text
+		Btn.TextSize = 13
+		Btn.Font = Enum.Font.Gotham
+		Btn.TextXAlignment = Enum.TextXAlignment.Left
+		Btn.AutoButtonColor = false
+		Btn.Parent = Frame
 
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 6)
-	Corner.Parent = Btn
+		local Corner = Instance.new("UICorner")
+		Corner.CornerRadius = UDim.new(0, 6)
+		Corner.Parent = Btn
 
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Color = Theme.Border
-	Stroke.Thickness = 1
-	Stroke.Parent = Btn
+		local Stroke = Instance.new("UIStroke")
+		Stroke.Color = Theme.Border
+		Stroke.Thickness = 1
+		Stroke.Parent = Btn
 
-	local open = false
+		local open = false
+		local List = Instance.new("Frame")
+		List.Size = UDim2.new(0, 200, 0, #options * 28)
+		List.BackgroundColor3 = Theme.TitleBar
+		List.BorderSizePixel = 0
+		List.Visible = false
+		List.ZIndex = 50
+		List.Parent = ScreenGui
 
-	-- Lista fica no ScreenGui pra não ser afetada pelo layout
-	local List = Instance.new("Frame")
-	List.Size = UDim2.new(0, 200, 0, #options * 28)
-	List.BackgroundColor3 = Theme.TitleBar
-	List.BorderSizePixel = 0
-	List.Visible = false
-	List.ZIndex = 50
-	List.Parent = ScreenGui
+		local ListCorner = Instance.new("UICorner")
+		ListCorner.CornerRadius = UDim.new(0, 6)
+		ListCorner.Parent = List
 
-	local ListCorner = Instance.new("UICorner")
-	ListCorner.CornerRadius = UDim.new(0, 6)
-	ListCorner.Parent = List
+		local ListStroke = Instance.new("UIStroke")
+		ListStroke.Color = Theme.Border
+		ListStroke.Thickness = 1
+		ListStroke.Parent = List
 
-	local ListStroke = Instance.new("UIStroke")
-	ListStroke.Color = Theme.Border
-	ListStroke.Thickness = 1
-	ListStroke.Parent = List
+		for i, opt in ipairs(options) do
+			local OptBtn = Instance.new("TextButton")
+			OptBtn.Size = UDim2.new(1, 0, 0, 28)
+			OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*28)
+			OptBtn.BackgroundTransparency = 1
+			OptBtn.Text = "  " .. opt
+			OptBtn.TextColor3 = Theme.Text
+			OptBtn.TextSize = 13
+			OptBtn.Font = Enum.Font.Gotham
+			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+			OptBtn.ZIndex = 51
+			OptBtn.Parent = List
 
-	for i, opt in ipairs(options) do
-		local OptBtn = Instance.new("TextButton")
-		OptBtn.Size = UDim2.new(1, 0, 0, 28)
-		OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*28)
-		OptBtn.BackgroundTransparency = 1
-		OptBtn.Text = "  " .. opt
-		OptBtn.TextColor3 = Theme.Text
-		OptBtn.TextSize = 13
-		OptBtn.Font = Enum.Font.Gotham
-		OptBtn.TextXAlignment = Enum.TextXAlignment.Left
-		OptBtn.ZIndex = 51
-		OptBtn.Parent = List
-
-		OptBtn.MouseButton1Click:Connect(function()
-			Btn.Text = "  " .. text .. ": " .. opt
-			List.Visible = false
-			open = false
-			if callback then callback(opt) end
-		end)
-	end
-
-	Btn.MouseButton1Click:Connect(function()
-		open = not open
-		if open then
-			-- posiciona a lista embaixo do botão
-			local absPos = Btn.AbsolutePosition
-			local absSize = Btn.AbsoluteSize
-			List.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
-			List.Size = UDim2.new(0, absSize.X, 0, #options * 28)
-			List.Visible = true
-		else
-			List.Visible = false
+			OptBtn.MouseButton1Click:Connect(function()
+				Btn.Text = "  " .. text .. ": " .. opt
+				List.Visible = false
+				open = false
+				if callback then callback(opt) end
+			end)
 		end
-	end)
 
-	-- fecha se clicar fora
-	UIS.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and open then
-			task.wait()
-			if not List:IsAncestorOf(game:GetService("Players").LocalPlayer:GetMouse().Target) then
-				-- fallback simples
+		Btn.MouseButton1Click:Connect(function()
+			open = not open
+			if open then
+				local absPos = Btn.AbsolutePosition
+				local absSize = Btn.AbsoluteSize
+				List.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
+				List.Size = UDim2.new(0, absSize.X, 0, #options * 28)
+				List.Visible = true
+			else
+				List.Visible = false
 			end
-		end
-	end)
+		end)
 
-	return Btn
-end
+		return Btn
+	end
 
 	local function AddCooldownButton(page, text, cooldown, callback)
 		local Btn = Instance.new("TextButton")
@@ -553,6 +544,64 @@ end
 		return Btn
 	end
 
+	-- NOVA FUNÇÃO: Bolinha de minimizar
+	local function AddMinimizeButton(config)
+		config = config or {}
+		local imageId = config.Image or "rbxassetid://7733960981" -- ícone padrão
+		local size = config.Size or 50
+		local corner = config.Corner or 1 -- 1 = círculo, 0.2 = arredondado, 0 = quadrado
+		local transparency = config.Transparency or 0.3
+		local position = config.Position or UDim2.new(0, 20, 0.5, -size/2)
+
+		local Ball = Instance.new("ImageButton")
+		Ball.Size = UDim2.new(0, size, 0, size)
+		Ball.Position = position
+		Ball.BackgroundColor3 = Theme.TitleBar
+		Ball.BackgroundTransparency = transparency
+		Ball.Image = imageId
+		Ball.ImageColor3 = Theme.Text
+		Ball.BorderSizePixel = 0
+		Ball.Parent = ScreenGui
+
+		local BallCorner = Instance.new("UICorner")
+		BallCorner.CornerRadius = UDim.new(corner, 0)
+		BallCorner.Parent = Ball
+
+		local BallStroke = Instance.new("UIStroke")
+		BallStroke.Color = Theme.Border
+		BallStroke.Thickness = 1.2
+		BallStroke.Parent = Ball
+
+		-- Drag da bolinha
+		local ballDragging, ballStart, ballPos
+		Ball.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				ballDragging = true
+				ballStart = input.Position
+				ballPos = Ball.Position
+			end
+		end)
+		Ball.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				ballDragging = false
+			end
+		end)
+		UIS.InputChanged:Connect(function(input)
+			if ballDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+				local delta = input.Position - ballStart
+				Ball.Position = UDim2.new(ballPos.X.Scale, ballPos.X.Offset + delta.X, ballPos.Y.Scale, ballPos.Y.Offset + delta.Y)
+			end
+		end)
+
+		local guiVisible = true
+		Ball.MouseButton1Click:Connect(function()
+			guiVisible = not guiVisible
+			Main.Visible = guiVisible
+		end)
+
+		return Ball
+	end
+
 	local function SetTheme(newTheme)
 		for k, v in pairs(newTheme) do
 			if Theme[k] then Theme[k] = v end
@@ -576,6 +625,7 @@ end
 		AddParagraph = AddParagraph,
 		AddDropdown = AddDropdown,
 		AddCooldownButton = AddCooldownButton,
+		AddMinimizeButton = AddMinimizeButton,
 		SetTheme = SetTheme,
 		Theme = Theme,
 		Main = Main
