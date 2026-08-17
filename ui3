@@ -812,28 +812,36 @@ function UI.CreateWindow(title)
 
 		local Page = Instance.new("ScrollingFrame")
 
-		Page.Size = UDim2.new(1, 0, 1, 0)
-		Page.BackgroundTransparency = 1
-		Page.BorderSizePixel = 0
-		Page.ScrollBarThickness = 3
-		Page.ScrollBarImageColor3 = Theme.Border
-		Page.Visible = false
-		Page.Parent = Content
+Page.Size = UDim2.new(1, 0, 1, 0)
+Page.BackgroundTransparency = 1
+Page.BorderSizePixel = 0
+Page.ScrollBarThickness = 3
+Page.ScrollBarImageColor3 = Theme.Border
+Page.ScrollingDirection = Enum.ScrollingDirection.Y
+Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+Page.Visible = false
+Page.Parent = Content
 
-		local Layout = Instance.new("UIListLayout")
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 8)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Parent = Page
 
-		Layout.Padding = UDim.new(0, 8)
-		Layout.SortOrder = Enum.SortOrder.LayoutOrder
-		Layout.Parent = Page
+local Padding = Instance.new("UIPadding")
+Padding.PaddingTop = UDim.new(0, 12)
+Padding.PaddingLeft = UDim.new(0, 12)
+Padding.PaddingRight = UDim.new(0, 12)
+Padding.PaddingBottom = UDim.new(0, 12)
+Padding.Parent = Page
 
-		local Padding = Instance.new("UIPadding")
-
-		Padding.PaddingTop = UDim.new(0, 12)
-		Padding.PaddingLeft = UDim.new(0, 12)
-		Padding.PaddingRight = UDim.new(0, 12)
-		Padding.PaddingBottom = UDim.new(0, 12)
-
-		Padding.Parent = Page
+Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+	Page.CanvasSize = UDim2.new(
+		0,
+		0,
+		0,
+		Layout.AbsoluteContentSize.Y + 24
+	)
+end)
 
 		--==============================================
 		-- OBJETO DA TAB
