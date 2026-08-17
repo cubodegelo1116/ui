@@ -357,53 +357,101 @@ function UI.CreateWindow(title)
 	end
 
 	local function AddSlider(page, text, min, max, default, callback)
-		local Frame = Instance.new("Frame")
-		Frame.Size = UDim2.new(1, 0, 0, 46)
-		Frame.BackgroundTransparency = 1
-		Frame.Parent = page
+	local Frame = Instance.new("Frame")
+	Frame.Size = UDim2.new(1, 0, 0, 46)
+	Frame.BackgroundTransparency = 1
+	Frame.Parent = page
 
-		local Label = Instance.new("TextLabel")
-		Label.Size = UDim2.new(1, 0, 0, 18)
-		Label.BackgroundTransparency = 1
-		Label.Text = text .. ": " .. tostring(default)
-		Label.TextColor3 = Theme.Text
-		Label.TextSize = 13
-		Label.Font = Enum.Font.Gotham
-		Label.TextXAlignment = Enum.TextXAlignment.Left
-		Label.Parent = Frame
+	local Label = Instance.new("TextLabel")
+	Label.Size = UDim2.new(1, 0, 0, 18)
+	Label.BackgroundTransparency = 1
+	Label.Text = text .. ": " .. tostring(default)
+	Label.TextColor3 = Theme.Text
+	Label.TextSize = 13
+	Label.Font = Enum.Font.Gotham
+	Label.TextXAlignment = Enum.TextXAlignment.Left
+	Label.Parent = Frame
 
-		local Bar = Instance.new("Frame")
-		Bar.Size = UDim2.new(1, 0, 0, 8)
-		Bar.Position = UDim2.new(0, 0, 0, 28)
-		Bar.BackgroundColor3 = Color3.fromRGB(35, 50, 58)
-		Bar.BorderSizePixel = 0
-		Bar.Parent = Frame
+	local Bar = Instance.new("Frame")
+	Bar.Size = UDim2.new(1, 0, 0, 8)
+	Bar.Position = UDim2.new(0, 0, 0, 28)
+	Bar.BackgroundColor3 = Color3.fromRGB(35, 50, 58)
+	Bar.BorderSizePixel = 0
+	Bar.Parent = Frame
 
-		local BarCorner = Instance.new("UICorner")
-		BarCorner.CornerRadius = UDim.new(1, 0)
-		BarCorner.Parent = Bar
+	local BarCorner = Instance.new("UICorner")
+	BarCorner.CornerRadius = UDim.new(1, 0)
+	BarCorner.Parent = Bar
 
-		local Fill = Instance.new("Frame")
-		Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-		Fill.BackgroundColor3 = Theme.Accent
-		Fill.BorderSizePixel = 0
-		Fill.Parent = Bar
+	local Fill = Instance.new("Frame")
+	Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+	Fill.BackgroundColor3 = Theme.Accent
+	Fill.BorderSizePixel = 0
+	Fill.Parent = Bar
 
-		local FillCorner = Instance.new("UICorner")
-		FillCorner.CornerRadius = UDim.new(1, 0)
-		FillCorner.Parent = Fill
+	local FillCorner = Instance.new("UICorner")
+	FillCorner.CornerRadius = UDim.new(1, 0)
+	FillCorner.Parent = Fill
 
-		Bar.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				local percent = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-				local value = math.floor(min + (max - min) * percent)
-				Fill.Size = UDim2.new(percent, 0, 1, 0)
-				Label.Text = text .. ": " .. value
-				if callback then callback(value) end
-			end
-		end)
-		return Fill
+	-- Bolinha
+	local Handle = Instance.new("Frame")
+	Handle.Size = UDim2.new(0, 16, 0, 16)
+	Handle.Position = UDim2.new((default - min) / (max - min), -8, 0.5, -8)
+	Handle.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+	Handle.BorderSizePixel = 0
+	Handle.ZIndex = 2
+	Handle.Parent = Bar
+
+	local HandleCorner = Instance.new("UICorner")
+	HandleCorner.CornerRadius = UDim.new(1, 0)
+	HandleCorner.Parent = Handle
+
+	local draggingSlider = false
+
+	local function update(input)
+		local percent = math.clamp((input.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+		local value = math.floor(min + (max - min) * percent)
+
+		Fill.Size = UDim2.new(percent, 0, 1, 0)
+		Handle.Position = UDim2.new(percent, -8, 0.5, -8)
+		Label.Text = text .. ": " .. value
+
+		if callback then callback(value) end
 	end
+
+	Handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingSlider = true
+		end
+	end)
+
+	Handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingSlider = false
+		end
+	end)
+
+	Bar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingSlider = true
+			update(input)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+			update(input)
+		end
+	end)
+
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			draggingSlider = false
+		end
+	end)
+
+	return Fill
+end
 
 	local function AddTextLabel(page, text)
 		local Label = Instance.new("TextLabel")
