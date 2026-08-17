@@ -100,8 +100,8 @@ function UI.CreateWindow(title, subtitle)
 		Error = Color3.fromRGB(220, 50, 50),
 		Success = Color3.fromRGB(50, 200, 100),
 		Warning = Color3.fromRGB(255, 200, 50),
-		TabBorder = Color3.fromRGB(40, 65, 75), -- Nova cor para borda das tabs
-		DropdownHover = Color3.fromRGB(35, 55, 65), -- Nova cor para hover do dropdown
+		TabBorder = Color3.fromRGB(40, 65, 75),
+		DropdownHover = Color3.fromRGB(35, 55, 65),
 	}
 
 	local Themes = {}
@@ -771,6 +771,9 @@ function UI.CreateWindow(title, subtitle)
 		Label.Parent = page
 		Label:SetAttribute("ThemeRole", "Text")
 
+		-- Remover qualquer borda que possa existir
+		Label.BorderSizePixel = 0
+
 		return Label
 	end
 
@@ -824,6 +827,7 @@ function UI.CreateWindow(title, subtitle)
 		TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 		TitleLabel.Parent = Box
 		TitleLabel:SetAttribute("ThemeRole", "Text")
+		TitleLabel.BorderSizePixel = 0
 
 		local TextLabel = Instance.new("TextLabel")
 		TextLabel.Size = UDim2.new(1, 0, 0, 0)
@@ -838,6 +842,7 @@ function UI.CreateWindow(title, subtitle)
 		TextLabel.TextWrapped = true
 		TextLabel.Parent = Box
 		TextLabel:SetAttribute("ThemeRole", "TextDark")
+		TextLabel.BorderSizePixel = 0
 
 		return Box
 	end
@@ -962,9 +967,9 @@ function UI.CreateWindow(title, subtitle)
 				OptBtn.LayoutOrder = i
 				OptBtn.Parent = List
 				OptBtn:SetAttribute("ThemeRole", "Text")
+				OptBtn.BorderSizePixel = 0
 
 				OptBtn.MouseEnter:Connect(function()
-					-- Usa a cor de hover do dropdown quando o mouse entra
 					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.DropdownHover, BackgroundTransparency = 0}):Play()
 				end)
 
@@ -1255,10 +1260,10 @@ function UI.CreateWindow(title, subtitle)
 		TabBtnCorner.CornerRadius = UDim.new(0, 6)
 		TabBtnCorner.Parent = TabBtn
 
-		-- Adiciona borda à tab
+		-- Adiciona borda à tab com 0.5 pixels
 		local TabStroke = Instance.new("UIStroke")
 		TabStroke.Color = Theme.TabBorder
-		TabStroke.Thickness = 1
+		TabStroke.Thickness = 0.5
 		TabStroke.Parent = TabBtn
 		TabStroke:SetAttribute("ThemeRole", "TabBorder")
 
@@ -1408,6 +1413,7 @@ function UI.CreateWindow(title, subtitle)
 		Icon.ImageColor3 = Theme.Text
 		Icon.Parent = Ball
 		Icon:SetAttribute("ThemeRole", "Text")
+		Icon.BorderSizePixel = 0
 
 		local ballDragging = false
 		local ballStart
@@ -1486,6 +1492,7 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "Text" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.Text
+						object.BorderSizePixel = 0 -- Remove qualquer borda
 					elseif object:IsA("ImageLabel") or object:IsA("ImageButton") then
 						object.ImageColor3 = Theme.Text
 					end
@@ -1493,6 +1500,7 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "TextDark" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.TextDark
+						object.BorderSizePixel = 0 -- Remove qualquer borda
 					end
 
 				elseif role == "Accent" then
@@ -1520,6 +1528,7 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "TabBorder" then
 					if object:IsA("UIStroke") then
 						object.Color = Theme.TabBorder
+						object.Thickness = 0.5 -- Mantém 0.5 pixels
 					elseif object:IsA("GuiObject") then
 						object.BackgroundColor3 = Theme.TabBorder
 					end
