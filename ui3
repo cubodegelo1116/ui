@@ -1,6 +1,6 @@
 local UI = {}
 
-function UI.CreateWindow(title)
+function UI.CreateWindow(title, subtitle)
 	local UIS = game:GetService("UserInputService")
 	local TweenService = game:GetService("TweenService")
 
