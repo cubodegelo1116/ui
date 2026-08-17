@@ -4,6 +4,10 @@ function UI.CreateWindow(title)
 	local UIS = game:GetService("UserInputService")
 	local TweenService = game:GetService("TweenService")
 
+	--==================================================
+	-- THEME BASE
+	--==================================================
+
 	local Theme = {
 		Background = Color3.fromRGB(18, 28, 32),
 		TitleBar = Color3.fromRGB(22, 35, 40),
@@ -20,11 +24,57 @@ function UI.CreateWindow(title)
 		Cooldown = Color3.fromRGB(160, 50, 50),
 	}
 
+	--==================================================
+	-- THEME SYSTEM
+	--==================================================
+
+	local Themes = {}
+
+	local function CopyTheme(theme)
+		local copy = {}
+
+		for k, v in pairs(theme) do
+			copy[k] = v
+		end
+
+		return copy
+	end
+
+	Themes.Default = CopyTheme(Theme)
+
+	local function CreateTheme(name, colors)
+		if not name then
+			return nil
+		end
+
+		local NewTheme = CopyTheme(Theme)
+
+		if colors then
+			for key, value in pairs(colors) do
+				if NewTheme[key] ~= nil then
+					NewTheme[key] = value
+				end
+			end
+		end
+
+		Themes[name] = NewTheme
+
+		return NewTheme
+	end
+
+	--==================================================
+	-- SCREEN GUI
+	--==================================================
+
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "UI"
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+	--==================================================
+	-- MAIN
+	--==================================================
 
 	local Main = Instance.new("Frame")
 	Main.Size = UDim2.new(0, 520, 0, 380)
@@ -35,6 +85,8 @@ function UI.CreateWindow(title)
 	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
 
+	Main:SetAttribute("ThemeRole", "Background")
+
 	local MainCorner = Instance.new("UICorner")
 	MainCorner.CornerRadius = UDim.new(0, 10)
 	MainCorner.Parent = Main
@@ -43,6 +95,8 @@ function UI.CreateWindow(title)
 	MainStroke.Color = Theme.Border
 	MainStroke.Thickness = 1.2
 	MainStroke.Parent = Main
+
+	MainStroke:SetAttribute("ThemeRole", "Border")
 
 	--==================================================
 	-- TITLE BAR
@@ -53,6 +107,8 @@ function UI.CreateWindow(title)
 	TitleBar.BackgroundColor3 = Theme.TitleBar
 	TitleBar.BorderSizePixel = 0
 	TitleBar.Parent = Main
+
+	TitleBar:SetAttribute("ThemeRole", "TitleBar")
 
 	local TitleCorner = Instance.new("UICorner")
 	TitleCorner.CornerRadius = UDim.new(0, 10)
@@ -65,6 +121,8 @@ function UI.CreateWindow(title)
 	TitleBottom.BorderSizePixel = 0
 	TitleBottom.Parent = TitleBar
 
+	TitleBottom:SetAttribute("ThemeRole", "TitleBar")
+
 	local Title = Instance.new("TextLabel")
 	Title.Size = UDim2.new(1, -80, 1, 0)
 	Title.Position = UDim2.new(0, 14, 0, 0)
@@ -75,6 +133,8 @@ function UI.CreateWindow(title)
 	Title.Font = Enum.Font.GothamMedium
 	Title.TextXAlignment = Enum.TextXAlignment.Left
 	Title.Parent = TitleBar
+
+	Title:SetAttribute("ThemeRole", "Text")
 
 	--==================================================
 	-- MINIMIZE
@@ -90,6 +150,8 @@ function UI.CreateWindow(title)
 	Minimize.Font = Enum.Font.GothamBold
 	Minimize.Parent = TitleBar
 
+	Minimize:SetAttribute("ThemeRole", "TextDark")
+
 	--==================================================
 	-- CLOSE
 	--==================================================
@@ -103,6 +165,8 @@ function UI.CreateWindow(title)
 	Close.TextSize = 20
 	Close.Font = Enum.Font.GothamBold
 	Close.Parent = TitleBar
+
+	Close:SetAttribute("ThemeRole", "TextDark")
 
 	Close.MouseButton1Click:Connect(function()
 		ScreenGui:Destroy()
@@ -157,6 +221,8 @@ function UI.CreateWindow(title)
 	Resize.AutoButtonColor = false
 	Resize.Parent = Main
 
+	Resize:SetAttribute("ThemeRole", "Border")
+
 	local ResizeCorner = Instance.new("UICorner")
 	ResizeCorner.CornerRadius = UDim.new(0, 3)
 	ResizeCorner.Parent = Resize
@@ -210,6 +276,8 @@ function UI.CreateWindow(title)
 	TabFrame.BorderSizePixel = 0
 	TabFrame.Parent = Main
 
+	TabFrame:SetAttribute("ThemeRole", "TabBackground")
+
 	local TabCorner = Instance.new("UICorner")
 	TabCorner.CornerRadius = UDim.new(0, 10)
 	TabCorner.Parent = TabFrame
@@ -220,6 +288,8 @@ function UI.CreateWindow(title)
 	Content.BackgroundColor3 = Theme.Background
 	Content.BorderSizePixel = 0
 	Content.Parent = Main
+
+	Content:SetAttribute("ThemeRole", "Background")
 
 	local ContentCorner = Instance.new("UICorner")
 	ContentCorner.CornerRadius = UDim.new(0, 10)
@@ -260,10 +330,7 @@ function UI.CreateWindow(title)
 	end)
 
 	--==================================================
-	-- FUNÇÕES DOS COMPONENTES
-	--==================================================
-	-- Declaradas antes do CreateTab para que as Tabs
-	-- possam criar seus próprios métodos.
+	-- COMPONENT FUNCTIONS
 	--==================================================
 
 	local AddButton
@@ -291,6 +358,8 @@ function UI.CreateWindow(title)
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 
+		Btn:SetAttribute("ThemeRole", "Button")
+
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
 		Corner.Parent = Btn
@@ -299,6 +368,8 @@ function UI.CreateWindow(title)
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
 		Stroke.Parent = Btn
+
+		Stroke:SetAttribute("ThemeRole", "Border")
 
 		Btn.MouseEnter:Connect(function()
 			Btn.BackgroundColor3 = Theme.ButtonHover
@@ -335,6 +406,8 @@ function UI.CreateWindow(title)
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.Parent = Frame
 
+		Label:SetAttribute("ThemeRole", "Text")
+
 		local state = default or false
 
 		local Toggle = Instance.new("TextButton")
@@ -346,6 +419,11 @@ function UI.CreateWindow(title)
 		Toggle.Text = ""
 		Toggle.AutoButtonColor = false
 		Toggle.Parent = Frame
+
+		Toggle:SetAttribute(
+			"ThemeRole",
+			state and "ToggleOn" or "ToggleOff"
+		)
 
 		local ToggleCorner = Instance.new("UICorner")
 		ToggleCorner.CornerRadius = UDim.new(1, 0)
@@ -377,6 +455,11 @@ function UI.CreateWindow(title)
 			local goalColor = state
 				and Theme.ToggleOn
 				or Theme.ToggleOff
+
+			Toggle:SetAttribute(
+				"ThemeRole",
+				state and "ToggleOn" or "ToggleOff"
+			)
 
 			TweenService:Create(
 				Circle,
@@ -424,6 +507,8 @@ function UI.CreateWindow(title)
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.Parent = Frame
 
+		Label:SetAttribute("ThemeRole", "Text")
+
 		local Bar = Instance.new("Frame")
 
 		Bar.Size = UDim2.new(1, 0, 0, 8)
@@ -448,6 +533,8 @@ function UI.CreateWindow(title)
 		Fill.BackgroundColor3 = Theme.Accent
 		Fill.BorderSizePixel = 0
 		Fill.Parent = Bar
+
+		Fill:SetAttribute("ThemeRole", "Accent")
 
 		local FillCorner = Instance.new("UICorner")
 		FillCorner.CornerRadius = UDim.new(1, 0)
@@ -553,6 +640,8 @@ function UI.CreateWindow(title)
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.Parent = page
 
+		Label:SetAttribute("ThemeRole", "Text")
+
 		return Label
 	end
 
@@ -560,7 +649,7 @@ function UI.CreateWindow(title)
 	-- PARAGRAPH
 	--==================================================
 
-	function AddParagraph(page, title, text)
+	function AddParagraph(page, paragraphTitle, text)
 		local Box = Instance.new("Frame")
 
 		Box.Size = UDim2.new(1, 0, 0, 0)
@@ -568,6 +657,8 @@ function UI.CreateWindow(title)
 		Box.BackgroundColor3 = Theme.Button
 		Box.BorderSizePixel = 0
 		Box.Parent = page
+
+		Box:SetAttribute("ThemeRole", "Button")
 
 		local BoxCorner = Instance.new("UICorner")
 		BoxCorner.CornerRadius = UDim.new(0, 6)
@@ -577,6 +668,8 @@ function UI.CreateWindow(title)
 		BoxStroke.Color = Theme.Border
 		BoxStroke.Thickness = 1
 		BoxStroke.Parent = Box
+
+		BoxStroke:SetAttribute("ThemeRole", "Border")
 
 		local Padding = Instance.new("UIPadding")
 
@@ -595,12 +688,14 @@ function UI.CreateWindow(title)
 
 		TitleLabel.Size = UDim2.new(1, 0, 0, 18)
 		TitleLabel.BackgroundTransparency = 1
-		TitleLabel.Text = title
+		TitleLabel.Text = paragraphTitle
 		TitleLabel.TextColor3 = Theme.Text
 		TitleLabel.TextSize = 13
 		TitleLabel.Font = Enum.Font.GothamMedium
 		TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 		TitleLabel.Parent = Box
+
+		TitleLabel:SetAttribute("ThemeRole", "Text")
 
 		local TextLabel = Instance.new("TextLabel")
 
@@ -615,6 +710,8 @@ function UI.CreateWindow(title)
 		TextLabel.TextYAlignment = Enum.TextYAlignment.Top
 		TextLabel.TextWrapped = true
 		TextLabel.Parent = Box
+
+		TextLabel:SetAttribute("ThemeRole", "TextDark")
 
 		return Box
 	end
@@ -643,6 +740,8 @@ function UI.CreateWindow(title)
 		Btn.AutoButtonColor = false
 		Btn.Parent = Frame
 
+		Btn:SetAttribute("ThemeRole", "Button")
+
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
 		Corner.Parent = Btn
@@ -651,6 +750,8 @@ function UI.CreateWindow(title)
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
 		Stroke.Parent = Btn
+
+		Stroke:SetAttribute("ThemeRole", "Border")
 
 		local open = false
 
@@ -663,6 +764,8 @@ function UI.CreateWindow(title)
 		List.ZIndex = 50
 		List.Parent = ScreenGui
 
+		List:SetAttribute("ThemeRole", "TitleBar")
+
 		local ListCorner = Instance.new("UICorner")
 		ListCorner.CornerRadius = UDim.new(0, 6)
 		ListCorner.Parent = List
@@ -671,6 +774,8 @@ function UI.CreateWindow(title)
 		ListStroke.Color = Theme.Border
 		ListStroke.Thickness = 1
 		ListStroke.Parent = List
+
+		ListStroke:SetAttribute("ThemeRole", "Border")
 
 		for i, opt in ipairs(options) do
 			local OptBtn = Instance.new("TextButton")
@@ -685,6 +790,8 @@ function UI.CreateWindow(title)
 			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
 			OptBtn.ZIndex = 51
 			OptBtn.Parent = List
+
+			OptBtn:SetAttribute("ThemeRole", "Text")
 
 			OptBtn.MouseButton1Click:Connect(function()
 				Btn.Text = "  " .. text .. ": " .. opt
@@ -745,6 +852,8 @@ function UI.CreateWindow(title)
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 
+		Btn:SetAttribute("ThemeRole", "Button")
+
 		local Corner = Instance.new("UICorner")
 		Corner.CornerRadius = UDim.new(0, 6)
 		Corner.Parent = Btn
@@ -753,6 +862,8 @@ function UI.CreateWindow(title)
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
 		Stroke.Parent = Btn
+
+		Stroke:SetAttribute("ThemeRole", "Border")
 
 		local onCooldown = false
 
@@ -806,46 +917,53 @@ function UI.CreateWindow(title)
 		TabBtn.AutoButtonColor = false
 		TabBtn.Parent = TabFrame
 
+		TabBtn:SetAttribute("ThemeRole", "TabBackground")
+
 		local TabBtnCorner = Instance.new("UICorner")
 		TabBtnCorner.CornerRadius = UDim.new(0, 6)
 		TabBtnCorner.Parent = TabBtn
 
 		local Page = Instance.new("ScrollingFrame")
 
-Page.Size = UDim2.new(1, 0, 1, 0)
-Page.BackgroundTransparency = 1
-Page.BorderSizePixel = 0
-Page.ScrollBarThickness = 3
-Page.ScrollBarImageColor3 = Theme.Border
-Page.ScrollingDirection = Enum.ScrollingDirection.Y
-Page.CanvasSize = UDim2.new(0, 0, 0, 0)
-Page.Visible = false
-Page.Parent = Content
+		Page.Size = UDim2.new(1, 0, 1, 0)
+		Page.BackgroundTransparency = 1
+		Page.BorderSizePixel = 0
+		Page.ScrollBarThickness = 3
+		Page.ScrollBarImageColor3 = Theme.Border
+		Page.ScrollingDirection = Enum.ScrollingDirection.Y
+		Page.CanvasSize = UDim2.new(0, 0, 0, 0)
+		Page.Visible = false
+		Page.Parent = Content
 
-local Layout = Instance.new("UIListLayout")
-Layout.Padding = UDim.new(0, 8)
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Parent = Page
+		Page:SetAttribute("ThemeRole", "Background")
 
-local Padding = Instance.new("UIPadding")
-Padding.PaddingTop = UDim.new(0, 12)
-Padding.PaddingLeft = UDim.new(0, 12)
-Padding.PaddingRight = UDim.new(0, 12)
-Padding.PaddingBottom = UDim.new(0, 12)
-Padding.Parent = Page
+		local Layout = Instance.new("UIListLayout")
 
-Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-	Page.CanvasSize = UDim2.new(
-		0,
-		0,
-		0,
-		Layout.AbsoluteContentSize.Y + 24
-	)
-end)
+		Layout.Padding = UDim.new(0, 8)
+		Layout.SortOrder = Enum.SortOrder.LayoutOrder
+		Layout.Parent = Page
 
-		--==============================================
-		-- OBJETO DA TAB
-		--==============================================
+		local Padding = Instance.new("UIPadding")
+
+		Padding.PaddingTop = UDim.new(0, 12)
+		Padding.PaddingLeft = UDim.new(0, 12)
+		Padding.PaddingRight = UDim.new(0, 12)
+		Padding.PaddingBottom = UDim.new(0, 12)
+
+		Padding.Parent = Page
+
+		Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			Page.CanvasSize = UDim2.new(
+				0,
+				0,
+				0,
+				Layout.AbsoluteContentSize.Y + 24
+			)
+		end)
+
+		--==================================================
+		-- TAB OBJECT
+		--==================================================
 
 		local Tab = {}
 
@@ -868,8 +986,8 @@ end)
 			return AddTextLabel(Page, text)
 		end
 
-		Tab.AddParagraph = function(title, text)
-			return AddParagraph(Page, title, text)
+		Tab.AddParagraph = function(paragraphTitle, text)
+			return AddParagraph(Page, paragraphTitle, text)
 		end
 
 		Tab.AddDropdown = function(text, options, callback)
@@ -880,20 +998,32 @@ end)
 			return AddCooldownButton(Page, text, cooldown, callback)
 		end
 
-		--==============================================
-		-- TROCA DE TAB
-		--==============================================
+		--==================================================
+		-- TAB SWITCH
+		--==================================================
 
 		TabBtn.MouseButton1Click:Connect(function()
 			if CurrentTab then
 				CurrentTab.Page.Visible = false
+
 				CurrentTab.Button.BackgroundColor3 = Theme.TabBackground
 				CurrentTab.Button.TextColor3 = Theme.TextDark
+
+				CurrentTab.Button:SetAttribute(
+					"ThemeRole",
+					"TabBackground"
+				)
 			end
 
 			Page.Visible = true
+
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn.TextColor3 = Theme.Text
+
+			TabBtn:SetAttribute(
+				"ThemeRole",
+				"TabSelected"
+			)
 
 			CurrentTab = Tab
 		end)
@@ -911,8 +1041,14 @@ end)
 
 		if #Tabs == 1 then
 			Page.Visible = true
+
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn.TextColor3 = Theme.Text
+
+			TabBtn:SetAttribute(
+				"ThemeRole",
+				"TabSelected"
+			)
 
 			CurrentTab = Tab
 		end
@@ -921,7 +1057,7 @@ end)
 	end
 
 	--==================================================
-	-- BOLINHA DE MINIMIZAR
+	-- MINIMIZE BALL
 	--==================================================
 
 	local function AddMinimizeButton(config)
@@ -944,6 +1080,8 @@ end)
 		Ball.BorderSizePixel = 0
 		Ball.Parent = ScreenGui
 
+		Ball:SetAttribute("ThemeRole", "TitleBar")
+
 		local BallCorner = Instance.new("UICorner")
 		BallCorner.CornerRadius = UDim.new(corner, 0)
 		BallCorner.Parent = Ball
@@ -953,21 +1091,26 @@ end)
 		BallStroke.Thickness = 1.2
 		BallStroke.Parent = Ball
 
+		BallStroke:SetAttribute("ThemeRole", "Border")
+
 		local Icon = Instance.new("ImageLabel")
 
 		Icon.Size = UDim2.new(0, imageSize, 0, imageSize)
+
 		Icon.Position = UDim2.new(
 			0.5,
 			-imageSize / 2,
 			0.5,
 			-imageSize / 2
 		)
+
 		Icon.BackgroundTransparency = 1
 		Icon.Image = imageId
 		Icon.ImageColor3 = Theme.Text
 		Icon.Parent = Ball
 
-		-- Drag da bolinha
+		Icon:SetAttribute("ThemeRole", "Text")
+
 		local ballDragging = false
 		local ballStart
 		local ballPos
@@ -1012,29 +1155,231 @@ end)
 	end
 
 	--==================================================
-	-- THEME
+	-- APPLY THEME
 	--==================================================
 
-	local function SetTheme(newTheme)
-		for k, v in pairs(newTheme) do
-			if Theme[k] then
-				Theme[k] = v
+	local function ApplyTheme()
+		for _, object in ipairs(ScreenGui:GetDescendants()) do
+			local role = object:GetAttribute("ThemeRole")
+
+			if role then
+				if role == "Background" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.Background
+					end
+
+				elseif role == "TitleBar" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.TitleBar
+					end
+
+				elseif role == "TabBackground" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.TabBackground
+					end
+
+				elseif role == "TabSelected" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.TabSelected
+					end
+
+				elseif role == "Button" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.Button
+					end
+
+				elseif role == "ButtonHover" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.ButtonHover
+					end
+
+				elseif role == "Text" then
+					if object:IsA("TextLabel")
+						or object:IsA("TextButton")
+						or object:IsA("TextBox") then
+
+						object.TextColor3 = Theme.Text
+
+					elseif object:IsA("ImageLabel")
+						or object:IsA("ImageButton") then
+
+						object.ImageColor3 = Theme.Text
+					end
+
+				elseif role == "TextDark" then
+					if object:IsA("TextLabel")
+						or object:IsA("TextButton")
+						or object:IsA("TextBox") then
+
+						object.TextColor3 = Theme.TextDark
+					end
+
+				elseif role == "Accent" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.Accent
+					end
+
+				elseif role == "ToggleOn" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.ToggleOn
+					end
+
+				elseif role == "ToggleOff" then
+					if object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.ToggleOff
+					end
+
+				elseif role == "Border" then
+					if object:IsA("UIStroke") then
+						object.Color = Theme.Border
+
+					elseif object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.Border
+					end
+				end
+			end
+		end
+	end
+
+	--==================================================
+	-- SET THEME
+	--==================================================
+
+	local function SetTheme(theme)
+		local selectedTheme
+
+		if typeof(theme) == "string" then
+			selectedTheme = Themes[theme]
+
+			if not selectedTheme then
+				warn("UI: Tema '" .. theme .. "' não existe.")
+				return false
+			end
+
+		elseif typeof(theme) == "table" then
+			selectedTheme = theme
+		else
+			warn("UI: SetTheme recebeu um valor inválido.")
+			return false
+		end
+
+		for key, value in pairs(selectedTheme) do
+			if Theme[key] ~= nil then
+				Theme[key] = value
 			end
 		end
 
-		Main.BackgroundColor3 = Theme.Background
-		MainStroke.Color = Theme.Border
+		ApplyTheme()
 
-		TitleBar.BackgroundColor3 = Theme.TitleBar
-		TitleBottom.BackgroundColor3 = Theme.TitleBar
-
-		Title.TextColor3 = Theme.Text
-
-		TabFrame.BackgroundColor3 = Theme.TabBackground
-		Content.BackgroundColor3 = Theme.Background
-
-		Resize.BackgroundColor3 = Theme.Border
+		return true
 	end
+
+	--==================================================
+	-- REGISTER THEME
+	--==================================================
+
+	local function RegisterTheme(name, colors)
+		if not name then
+			return nil
+		end
+
+		if type(colors) ~= "table" then
+			warn("UI: cores do tema precisam ser uma tabela.")
+			return nil
+		end
+
+		local newTheme = CopyTheme(Themes.Default)
+
+		for key, value in pairs(colors) do
+			if newTheme[key] ~= nil then
+				newTheme[key] = value
+			end
+		end
+
+		Themes[name] = newTheme
+
+		return newTheme
+	end
+
+	--==================================================
+	-- GET THEME
+	--==================================================
+
+	local function GetTheme(name)
+		if name then
+			return Themes[name]
+		end
+
+		return Theme
+	end
+
+	--==================================================
+	-- GET ALL THEMES
+	--==================================================
+
+	local function GetThemes()
+		local result = {}
+
+		for name in pairs(Themes) do
+			table.insert(result, name)
+		end
+
+		table.sort(result)
+
+		return result
+	end
+
+	--==================================================
+	-- CREATE SOME DEFAULT THEMES
+	--==================================================
+
+	RegisterTheme("Ocean", {
+		Background = Color3.fromRGB(15, 22, 30),
+		TitleBar = Color3.fromRGB(18, 30, 42),
+		TabBackground = Color3.fromRGB(12, 20, 28),
+		TabSelected = Color3.fromRGB(25, 55, 75),
+		Button = Color3.fromRGB(22, 42, 55),
+		ButtonHover = Color3.fromRGB(30, 55, 70),
+		Text = Color3.fromRGB(230, 245, 255),
+		TextDark = Color3.fromRGB(135, 165, 180),
+		Accent = Color3.fromRGB(0, 180, 220),
+		ToggleOn = Color3.fromRGB(0, 200, 150),
+		ToggleOff = Color3.fromRGB(45, 60, 70),
+		Border = Color3.fromRGB(35, 75, 90),
+		Cooldown = Color3.fromRGB(180, 55, 55)
+	})
+
+	RegisterTheme("Purple", {
+		Background = Color3.fromRGB(25, 20, 32),
+		TitleBar = Color3.fromRGB(34, 26, 45),
+		TabBackground = Color3.fromRGB(20, 16, 27),
+		TabSelected = Color3.fromRGB(65, 42, 85),
+		Button = Color3.fromRGB(45, 30, 58),
+		ButtonHover = Color3.fromRGB(58, 38, 75),
+		Text = Color3.fromRGB(245, 235, 255),
+		TextDark = Color3.fromRGB(170, 145, 185),
+		Accent = Color3.fromRGB(170, 80, 255),
+		ToggleOn = Color3.fromRGB(170, 80, 230),
+		ToggleOff = Color3.fromRGB(65, 50, 75),
+		Border = Color3.fromRGB(85, 55, 105),
+		Cooldown = Color3.fromRGB(190, 55, 75)
+	})
+
+	RegisterTheme("Red", {
+		Background = Color3.fromRGB(30, 18, 20),
+		TitleBar = Color3.fromRGB(42, 22, 25),
+		TabBackground = Color3.fromRGB(24, 15, 17),
+		TabSelected = Color3.fromRGB(80, 35, 40),
+		Button = Color3.fromRGB(55, 28, 32),
+		ButtonHover = Color3.fromRGB(72, 35, 40),
+		Text = Color3.fromRGB(255, 240, 240),
+		TextDark = Color3.fromRGB(185, 145, 150),
+		Accent = Color3.fromRGB(240, 65, 75),
+		ToggleOn = Color3.fromRGB(230, 65, 90),
+		ToggleOff = Color3.fromRGB(70, 45, 48),
+		Border = Color3.fromRGB(105, 50, 55),
+		Cooldown = Color3.fromRGB(150, 40, 40)
+	})
 
 	--==================================================
 	-- API DA WINDOW
@@ -1045,9 +1390,15 @@ end)
 
 		AddMinimizeButton = AddMinimizeButton,
 
+		-- Theme
+		CreateTheme = CreateTheme,
+		RegisterTheme = RegisterTheme,
 		SetTheme = SetTheme,
+		GetTheme = GetTheme,
+		GetThemes = GetThemes,
 
 		Theme = Theme,
+		Themes = Themes,
 
 		Main = Main
 	}
