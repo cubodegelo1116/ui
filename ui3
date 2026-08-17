@@ -100,6 +100,8 @@ function UI.CreateWindow(title, subtitle)
 		Error = Color3.fromRGB(220, 50, 50),
 		Success = Color3.fromRGB(50, 200, 100),
 		Warning = Color3.fromRGB(255, 200, 50),
+		TabBorder = Color3.fromRGB(40, 65, 75), -- Nova cor para borda das tabs
+		DropdownHover = Color3.fromRGB(35, 55, 65), -- Nova cor para hover do dropdown
 	}
 
 	local Themes = {}
@@ -890,22 +892,22 @@ function UI.CreateWindow(title, subtitle)
 		local open = false
 
 		-- Dropdown list
-local List = Instance.new("ScrollingFrame")
-List.Name = "DropdownList"
-List.BackgroundColor3 = Theme.TitleBar
-List.BorderSizePixel = 0
-List.Visible = false
-List.ZIndex = 50
-List.Parent = ScreenGui
+		local List = Instance.new("ScrollingFrame")
+		List.Name = "DropdownList"
+		List.BackgroundColor3 = Theme.TitleBar
+		List.BorderSizePixel = 0
+		List.Visible = false
+		List.ZIndex = 50
+		List.Parent = ScreenGui
 
-List.ScrollBarThickness = 4
-List.ScrollBarImageColor3 = Theme.Border
-List.ScrollingDirection = Enum.ScrollingDirection.Y
-List.CanvasSize = UDim2.new(0, 0, 0, 0)
-List.AutomaticCanvasSize = Enum.AutomaticSize.Y
-List.ClipsDescendants = true
+		List.ScrollBarThickness = 4
+		List.ScrollBarImageColor3 = Theme.Border
+		List.ScrollingDirection = Enum.ScrollingDirection.Y
+		List.CanvasSize = UDim2.new(0, 0, 0, 0)
+		List.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		List.ClipsDescendants = true
 
-List:SetAttribute("ThemeRole", "TitleBar")
+		List:SetAttribute("ThemeRole", "TitleBar")
 
 		local ListCorner = Instance.new("UICorner")
 		ListCorner.CornerRadius = UDim.new(0, 6)
@@ -917,15 +919,15 @@ List:SetAttribute("ThemeRole", "TitleBar")
 		ListStroke.Parent = List
 		ListStroke:SetAttribute("ThemeRole", "Border")
 
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 0)
-ListLayout.Parent = List
+		local ListLayout = Instance.new("UIListLayout")
+		ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		ListLayout.Padding = UDim.new(0, 0)
+		ListLayout.Parent = List
 
-local ListPadding = Instance.new("UIPadding")
-ListPadding.PaddingTop = UDim.new(0, 2)
-ListPadding.PaddingBottom = UDim.new(0, 2)
-ListPadding.Parent = List
+		local ListPadding = Instance.new("UIPadding")
+		ListPadding.PaddingTop = UDim.new(0, 2)
+		ListPadding.PaddingBottom = UDim.new(0, 2)
+		ListPadding.Parent = List
 
 		-- Update button text
 		local function UpdateButtonText()
@@ -959,9 +961,11 @@ ListPadding.Parent = List
 				OptBtn.ZIndex = 51
 				OptBtn.LayoutOrder = i
 				OptBtn.Parent = List
+				OptBtn:SetAttribute("ThemeRole", "Text")
 
 				OptBtn.MouseEnter:Connect(function()
-					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundTransparency = 0}):Play()
+					-- Usa a cor de hover do dropdown quando o mouse entra
+					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.DropdownHover, BackgroundTransparency = 0}):Play()
 				end)
 
 				OptBtn.MouseLeave:Connect(function()
@@ -981,16 +985,16 @@ ListPadding.Parent = List
 			end
 
 			local listHeight = math.min(
-	#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
-	DROPDOWN_MAX_HEIGHT
-)
+				#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
+				DROPDOWN_MAX_HEIGHT
+			)
 
-List.Size = UDim2.new(
-	0,
-	Btn.AbsoluteSize.X,
-	0,
-	listHeight
-)
+			List.Size = UDim2.new(
+				0,
+				Btn.AbsoluteSize.X,
+				0,
+				listHeight
+			)
 		end
 
 		-- Initialize
@@ -1007,16 +1011,16 @@ List.Size = UDim2.new(
 
 				List.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
 				local listHeight = math.min(
-	#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
-	DROPDOWN_MAX_HEIGHT
-)
+					#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
+					DROPDOWN_MAX_HEIGHT
+				)
 
-List.Size = UDim2.new(
-	0,
-	absSize.X,
-	0,
-	listHeight
-)
+				List.Size = UDim2.new(
+					0,
+					absSize.X,
+					0,
+					listHeight
+				)
 				List.Visible = true
 			else
 				List.Visible = false
@@ -1250,6 +1254,13 @@ List.Size = UDim2.new(
 		local TabBtnCorner = Instance.new("UICorner")
 		TabBtnCorner.CornerRadius = UDim.new(0, 6)
 		TabBtnCorner.Parent = TabBtn
+
+		-- Adiciona borda à tab
+		local TabStroke = Instance.new("UIStroke")
+		TabStroke.Color = Theme.TabBorder
+		TabStroke.Thickness = 1
+		TabStroke.Parent = TabBtn
+		TabStroke:SetAttribute("ThemeRole", "TabBorder")
 
 		local Page = Instance.new("ScrollingFrame")
 		Page.Name = name .. "_Page"
@@ -1505,6 +1516,24 @@ List.Size = UDim2.new(
 					elseif object:IsA("GuiObject") then
 						object.BackgroundColor3 = Theme.Border
 					end
+
+				elseif role == "TabBorder" then
+					if object:IsA("UIStroke") then
+						object.Color = Theme.TabBorder
+					elseif object:IsA("GuiObject") then
+						object.BackgroundColor3 = Theme.TabBorder
+					end
+				end
+			end
+		end
+		
+		-- Atualiza a cor do texto das tabs mesmo quando não estão selecionadas
+		for _, tab in ipairs(Tabs) do
+			if tab.Button then
+				if tab == CurrentTab then
+					tab.Button.TextColor3 = Theme.Text
+				else
+					tab.Button.TextColor3 = Theme.TextDark
 				end
 			end
 		end
@@ -1527,7 +1556,9 @@ List.Size = UDim2.new(
 		ToggleOn = Color3.fromRGB(0, 200, 150),
 		ToggleOff = Color3.fromRGB(45, 60, 70),
 		Border = Color3.fromRGB(35, 75, 90),
-		Cooldown = Color3.fromRGB(180, 55, 55)
+		Cooldown = Color3.fromRGB(180, 55, 55),
+		TabBorder = Color3.fromRGB(35, 75, 90),
+		DropdownHover = Color3.fromRGB(30, 55, 70),
 	})
 
 	RegisterTheme("Purple", {
@@ -1543,7 +1574,9 @@ List.Size = UDim2.new(
 		ToggleOn = Color3.fromRGB(170, 80, 230),
 		ToggleOff = Color3.fromRGB(65, 50, 75),
 		Border = Color3.fromRGB(85, 55, 105),
-		Cooldown = Color3.fromRGB(190, 55, 75)
+		Cooldown = Color3.fromRGB(190, 55, 75),
+		TabBorder = Color3.fromRGB(85, 55, 105),
+		DropdownHover = Color3.fromRGB(58, 38, 75),
 	})
 
 	RegisterTheme("Red", {
@@ -1559,7 +1592,9 @@ List.Size = UDim2.new(
 		ToggleOn = Color3.fromRGB(230, 65, 90),
 		ToggleOff = Color3.fromRGB(70, 45, 48),
 		Border = Color3.fromRGB(105, 50, 55),
-		Cooldown = Color3.fromRGB(150, 40, 40)
+		Cooldown = Color3.fromRGB(150, 40, 40),
+		TabBorder = Color3.fromRGB(105, 50, 55),
+		DropdownHover = Color3.fromRGB(72, 35, 40),
 	})
 
 	RegisterTheme("Neon", {
@@ -1575,7 +1610,9 @@ List.Size = UDim2.new(
 		ToggleOn = Color3.fromRGB(0, 255, 200),
 		ToggleOff = Color3.fromRGB(50, 50, 80),
 		Border = Color3.fromRGB(100, 0, 200),
-		Cooldown = Color3.fromRGB(255, 0, 0)
+		Cooldown = Color3.fromRGB(255, 0, 0),
+		TabBorder = Color3.fromRGB(100, 0, 200),
+		DropdownHover = Color3.fromRGB(30, 30, 45),
 	})
 
 	-- ════════════════════════════════════════════════════════════
