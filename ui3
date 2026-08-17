@@ -64,15 +64,50 @@ function UI.CreateWindow(title)
 	TitleBottom.Parent = TitleBar
 
 	local Title = Instance.new("TextLabel")
-	Title.Size = UDim2.new(1, -80, 1, 0)
-	Title.Position = UDim2.new(0, 14, 0, 0)
-	Title.BackgroundTransparency = 1
-	Title.Text = title or "Cartola Hub"
-	Title.TextColor3 = Theme.Text
-	Title.TextSize = 15
-	Title.Font = Enum.Font.GothamMedium
-	Title.TextXAlignment = Enum.TextXAlignment.Left
-	Title.Parent = TitleBar
+Title.Size = UDim2.new(0, 0, 1, 0)
+Title.AutomaticSize = Enum.AutomaticSize.X
+Title.Position = UDim2.new(0, 14, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = title or ""
+Title.TextColor3 = Theme.Text
+Title.TextSize = 15
+Title.Font = Enum.Font.GothamMedium
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 0, 1, 0)
+Subtitle.AutomaticSize = Enum.AutomaticSize.X
+Subtitle.Position = UDim2.new(0, 0, 0, 0)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = subtitle or ""
+Subtitle.TextColor3 = Theme.TextDark
+Subtitle.TextSize = 12
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.Parent = TitleBar
+
+local TitleLayout = Instance.new("UIListLayout")
+TitleLayout.FillDirection = Enum.FillDirection.Horizontal
+TitleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+TitleLayout.Padding = UDim.new(0, 6)
+TitleLayout.Parent = TitleBar
+
+TitleLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    Title.Position = UDim2.new(
+        0,
+        14,
+        0,
+        0
+    )
+    
+    Subtitle.Position = UDim2.new(
+        0,
+        14 + Title.AbsoluteSize.X + 6,
+        0,
+        0
+    )
+end)
 
 	-- Minimize
 	local Minimize = Instance.new("TextButton")
