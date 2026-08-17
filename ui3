@@ -2,68 +2,110 @@ local UI = {}
 
 function UI.CreateWindow(title)
 	local UIS = game:GetService("UserInputService")
+	local TweenService = game:GetService("TweenService")
 
-	-- Tema (pode mudar)
 	local Theme = {
-		Background = Color3.fromRGB(30, 30, 30),
-		TitleBar = Color3.fromRGB(40, 40, 40),
-		TabBackground = Color3.fromRGB(25, 25, 25),
-		TabSelected = Color3.fromRGB(45, 45, 45),
-		Button = Color3.fromRGB(50, 50, 50),
-		Text = Color3.fromRGB(255, 255, 255),
-		TextDark = Color3.fromRGB(200, 200, 200),
-		Accent = Color3.fromRGB(0, 140, 255),
-		ToggleOn = Color3.fromRGB(0, 170, 0),
-		ToggleOff = Color3.fromRGB(70, 70, 70),
-		Border = Color3.fromRGB(60, 60, 60),
-		Cooldown = Color3.fromRGB(70, 40, 40),
+		Background = Color3.fromRGB(18, 28, 32),
+		TitleBar = Color3.fromRGB(22, 35, 40),
+		TabBackground = Color3.fromRGB(15, 24, 28),
+		TabSelected = Color3.fromRGB(30, 50, 58),
+		Button = Color3.fromRGB(28, 45, 52),
+		ButtonHover = Color3.fromRGB(35, 55, 65),
+		Text = Color3.fromRGB(230, 240, 245),
+		TextDark = Color3.fromRGB(140, 160, 170),
+		Accent = Color3.fromRGB(0, 180, 200),
+		ToggleOn = Color3.fromRGB(0, 190, 140),
+		ToggleOff = Color3.fromRGB(45, 60, 68),
+		Border = Color3.fromRGB(40, 65, 75),
+		Cooldown = Color3.fromRGB(160, 50, 50),
 	}
 
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "UI"
 	ScreenGui.ResetOnSpawn = false
+	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
 	local Main = Instance.new("Frame")
-	Main.Size = UDim2.new(0, 500, 0, 350)
-	Main.Position = UDim2.new(0.5, -250, 0.5, -175)
+	Main.Size = UDim2.new(0, 520, 0, 380)
+	Main.Position = UDim2.new(0.5, -260, 0.5, -190)
 	Main.BackgroundColor3 = Theme.Background
 	Main.BorderSizePixel = 0
 	Main.Active = true
+	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
+
+	local MainCorner = Instance.new("UICorner")
+	MainCorner.CornerRadius = UDim.new(0, 10)
+	MainCorner.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Theme.Border
-	MainStroke.Thickness = 1
+	MainStroke.Thickness = 1.2
 	MainStroke.Parent = Main
 
 	-- Title Bar
 	local TitleBar = Instance.new("Frame")
-	TitleBar.Size = UDim2.new(1, 0, 0, 30)
+	TitleBar.Size = UDim2.new(1, 0, 0, 36)
 	TitleBar.BackgroundColor3 = Theme.TitleBar
 	TitleBar.BorderSizePixel = 0
 	TitleBar.Parent = Main
 
+	local TitleCorner = Instance.new("UICorner")
+	TitleCorner.CornerRadius = UDim.new(0, 10)
+	TitleCorner.Parent = TitleBar
+
+	-- corrige canto de baixo da titlebar
+	local TitleFix = Instance.new("Frame")
+	TitleFix.Size = UDim2.new(1, 0, 0, 12)
+	TitleFix.Position = UDim2.new(0, 0, 1, -12)
+	TitleFix.BackgroundColor3 = Theme.TitleBar
+	TitleFix.BorderSizePixel = 0
+	TitleFix.Parent = TitleBar
+
 	local Title = Instance.new("TextLabel")
-	Title.Size = UDim2.new(1, -40, 1, 0)
-	Title.Position = UDim2.new(0, 10, 0, 0)
+	Title.Size = UDim2.new(1, -80, 1, 0)
+	Title.Position = UDim2.new(0, 14, 0, 0)
 	Title.BackgroundTransparency = 1
-	Title.Text = title
+	Title.Text = title or "Cartola Hub"
 	Title.TextColor3 = Theme.Text
-	Title.TextSize = 14
-	Title.Font = Enum.Font.SourceSansBold
+	Title.TextSize = 15
+	Title.Font = Enum.Font.GothamMedium
 	Title.TextXAlignment = Enum.TextXAlignment.Left
 	Title.Parent = TitleBar
 
+	-- Minimize
+	local Minimize = Instance.new("TextButton")
+	Minimize.Size = UDim2.new(0, 32, 0, 32)
+	Minimize.Position = UDim2.new(1, -68, 0, 2)
+	Minimize.BackgroundTransparency = 1
+	Minimize.Text = "−"
+	Minimize.TextColor3 = Theme.TextDark
+	Minimize.TextSize = 20
+	Minimize.Font = Enum.Font.GothamBold
+	Minimize.Parent = TitleBar
+
+	local minimized = false
+	local oldSize = Main.Size
+	Minimize.MouseButton1Click:Connect(function()
+		minimized = not minimized
+		if minimized then
+			oldSize = Main.Size
+			Main.Size = UDim2.new(0, Main.Size.X.Offset, 0, 36)
+		else
+			Main.Size = oldSize
+		end
+	end)
+
+	-- Close
 	local Close = Instance.new("TextButton")
-	Close.Size = UDim2.new(0, 30, 0, 30)
-	Close.Position = UDim2.new(1, -30, 0, 0)
-	Close.BackgroundColor3 = Theme.TitleBar
-	Close.BorderSizePixel = 0
-	Close.Text = "X"
-	Close.TextColor3 = Theme.Text
-	Close.TextSize = 14
-	Close.Font = Enum.Font.SourceSansBold
+	Close.Size = UDim2.new(0, 32, 0, 32)
+	Close.Position = UDim2.new(1, -34, 0, 2)
+	Close.BackgroundTransparency = 1
+	Close.Text = "×"
+	Close.TextColor3 = Theme.TextDark
+	Close.TextSize = 20
+	Close.Font = Enum.Font.GothamBold
 	Close.Parent = TitleBar
 
 	Close.MouseButton1Click:Connect(function()
@@ -79,13 +121,11 @@ function UI.CreateWindow(title)
 			startPos = Main.Position
 		end
 	end)
-
 	TitleBar.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = false
 		end
 	end)
-
 	UIS.InputChanged:Connect(function(input)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - dragStart
@@ -95,12 +135,17 @@ function UI.CreateWindow(title)
 
 	-- Resize
 	local Resize = Instance.new("TextButton")
-	Resize.Size = UDim2.new(0, 16, 0, 16)
-	Resize.Position = UDim2.new(1, -16, 1, -16)
+	Resize.Size = UDim2.new(0, 14, 0, 14)
+	Resize.Position = UDim2.new(1, -14, 1, -14)
 	Resize.BackgroundColor3 = Theme.Border
 	Resize.BorderSizePixel = 0
 	Resize.Text = ""
+	Resize.AutoButtonColor = false
 	Resize.Parent = Main
+
+	local ResizeCorner = Instance.new("UICorner")
+	ResizeCorner.CornerRadius = UDim.new(0, 4)
+	ResizeCorner.Parent = Resize
 
 	local resizing, resizeStart, startSize
 	Resize.InputBegan:Connect(function(input)
@@ -110,33 +155,31 @@ function UI.CreateWindow(title)
 			startSize = Main.Size
 		end
 	end)
-
 	Resize.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			resizing = false
 		end
 	end)
-
 	UIS.InputChanged:Connect(function(input)
 		if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - resizeStart
-			local newX = math.clamp(startSize.X.Offset + delta.X, 300, 900)
-			local newY = math.clamp(startSize.Y.Offset + delta.Y, 200, 700)
+			local newX = math.clamp(startSize.X.Offset + delta.X, 380, 900)
+			local newY = math.clamp(startSize.Y.Offset + delta.Y, 250, 700)
 			Main.Size = UDim2.new(0, newX, 0, newY)
 		end
 	end)
 
-	-- Tabs
+	-- Tabs (esquerda)
 	local TabFrame = Instance.new("Frame")
-	TabFrame.Size = UDim2.new(0, 100, 1, -30)
-	TabFrame.Position = UDim2.new(0, 0, 0, 30)
+	TabFrame.Size = UDim2.new(0, 110, 1, -36)
+	TabFrame.Position = UDim2.new(0, 0, 0, 36)
 	TabFrame.BackgroundColor3 = Theme.TabBackground
 	TabFrame.BorderSizePixel = 0
 	TabFrame.Parent = Main
 
 	local Content = Instance.new("Frame")
-	Content.Size = UDim2.new(1, -100, 1, -30)
-	Content.Position = UDim2.new(0, 100, 0, 30)
+	Content.Size = UDim2.new(1, -110, 1, -36)
+	Content.Position = UDim2.new(0, 110, 0, 36)
 	Content.BackgroundColor3 = Theme.Background
 	Content.BorderSizePixel = 0
 	Content.Parent = Main
@@ -146,52 +189,64 @@ function UI.CreateWindow(title)
 
 	local function CreateTab(name)
 		local TabBtn = Instance.new("TextButton")
-		TabBtn.Size = UDim2.new(1, 0, 0, 30)
+		TabBtn.Size = UDim2.new(1, -10, 0, 32)
+		TabBtn.Position = UDim2.new(0, 5, 0, 0)
 		TabBtn.BackgroundColor3 = Theme.TabBackground
 		TabBtn.BorderSizePixel = 0
 		TabBtn.Text = name
 		TabBtn.TextColor3 = Theme.TextDark
 		TabBtn.TextSize = 13
-		TabBtn.Font = Enum.Font.SourceSans
+		TabBtn.Font = Enum.Font.Gotham
+		TabBtn.AutoButtonColor = false
 		TabBtn.Parent = TabFrame
+
+		local TabCorner = Instance.new("UICorner")
+		TabCorner.CornerRadius = UDim.new(0, 6)
+		TabCorner.Parent = TabBtn
 
 		local Page = Instance.new("ScrollingFrame")
 		Page.Size = UDim2.new(1, 0, 1, 0)
 		Page.BackgroundTransparency = 1
 		Page.BorderSizePixel = 0
-		Page.ScrollBarThickness = 4
+		Page.ScrollBarThickness = 3
+		Page.ScrollBarImageColor3 = Theme.Border
 		Page.Visible = false
 		Page.Parent = Content
 
 		local Layout = Instance.new("UIListLayout")
-		Layout.Padding = UDim.new(0, 6)
+		Layout.Padding = UDim.new(0, 8)
+		Layout.SortOrder = Enum.SortOrder.LayoutOrder
 		Layout.Parent = Page
 
 		local Padding = Instance.new("UIPadding")
-		Padding.PaddingTop = UDim.new(0, 8)
-		Padding.PaddingLeft = UDim.new(0, 8)
-		Padding.PaddingRight = UDim.new(0, 8)
+		Padding.PaddingTop = UDim.new(0, 12)
+		Padding.PaddingLeft = UDim.new(0, 12)
+		Padding.PaddingRight = UDim.new(0, 12)
+		Padding.PaddingBottom = UDim.new(0, 12)
 		Padding.Parent = Page
 
 		TabBtn.MouseButton1Click:Connect(function()
 			if CurrentTab then
 				CurrentTab.Page.Visible = false
 				CurrentTab.Btn.BackgroundColor3 = Theme.TabBackground
+				CurrentTab.Btn.TextColor3 = Theme.TextDark
 			end
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
+			TabBtn.TextColor3 = Theme.Text
 			CurrentTab = {Btn = TabBtn, Page = Page}
 		end)
 
 		table.insert(Tabs, {Btn = TabBtn, Page = Page})
 
 		for i, t in ipairs(Tabs) do
-			t.Btn.Position = UDim2.new(0, 0, 0, (i-1)*30)
+			t.Btn.Position = UDim2.new(0, 5, 0, 8 + (i-1)*38)
 		end
 
 		if #Tabs == 1 then
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
+			TabBtn.TextColor3 = Theme.Text
 			CurrentTab = {Btn = TabBtn, Page = Page}
 		end
 
@@ -200,19 +255,31 @@ function UI.CreateWindow(title)
 
 	local function AddButton(page, text, callback)
 		local Btn = Instance.new("TextButton")
-		Btn.Size = UDim2.new(1, 0, 0, 28)
+		Btn.Size = UDim2.new(1, 0, 0, 32)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
 		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
-		Btn.Font = Enum.Font.SourceSans
+		Btn.Font = Enum.Font.Gotham
+		Btn.AutoButtonColor = false
 		Btn.Parent = page
+
+		local Corner = Instance.new("UICorner")
+		Corner.CornerRadius = UDim.new(0, 6)
+		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
 		Stroke.Parent = Btn
+
+		Btn.MouseEnter:Connect(function()
+			Btn.BackgroundColor3 = Theme.ButtonHover
+		end)
+		Btn.MouseLeave:Connect(function()
+			Btn.BackgroundColor3 = Theme.Button
+		end)
 
 		Btn.MouseButton1Click:Connect(callback or function() end)
 		return Btn
@@ -220,37 +287,53 @@ function UI.CreateWindow(title)
 
 	local function AddToggle(page, text, default, callback)
 		local Frame = Instance.new("Frame")
-		Frame.Size = UDim2.new(1, 0, 0, 28)
+		Frame.Size = UDim2.new(1, 0, 0, 32)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
 		local Label = Instance.new("TextLabel")
-		Label.Size = UDim2.new(1, -50, 1, 0)
+		Label.Size = UDim2.new(1, -55, 1, 0)
 		Label.BackgroundTransparency = 1
 		Label.Text = text
 		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
-		Label.Font = Enum.Font.SourceSans
+		Label.Font = Enum.Font.Gotham
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.Parent = Frame
 
 		local Toggle = Instance.new("TextButton")
-		Toggle.Size = UDim2.new(0, 40, 0, 20)
-		Toggle.Position = UDim2.new(1, -40, 0.5, -10)
+		Toggle.Size = UDim2.new(0, 44, 0, 22)
+		Toggle.Position = UDim2.new(1, -44, 0.5, -11)
 		Toggle.BackgroundColor3 = default and Theme.ToggleOn or Theme.ToggleOff
 		Toggle.BorderSizePixel = 0
 		Toggle.Text = ""
+		Toggle.AutoButtonColor = false
 		Toggle.Parent = Frame
 
-		local Stroke = Instance.new("UIStroke")
-		Stroke.Color = Theme.Border
-		Stroke.Thickness = 1
-		Stroke.Parent = Toggle
+		local ToggleCorner = Instance.new("UICorner")
+		ToggleCorner.CornerRadius = UDim.new(1, 0)
+		ToggleCorner.Parent = Toggle
+
+		local Circle = Instance.new("Frame")
+		Circle.Size = UDim2.new(0, 16, 0, 16)
+		Circle.Position = default and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+		Circle.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+		Circle.BorderSizePixel = 0
+		Circle.Parent = Toggle
+
+		local CircleCorner = Instance.new("UICorner")
+		CircleCorner.CornerRadius = UDim.new(1, 0)
+		CircleCorner.Parent = Circle
 
 		local state = default or false
 		Toggle.MouseButton1Click:Connect(function()
 			state = not state
-			Toggle.BackgroundColor3 = state and Theme.ToggleOn or Theme.ToggleOff
+			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+			local goalColor = state and Theme.ToggleOn or Theme.ToggleOff
+
+			TweenService:Create(Circle, TweenInfo.new(0.15), {Position = goalPos}):Play()
+			TweenService:Create(Toggle, TweenInfo.new(0.15), {BackgroundColor3 = goalColor}):Play()
+
 			if callback then callback(state) end
 		end)
 		return Toggle
@@ -258,7 +341,7 @@ function UI.CreateWindow(title)
 
 	local function AddSlider(page, text, min, max, default, callback)
 		local Frame = Instance.new("Frame")
-		Frame.Size = UDim2.new(1, 0, 0, 40)
+		Frame.Size = UDim2.new(1, 0, 0, 46)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -268,27 +351,30 @@ function UI.CreateWindow(title)
 		Label.Text = text .. ": " .. tostring(default)
 		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
-		Label.Font = Enum.Font.SourceSans
+		Label.Font = Enum.Font.Gotham
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.Parent = Frame
 
 		local Bar = Instance.new("Frame")
-		Bar.Size = UDim2.new(1, 0, 0, 6)
-		Bar.Position = UDim2.new(0, 0, 0, 26)
-		Bar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		Bar.Size = UDim2.new(1, 0, 0, 8)
+		Bar.Position = UDim2.new(0, 0, 0, 28)
+		Bar.BackgroundColor3 = Color3.fromRGB(35, 50, 58)
 		Bar.BorderSizePixel = 0
 		Bar.Parent = Frame
 
-		local BarStroke = Instance.new("UIStroke")
-		BarStroke.Color = Theme.Border
-		BarStroke.Thickness = 1
-		BarStroke.Parent = Bar
+		local BarCorner = Instance.new("UICorner")
+		BarCorner.CornerRadius = UDim.new(1, 0)
+		BarCorner.Parent = Bar
 
 		local Fill = Instance.new("Frame")
 		Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
 		Fill.BackgroundColor3 = Theme.Accent
 		Fill.BorderSizePixel = 0
 		Fill.Parent = Bar
+
+		local FillCorner = Instance.new("UICorner")
+		FillCorner.CornerRadius = UDim.new(1, 0)
+		FillCorner.Parent = Fill
 
 		Bar.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -309,7 +395,7 @@ function UI.CreateWindow(title)
 		Label.Text = text
 		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
-		Label.Font = Enum.Font.SourceSans
+		Label.Font = Enum.Font.GothamMedium
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.Parent = page
 		return Label
@@ -322,7 +408,7 @@ function UI.CreateWindow(title)
 		Label.Text = text
 		Label.TextColor3 = Theme.TextDark
 		Label.TextSize = 12
-		Label.Font = Enum.Font.SourceSans
+		Label.Font = Enum.Font.Gotham
 		Label.TextXAlignment = Enum.TextXAlignment.Left
 		Label.TextYAlignment = Enum.TextYAlignment.Top
 		Label.TextWrapped = true
@@ -332,7 +418,7 @@ function UI.CreateWindow(title)
 
 	local function AddDropdown(page, text, options, callback)
 		local Frame = Instance.new("Frame")
-		Frame.Size = UDim2.new(1, 0, 0, 28)
+		Frame.Size = UDim2.new(1, 0, 0, 32)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -340,11 +426,17 @@ function UI.CreateWindow(title)
 		Btn.Size = UDim2.new(1, 0, 1, 0)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
-		Btn.Text = text .. ": " .. (options[1] or "")
+		Btn.Text = "  " .. text .. ": " .. (options[1] or "")
 		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
-		Btn.Font = Enum.Font.SourceSans
+		Btn.Font = Enum.Font.Gotham
+		Btn.TextXAlignment = Enum.TextXAlignment.Left
+		Btn.AutoButtonColor = false
 		Btn.Parent = Frame
+
+		local Corner = Instance.new("UICorner")
+		Corner.CornerRadius = UDim.new(0, 6)
+		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
@@ -353,13 +445,17 @@ function UI.CreateWindow(title)
 
 		local open = false
 		local List = Instance.new("Frame")
-		List.Size = UDim2.new(1, 0, 0, #options * 24)
-		List.Position = UDim2.new(0, 0, 1, 2)
+		List.Size = UDim2.new(1, 0, 0, #options * 28)
+		List.Position = UDim2.new(0, 0, 1, 4)
 		List.BackgroundColor3 = Theme.TitleBar
 		List.BorderSizePixel = 0
 		List.Visible = false
-		List.ZIndex = 5
+		List.ZIndex = 10
 		List.Parent = Frame
+
+		local ListCorner = Instance.new("UICorner")
+		ListCorner.CornerRadius = UDim.new(0, 6)
+		ListCorner.Parent = List
 
 		local ListStroke = Instance.new("UIStroke")
 		ListStroke.Color = Theme.Border
@@ -368,19 +464,19 @@ function UI.CreateWindow(title)
 
 		for i, opt in ipairs(options) do
 			local OptBtn = Instance.new("TextButton")
-			OptBtn.Size = UDim2.new(1, 0, 0, 24)
-			OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*24)
-			OptBtn.BackgroundColor3 = Theme.TitleBar
-			OptBtn.BorderSizePixel = 0
-			OptBtn.Text = opt
+			OptBtn.Size = UDim2.new(1, 0, 0, 28)
+			OptBtn.Position = UDim2.new(0, 0, 0, (i-1)*28)
+			OptBtn.BackgroundTransparency = 1
+			OptBtn.Text = "  " .. opt
 			OptBtn.TextColor3 = Theme.Text
-			OptBtn.TextSize = 12
-			OptBtn.Font = Enum.Font.SourceSans
-			OptBtn.ZIndex = 6
+			OptBtn.TextSize = 13
+			OptBtn.Font = Enum.Font.Gotham
+			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+			OptBtn.ZIndex = 11
 			OptBtn.Parent = List
 
 			OptBtn.MouseButton1Click:Connect(function()
-				Btn.Text = text .. ": " .. opt
+				Btn.Text = "  " .. text .. ": " .. opt
 				List.Visible = false
 				open = false
 				if callback then callback(opt) end
@@ -396,14 +492,19 @@ function UI.CreateWindow(title)
 
 	local function AddCooldownButton(page, text, cooldown, callback)
 		local Btn = Instance.new("TextButton")
-		Btn.Size = UDim2.new(1, 0, 0, 28)
+		Btn.Size = UDim2.new(1, 0, 0, 32)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
 		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
-		Btn.Font = Enum.Font.SourceSans
+		Btn.Font = Enum.Font.Gotham
+		Btn.AutoButtonColor = false
 		Btn.Parent = page
+
+		local Corner = Instance.new("UICorner")
+		Corner.CornerRadius = UDim.new(0, 6)
+		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
@@ -431,20 +532,15 @@ function UI.CreateWindow(title)
 		return Btn
 	end
 
-	-- Função pra mudar cores
 	local function SetTheme(newTheme)
 		for k, v in pairs(newTheme) do
-			if Theme[k] then
-				Theme[k] = v
-			end
+			if Theme[k] then Theme[k] = v end
 		end
-
 		Main.BackgroundColor3 = Theme.Background
 		MainStroke.Color = Theme.Border
 		TitleBar.BackgroundColor3 = Theme.TitleBar
+		TitleFix.BackgroundColor3 = Theme.TitleBar
 		Title.TextColor3 = Theme.Text
-		Close.BackgroundColor3 = Theme.TitleBar
-		Close.TextColor3 = Theme.Text
 		TabFrame.BackgroundColor3 = Theme.TabBackground
 		Content.BackgroundColor3 = Theme.Background
 		Resize.BackgroundColor3 = Theme.Border
