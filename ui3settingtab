@@ -1,15 +1,44 @@
-local SettingsTab = Window:CreateTab("Settings")
+return function(Main)
+    local Settings = Main.CreateTab("Settings")
 
-SettingsTab:AddParagraph(
-    "Aparencia",
-    "Escolha um tema para a interface."
-)
+    Settings.AddTextLabel("Settings")
 
-local ThemeDropdown = SettingsTab:AddDropdown(
-    "Tema",
-    {"Default", "Ocean", "Purple", "Red"},
-    function(theme)
-        Window.SetTheme(theme)
-        print("[Settings] Tema:", theme)
-    end
-)
+    Settings.AddParagraph(
+        "Configurações",
+        "Personalize algumas opções da UI."
+    )
+
+    Settings.AddToggle("UI Enabled", true, function(value)
+        print("UI Enabled:", value)
+    end)
+
+    Settings.AddToggle("Notifications", true, function(value)
+        print("Notifications:", value)
+    end)
+
+    Settings.AddToggle("Sounds", true, function(value)
+        print("Sounds:", value)
+    end)
+
+    Settings.AddSlider("UI Transparency", 0, 100, 0, function(value)
+        print("Transparency:", value)
+    end)
+
+    Settings.AddDropdown("Theme", {
+        "Default",
+        "Dark",
+        "Purple",
+        "Red",
+        "Blue"
+    }, function(value)
+        print("Theme:", value)
+    end)
+
+    Settings.AddTextBox("Config Name", function(value)
+        print("Config:", value)
+    end)
+
+    Settings.AddButton("Reset Settings", function()
+        print("Settings resetadas")
+    end)
+end
