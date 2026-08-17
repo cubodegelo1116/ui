@@ -759,6 +759,8 @@ function AddDropdown(page, text, options, callback)
 	Btn.AutoButtonColor = false
 	Btn.Parent = Frame
 
+	Btn:SetAttribute("ThemeRole", "Button")
+
 	local Corner = Instance.new("UICorner")
 	Corner.CornerRadius = UDim.new(0, 6)
 	Corner.Parent = Btn
@@ -768,24 +770,38 @@ function AddDropdown(page, text, options, callback)
 	Stroke.Thickness = 1
 	Stroke.Parent = Btn
 
+	Stroke:SetAttribute("ThemeRole", "Border")
+
 	--==================================================
 	-- ESTADO
 	--==================================================
 
-	local currentOptions = options or {}
+	local currentOptions = {}
+
+	for _, option in ipairs(options or {}) do
+		if typeof(option) == "string" then
+			table.insert(currentOptions, option)
+		else
+			warn("Dropdown recebeu opção inválida:", option)
+		end
+	end
+
 	local currentValue = currentOptions[1]
 	local open = false
 
-local List = Instance.new("Frame")
+	--==================================================
+	-- LISTA
+	--==================================================
 
-List.BackgroundColor3 = Theme.TitleBar
-List.BackgroundTransparency = 0
-List.BorderSizePixel = 0
-List.Visible = false
-List.ZIndex = 100
-List.Active = true
-List.ClipsDescendants = true
-List.Parent = ScreenGui
+	local List = Instance.new("Frame")
+
+	List.BackgroundColor3 = Theme.TitleBar
+	List.BorderSizePixel = 0
+	List.Visible = false
+	List.ZIndex = 50
+	List.Parent = ScreenGui
+
+	List:SetAttribute("ThemeRole", "TitleBar")
 
 	local ListCorner = Instance.new("UICorner")
 	ListCorner.CornerRadius = UDim.new(0, 6)
@@ -796,10 +812,11 @@ List.Parent = ScreenGui
 	ListStroke.Thickness = 1
 	ListStroke.Parent = List
 
-local ListLayout = Instance.new("UIListLayout")
-ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-ListLayout.Padding = UDim.new(0, 0)
-ListLayout.Parent = List
+	ListStroke:SetAttribute("ThemeRole", "Border")
+
+	local ListLayout = Instance.new("UIListLayout")
+	ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	ListLayout.Parent = List
 
 	--==================================================
 	-- TEXTO
@@ -807,84 +824,93 @@ ListLayout.Parent = List
 
 	local function UpdateButtonText()
 
-		Btn.Text = "  " .. tostring(text) .. ": " .. tostring(currentValue or "")
+		if currentValue then
+			Btn.Text = "  " .. tostring(text) .. ": " .. tostring(currentValue)
+		else
+			Btn.Text = "  " .. tostring(text) .. ": Nenhum"
+		end
 
 	end
+
+	--==================================================
+	-- REBUILD
+	--==================================================
+
+	local function RebuildOptions()
+
+		-- Apaga SOMENTE os botões antigos
+		for _, child in ipairs(List:GetChildren()) do
+			if child:IsA("TextButton") then
+				child:Destroy()
+			end
+		end
+
+		-- Cria novamente
+		for i, opt in ipairs(currentOptions) do
+
+			local OptBtn = Instance.new("TextButton")
+
+			OptBtn.Size = UDim2.new(1, 0, 0, 28)
+			OptBtn.BackgroundTransparency = 1
+			OptBtn.BackgroundColor3 = Theme.Button
+			OptBtn.BorderSizePixel = 0
+
+			OptBtn.Text = "  " .. tostring(opt)
+			OptBtn.TextColor3 = Theme.Text
+			OptBtn.TextSize = 13
+			OptBtn.Font = Enum.Font.Gotham
+			OptBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+			OptBtn.AutoButtonColor = false
+			OptBtn.ZIndex = 51
+			OptBtn.LayoutOrder = i
+
+			OptBtn.Parent = List
+
+			OptBtn.MouseEnter:Connect(function()
+				OptBtn.BackgroundTransparency = 0
+			end)
+
+			OptBtn.MouseLeave:Connect(function()
+				OptBtn.BackgroundTransparency = 1
+			end)
+
+			OptBtn.MouseButton1Click:Connect(function()
+
+				currentValue = opt
+
+				UpdateButtonText()
+
+				open = false
+				List.Visible = false
+
+				if callback then
+					callback(opt)
+				end
+
+			end)
+
+		end
+
+		-- Atualiza tamanho mesmo estando FECHADO
+		List.Size = UDim2.new(
+			0,
+			Btn.AbsoluteSize.X,
+			0,
+			math.max(#currentOptions * 28, 28)
+		)
+
+	end
+
+	--==================================================
+	-- INICIALIZA
+	--==================================================
 
 	UpdateButtonText()
-
-	--==================================================
-	-- CRIAR OPÇÕES
-	--==================================================
-
-local function RebuildOptions()
-
-	for _, child in ipairs(List:GetChildren()) do
-		if child:IsA("TextButton") then
-			child:Destroy()
-		end
-	end
-
-	local count = 0
-
-	for _, opt in pairs(currentOptions) do
-
-		count += 1
-
-		local OptBtn = Instance.new("TextButton")
-
-		OptBtn.Size = UDim2.new(1, 0, 0, 28)
-		OptBtn.BackgroundColor3 = Theme.TitleBar
-		OptBtn.BackgroundTransparency = 0
-		OptBtn.BorderSizePixel = 0
-		OptBtn.Text = "  " .. tostring(opt)
-		OptBtn.TextColor3 = Theme.Text
-		OptBtn.TextSize = 13
-		OptBtn.Font = Enum.Font.Gotham
-		OptBtn.TextXAlignment = Enum.TextXAlignment.Left
-		OptBtn.AutoButtonColor = false
-		OptBtn.ZIndex = 101
-		OptBtn.LayoutOrder = count
-		OptBtn.Parent = List
-
-		OptBtn.MouseEnter:Connect(function()
-			OptBtn.BackgroundColor3 = Theme.Button
-		end)
-
-		OptBtn.MouseLeave:Connect(function()
-			OptBtn.BackgroundColor3 = Theme.TitleBar
-		end)
-
-		OptBtn.MouseButton1Click:Connect(function()
-
-			currentValue = opt
-
-			UpdateButtonText()
-
-			List.Visible = false
-			open = false
-
-			if callback then
-				callback(opt)
-			end
-
-		end)
-
-	end
-
-	List.Size = UDim2.new(
-		0,
-		Btn.AbsoluteSize.X,
-		0,
-		count * 28
-	)
-
-end
-
 	RebuildOptions()
 
 	--==================================================
-	-- ABRIR / FECHAR
+	-- ABRIR
 	--==================================================
 
 	Btn.MouseButton1Click:Connect(function()
@@ -907,7 +933,7 @@ end
 				0,
 				absSize.X,
 				0,
-				#currentOptions * 28
+				math.max(#currentOptions * 28, 28)
 			)
 
 			List.Visible = true
@@ -921,55 +947,85 @@ end
 	end)
 
 	--==================================================
-	-- API DO DROPDOWN
+	-- API
 	--==================================================
 
-local DropdownAPI = {}
+	local DropdownAPI = {}
 
-function DropdownAPI.SetOptions(newOptions)
-	if typeof(newOptions) ~= "table" then
-		return
+	function DropdownAPI.SetOptions(newOptions)
+
+		if typeof(newOptions) ~= "table" then
+			warn("Dropdown:SetOptions recebeu algo que não é tabela.")
+			return
+		end
+
+		currentOptions = {}
+
+		-- Filtra e garante STRING
+		for _, option in ipairs(newOptions) do
+
+			if typeof(option) == "string" then
+				table.insert(currentOptions, option)
+
+			else
+				warn(
+					"Dropdown:SetOptions ignorou opção inválida:",
+					option
+				)
+
+			end
+
+		end
+
+		-- Mantém seleção se ainda existir
+		if currentValue
+			and table.find(currentOptions, currentValue) then
+
+			-- mantém
+
+		else
+			currentValue = currentOptions[1]
+		end
+
+		-- ATUALIZA MESMO FECHADO
+		UpdateButtonText()
+		RebuildOptions()
+
 	end
 
-	currentOptions = newOptions
+	function DropdownAPI.SetValue(value)
 
-	if currentValue and table.find(currentOptions, currentValue) then
-		-- mantém seleção
-	else
-		currentValue = currentOptions[1]
+		if typeof(value) ~= "string" then
+			return false
+		end
+
+		if not table.find(currentOptions, value) then
+			return false
+		end
+
+		currentValue = value
+
+		UpdateButtonText()
+
+		if callback then
+			callback(value)
+		end
+
+		return true
+
 	end
 
-	UpdateButtonText()
-	RebuildOptions()
-end
-
-function DropdownAPI.SetValue(value)
-	if not table.find(currentOptions, value) then
-		return false
+	function DropdownAPI.GetValue()
+		return currentValue
 	end
 
-	currentValue = value
-	UpdateButtonText()
-
-	if callback then
-		callback(value)
+	function DropdownAPI.GetOptions()
+		return currentOptions
 	end
 
-	return true
-end
-
-function DropdownAPI.GetValue()
-	return currentValue
-end
-
-function DropdownAPI.GetOptions()
-	return currentOptions
-end
-
-return DropdownAPI
+	return DropdownAPI
 
 end
-
 	--==================================================
 	-- COOLDOWN BUTTON
 	--==================================================
