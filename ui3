@@ -1,14 +1,9 @@
 --[[
-	╔════════════════════════════════════════════════════════════╗
-	║          CARTOLA HUB - UI LIBRARY v2.0 PROFESSIONAL        ║
-	║                                                            ║
-	║  A modern, themeable UI library for Roblox applications   ║
-	║  featuring tabs, sliders, toggles, dropdowns, and more.   ║
-	║                                                            ║
-	║  Author: Cartola Hub Development                          ║
-	║  Version: 2.0 (Rewritten & Optimized)                     ║
-	║  Last Updated: 2026                                       ║
-	╚════════════════════════════════════════════════════════════╝
+	╔══════════════════════════╗
+	║  Author: PDDEV / RCCDEV  ║
+	║  Version: 2.0            ║
+	║  Last Updated: 2026      ║
+	╚══════════════════════════╝
 ]]
 
 local UI = {}
@@ -68,7 +63,7 @@ end
 
 function UI.CreateWindow(title, subtitle)
 	-- Validate inputs
-	title = ValidateString(title, true) or "Cartola Hub"
+	title = ValidateString(title, true) or ""
 	subtitle = ValidateString(subtitle, true)
 
 	local UIS = game:GetService("UserInputService")
@@ -184,7 +179,7 @@ function UI.CreateWindow(title, subtitle)
 	-- ════════════════════════════════════════════════════════════
 
 	local ScreenGui = Instance.new("ScreenGui")
-	ScreenGui.Name = "CartolarUI"
+	ScreenGui.Name = "UI3"
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
