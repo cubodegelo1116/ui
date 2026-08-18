@@ -428,25 +428,4 @@ R: Arraste pelo canto inferior direito! Ou modifique no código:
 Main.Size = UDim2.new(0, 520, 0, 380)  -- Largura, Altura
 ```
 
-**P: Posso ter múltiplas janelas?**  
-R: Tecnicamente sim, mas recomenda-se 1 janela com várias abas.
-
-**P: Como removo a UI?**  
-R: Clique o botão `×` na barra de título.
-
-**P: Posso adicionar ícones aos botões?**  
-R: No momento, use emojis no texto: `AddButton(page, "🔓 Abrir", callback)`
-
----
-
-## 📝 Changelog
-
-**v2.0** (2026)
-- ✨ Sistema de temas melhorado
-- ✨ Novos componentes (Dropdown, TextBox, etc)
-- 🐛 Fixes de performance
-- 🎨 UI mais polida
-
----
-
-Feito com ❤️ por PDDEV / RCCDEV
+Feito por PDDEV / RCCDEV
