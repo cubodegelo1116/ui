@@ -616,7 +616,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Developers.Parent = Credits
     Developers.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     Developers.BackgroundTransparency = 1
-    Developers.Position = UDim2.new(0, 0, 0.00437349873, 0)
+    Developers.Position = UDim2.new(0, 0, -0.02, 0)
     Developers.Size = UDim2.new(0, 285, 0, 20)
     Developers.Font = Enum.Font.Gotham
     Developers.Text = "Developers"
