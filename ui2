@@ -1115,9 +1115,6 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                 tweenService:Create(MainFrameShadow, TweenInfo.new(0.25), {
                     Size = UDim2.new(0, 478, 0, 262)
                 }):Play()
-                tweenService:Create(MainFrameShadow, TweenInfo.new(0.25), {
-                    Position = UDim2.new(0.5, 0, 0.5, 0)
-                }):Play()
                 tweenService:Create(MainFrame, TweenInfo.new(0.25), {
                     Size = UDim2.new(0, 425, 0, 210)
                 }):Play()
@@ -2233,7 +2230,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                             labelTextObject.Text = labelText
                             labelTextObject.TextColor3 = labelColor
                             labelTextObject.TextSize = 13
-                            labelTextObject.TextXAlignment = Enum.TextXAlignment.Left
+                            labelTextObject.TextXAlignment = Enum.TextXAlignment.Center
                             labelStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
                             labelStroke.Color = Color3.fromRGB(49, 49, 49)
                             labelStroke.Transparency = 0.2
