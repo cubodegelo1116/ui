@@ -619,7 +619,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Developers.Position = UDim2.new(0, 0, -0.02, 0)
     Developers.Size = UDim2.new(0, 285, 0, 20)
     Developers.Font = Enum.Font.Gotham
-    Developers.Text = "Developers"
+    Developers.Text = "Developer"
     Developers.TextColor3 = Color3.fromRGB(129, 129, 129)
     Developers.TextSize = 15
     Developers.TextYAlignment = Enum.TextYAlignment.Top
