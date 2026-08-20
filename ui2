@@ -114,13 +114,6 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     menuPageLayout = Instance.new("UIListLayout")
     menuPagePadding = Instance.new("UIPadding")
     Credits = Instance.new("Frame")
-    Ice = Instance.new("Frame")
-    iceCorner = Instance.new("UICorner")
-    Description = Instance.new("TextLabel")
-    descriptionCorner = Instance.new("UICorner")
-    iceStroke = Instance.new("UIStroke")
-    Developer = Instance.new("TextLabel")
-    developerCorner = Instance.new("UICorner")
     Developers = Instance.new("TextLabel")
     HexR = Instance.new("Frame")
     hexrCorner = Instance.new("UICorner")
@@ -592,7 +585,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
             notifyShadow:Destroy()
         end)
         spawn(function()
-            setclipboard("https://discord.com/invite/K5eqZsAz")
+            setclipboard("hello :)")
         end)
     end)
     discordCorner.CornerRadius = UDim.new(0, 4)
@@ -618,47 +611,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Credits.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Credits.BackgroundTransparency = 1
     Credits.Position = UDim2.new(0, 0, -1.24242425, 0)
-    Credits.Size = UDim2.new(0, 285, 0, 370)
-    Ice.Name = "Le M (Ice)"
-    Ice.Parent = Credits
-    Ice.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Ice.BackgroundTransparency = 0.4
-    Ice.BorderColor3 = Color3.fromRGB(20, 20, 20)
-    Ice.Position = UDim2.new(0, 0, 0.0589998811, 0)
-    Ice.Size = UDim2.new(0, 285, 0, 94)
-    iceCorner.CornerRadius = UDim.new(0, 4)
-    iceCorner.Parent = Ice
-    Description.Name = "Description"
-    Description.Parent = Ice
-    Description.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Description.BackgroundTransparency = 1
-    Description.BorderColor3 = Color3.fromRGB(20, 20, 20)
-    Description.Position = UDim2.new(0.235087723, 0, 0.734654367, 0)
-    Description.Size = UDim2.new(0, 150, 0, 19)
-    Description.Font = Enum.Font.SourceSans
-    Description.Text = ""
-    Description.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Description.TextSize = 16
-    Description.TextWrapped = true
-    descriptionCorner.CornerRadius = UDim.new(0, 4)
-    descriptionCorner.Parent = Description
-    iceStroke.Color = Color3.fromRGB(39, 39, 39)
-    iceStroke.Thickness = 0.8
-    iceStroke.Parent = Ice
-    Developer.Name = "Developer"
-    Developer.Parent = Ice
-    Developer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Developer.BackgroundTransparency = 1
-    Developer.BorderColor3 = Color3.fromRGB(20, 20, 20)
-    Developer.Position = UDim2.new(0.245614037, 0, 0.0866539478, 0)
-    Developer.Size = UDim2.new(0, 145, 0, 30)
-    Developer.Font = Enum.Font.Gotham
-    Developer.Text = "Ice, Creator"
-    Developer.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Developer.TextSize = 14
-    Developer.TextWrapped = true
-    developerCorner.CornerRadius = UDim.new(0, 4)
-    developerCorner.Parent = Developer
+    Credits.Size = UDim2.new(0, 285, 0, 130)
     Developers.Name = "Developers"
     Developers.Parent = Credits
     Developers.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
@@ -687,7 +640,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     description2.Position = UDim2.new(0.424561411, 0, 0.744000077, 0)
     description2.Size = UDim2.new(0, 150, 0, 19)
     description2.Font = Enum.Font.SourceSans
-    description2.Text = "Discord: xyz.hexr"
+    description2.Text = "Discord: cubodegelo666"
     description2.TextColor3 = Color3.fromRGB(255, 255, 255)
     description2.TextSize = 16
     description2.TextWrapped = true
@@ -705,7 +658,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     developer2.Position = UDim2.new(0.424561411, 0, 0.0866539478, 0)
     developer2.Size = UDim2.new(0, 145, 0, 30)
     developer2.Font = Enum.Font.Gotham
-    developer2.Text = "HexR, Developer"
+    developer2.Text = "RCCDEV, Lib Developer"
     developer2.TextColor3 = Color3.fromRGB(255, 255, 255)
     developer2.TextSize = 14
     developer2.TextWrapped = true
@@ -720,64 +673,10 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     hexrImage.Position = UDim2.new(0.0419999994, 0, 0.0960000008, 0)
     hexrImage.Size = UDim2.new(0, 88, 0, 88)
     task.spawn(function()
-        hexrImage.Image = game.Players:GetUserThumbnailAsync(406707268, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size420x420) or "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        hexrImage.Image = game.Players:GetUserThumbnailAsync(1564360030, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size420x420) or "rbxasset://textures/ui/GuiImagePlaceholder.png"
     end)
     hexrImageCorner.CornerRadius = UDim.new(0, 4)
     hexrImageCorner.Parent = hexrImage
-    xjfs.Name = "xjfs"
-    xjfs.Parent = Credits
-    xjfs.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    xjfs.BackgroundTransparency = 0.4
-    xjfs.BorderColor3 = Color3.fromRGB(20, 20, 20)
-    xjfs.Position = UDim2.new(0, 0, 0.658262908, 0)
-    xjfs.Size = UDim2.new(0, 285, 0, 107)
-    xjfsCorner.CornerRadius = UDim.new(0, 4)
-    xjfsCorner.Parent = xjfs
-    description3.Name = "Description"
-    description3.Parent = xjfs
-    description3.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    description3.BackgroundTransparency = 1
-    description3.BorderColor3 = Color3.fromRGB(20, 20, 20)
-    description3.Position = UDim2.new(0.424561411, 0, 0.744000077, 0)
-    description3.Size = UDim2.new(0, 150, 0, 19)
-    description3.Font = Enum.Font.SourceSans
-    description3.Text = "Discord: xjfs"
-    description3.TextColor3 = Color3.fromRGB(255, 255, 255)
-    description3.TextSize = 16
-    description3.TextWrapped = true
-    description3.TextXAlignment = Enum.TextXAlignment.Left
-    description3Corner.CornerRadius = UDim.new(0, 4)
-    description3Corner.Parent = description3
-    xjfsStroke.Color = Color3.fromRGB(39, 39, 39)
-    xjfsStroke.Thickness = 0.8
-    xjfsStroke.Parent = xjfs
-    developer3.Name = "Developer"
-    developer3.Parent = xjfs
-    developer3.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    developer3.BackgroundTransparency = 1
-    developer3.BorderColor3 = Color3.fromRGB(20, 20, 20)
-    developer3.Position = UDim2.new(0.424561411, 0, 0.0866539478, 0)
-    developer3.Size = UDim2.new(0, 145, 0, 30)
-    developer3.Font = Enum.Font.Gotham
-    developer3.Text = "xjfs, Developer"
-    developer3.TextColor3 = Color3.fromRGB(255, 255, 255)
-    developer3.TextSize = 14
-    developer3.TextWrapped = true
-    developer3.TextXAlignment = Enum.TextXAlignment.Left
-    developer3Corner.CornerRadius = UDim.new(0, 4)
-    developer3Corner.Parent = developer3
-    xjfsImage.Parent = xjfs
-    xjfsImage.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    xjfsImage.BackgroundTransparency = 1
-    xjfsImage.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    xjfsImage.BorderSizePixel = 0
-    xjfsImage.Position = UDim2.new(0.0419999994, 0, 0.0960000008, 0)
-    xjfsImage.Size = UDim2.new(0, 88, 0, 88)
-    task.spawn(function()
-        xjfsImage.Image = game.Players:GetUserThumbnailAsync(967736154, Enum.ThumbnailType.AvatarBust, Enum.ThumbnailSize.Size420x420) or "rbxasset://textures/ui/GuiImagePlaceholder.png"
-    end)
-    xjfsImageCorner.CornerRadius = UDim.new(0, 4)
-    xjfsImageCorner.Parent = xjfsImage
     TutorialPage.Name = "TutorialPage"
     TutorialPage.Parent = FrameFolder
     TutorialPage.Active = true
