@@ -1,8 +1,10 @@
 local IceHub = {}
 local config = loadstring(game:HttpGet("https://raw.githubusercontent.com/IceMae17/API/refs/heads/main/IceHub"))()
 local gameMode = nil
-local isChristmas = config._event_connection._CHRISTMAS_CONNECTION._christmas
-local isHalloween = config._event_connection._HALLOWEEN_CONNECTION._halloween
+
+local isChristmas = true
+local isHalloween = false
+
 local titleColor, buttonColor, labelColor, versionText
 if isHalloween then
     titleColor = config._rbxev_mode._halloween_mode._ttl
