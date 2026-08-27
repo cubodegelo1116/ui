@@ -3,7 +3,7 @@ local config = loadstring(game:HttpGet("https://raw.githubusercontent.com/IceMae
 local gameMode = nil
 
 local isChristmas = false
-local isHalloween = true
+local isHalloween = false
 
 local titleColor, buttonColor, labelColor, versionText
 if isHalloween then
