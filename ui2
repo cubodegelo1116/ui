@@ -949,29 +949,32 @@ local function changeTheme(themeName)
     local themes = config._themes or {}
     local theme = themes[themeName]
     if not theme then return false end
-    
-    -- Atualiza as cores
+
+    -- Atualiza as variáveis
     titleColor = theme.titleColor
     buttonColor = theme.buttonColor
     labelColor = theme.labelColor
     versionText = theme.versionText
-    
-    -- Atualiza o título
-    Title.Text = hubDisplayName .. " - " .. gameName .. " " .. versionText
-    Title.TextColor3 = titleColor
-    
-    -- Atualiza todos os botões das abas
+
+    -- Título
+    if Title then
+        Title.Text = hubDisplayName .. " - " .. gameName .. " " .. (versionText or "")
+        Title.TextColor3 = titleColor
+    end
+
+    -- Botões das abas (força a cor atual)
     for _, btn in pairs(tabButtonList) do
-        if btn and btn.Text and btn.Text ~= "" then
+        if btn and btn:IsA("TextButton") and btn.Text and btn.Text ~= "" then
             btn.TextColor3 = buttonColor
         end
     end
-    
-    -- Atualiza o nome do jogador
+
+    -- Nome do jogador
     if NameLabel then
         NameLabel.TextColor3 = labelColor
     end
-    
+
+    -- Força o tema ativo
     activeTheme = themeName
     return true
 end
