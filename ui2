@@ -5,30 +5,25 @@ local gameMode = nil
 local isChristmas = config._event_connection._CHRISTMAS_CONNECTION._christmas
 local isHalloween = config._event_connection._HALLOWEEN_CONNECTION._halloween
 
-local titleColor, buttonColor, labelColor, versionText
+local function loadTheme(themeName)
+    local themes = config._themes or {}
+    local theme = themes[themeName] or themes.default
+    
+    titleColor = theme.titleColor or Color3.fromRGB(255, 255, 255)
+    buttonColor = theme.buttonColor or Color3.fromRGB(0, 255, 255)
+    labelColor = theme.labelColor or Color3.fromRGB(0, 255, 255)
+    versionText = theme.versionText or ""
+    
+    return theme
+end
+
+local activeTheme = "default"
 if isHalloween then
-    titleColor = config._rbxev_mode._halloween_mode._ttl
-    buttonColor = config._rbxev_mode._halloween_mode._bps
-    labelColor = config._rbxev_mode._halloween_mode._lblt
-    versionText = config._rbxev_mode._halloween_mode._te
-else
-    buttonColor = nil
-    labelColor = nil
-    versionText = nil
-    titleColor = nil
+    activeTheme = "halloween"
+elseif isChristmas then
+    activeTheme = "christmas"
 end
-if isChristmas then
-    titleColor = config._rbxev_mode._christmas_mode._ttl
-    buttonColor = config._rbxev_mode._christmas_mode._bps
-    labelColor = config._rbxev_mode._christmas_mode._lblt
-    versionText = config._rbxev_mode._christmas_mode._te
-end
-if not (isHalloween or isChristmas) and true or gameMode then
-    titleColor = config._rbxev_mode._normal_mode._ttl
-    buttonColor = config._rbxev_mode._normal_mode._bps
-    labelColor = config._rbxev_mode._normal_mode._lblt
-    versionText = config._rbxev_mode._normal_mode._te
-end
+loadTheme(activeTheme)
 game.Players.LocalPlayer.Idled:Connect(function()
     local virtualUser = game:GetService("VirtualUser")
     virtualUser:CaptureController()
@@ -947,7 +942,41 @@ discordTextStroke.Parent = DiscordText
     
     -- MODIFICAÇÃO NO TÍTULO: Agora usa hubDisplayName, gameName e versionText
     Title.Text = hubDisplayName .. " - " .. gameName .. " " .. versionText
+
+
+-- Função para mudar tema dinamicamente
+local function changeTheme(themeName)
+    local themes = config._themes or {}
+    local theme = themes[themeName]
+    if not theme then return false end
     
+    -- Atualiza as cores
+    titleColor = theme.titleColor
+    buttonColor = theme.buttonColor
+    labelColor = theme.labelColor
+    versionText = theme.versionText
+    
+    -- Atualiza o título
+    Title.Text = hubDisplayName .. " - " .. gameName .. " " .. versionText
+    Title.TextColor3 = titleColor
+    
+    -- Atualiza todos os botões das abas
+    for _, btn in pairs(tabButtonList) do
+        if btn and btn.Text and btn.Text ~= "" then
+            btn.TextColor3 = buttonColor
+        end
+    end
+    
+    -- Atualiza o nome do jogador
+    if NameLabel then
+        NameLabel.TextColor3 = labelColor
+    end
+    
+    activeTheme = themeName
+    return true
+end
+
+
     Title.TextColor3 = titleColor
     Title.TextSize = 13
     Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -3014,6 +3043,15 @@ discordTextStroke.Parent = DiscordText
                 end
             }
         end
-    }
+    },  -- <--- VÍRGULA
+
+ChangeTheme = function(_, themeName)
+    return changeTheme(themeName)
+end,
+
+GetCurrentTheme = function()
+    return activeTheme
 end
+}  -- <--- FECHA
+
 return IceHub
