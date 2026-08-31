@@ -1,5 +1,5 @@
 local IceHub = {}
-local config = loadstring(game:HttpGet("https://raw.githubusercontent.com/IceMae17/API/refs/heads/main/IceHub"))()
+local config = loadstring(game:HttpGet("https://raw.githubusercontent.com/cubodegelo1116/ui/refs/heads/main/ui2themes"))()
 local gameMode = nil
 
 local isChristmas = config._event_connection._CHRISTMAS_CONNECTION._christmas
