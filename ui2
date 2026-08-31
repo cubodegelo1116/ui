@@ -3050,6 +3050,7 @@ end
     GetCurrentTheme = function()
         return activeTheme
     end
-}  -- <--- FECHA O RETURN
+}  
+end
 
 return IceHub
