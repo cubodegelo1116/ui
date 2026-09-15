@@ -1,1 +1,274 @@
+-- ============================================
+-- IceHub Floating Minimizer (módulo standalone)
+-- Uso:
+--   local bolinha = loadstring(game:HttpGet("SEU_LINK"))()
+--   local mini = bolinha.Create({ Text = "IH" })
+-- ============================================
 
+local FloatingMinimizer = {}
+
+-- ============================================
+-- Configuração padrão (pode sobrescrever no Create)
+-- ============================================
+local DEFAULT = {
+    Size = UDim2.new(0, 45, 0, 45),
+    Position = UDim2.new(0, 20, 0.5, -22),
+    BackgroundColor = Color3.fromRGB(20, 20, 20),
+    BackgroundTransparency = 0.1,
+    StrokeColor = Color3.fromRGB(49, 49, 49),
+    StrokeTransparency = 0.2,
+    Text = "IH",
+    TextColor = Color3.fromRGB(0, 255, 255),
+    TextSize = 16,
+    Font = Enum.Font.GothamBold,
+    Image = "",
+    ImageColor = Color3.fromRGB(255, 255, 255),
+    UseImage = false,
+    StartHidden = true,      -- começa escondida se UI visível?
+    OnToggle = nil,
+}
+
+-- ============================================
+-- Cria a bolinha
+-- ============================================
+function FloatingMinimizer.Create(userConfig)
+    local cfg = {}
+    for k, v in pairs(DEFAULT) do cfg[k] = v end
+    if userConfig then
+        for k, v in pairs(userConfig) do cfg[k] = v end
+    end
+
+    local tweenService = game:GetService("TweenService")
+
+    -- Espera a IceHub existir (caso crie a bolinha antes da UI)
+    local screenGui
+    for _ = 1, 50 do
+        screenGui = game.CoreGui:FindFirstChild("IceHub")
+        if screenGui then break end
+        task.wait(0.1)
+    end
+
+    if not screenGui then
+        warn("[FloatingMinimizer] IceHub não encontrada.")
+        return nil
+    end
+
+    local mainFrameShadow = screenGui:FindFirstChild("MainFrameShadow")
+    if not mainFrameShadow then
+        warn("[FloatingMinimizer] MainFrameShadow não encontrada.")
+        return nil
+    end
+
+    -- Remove instância anterior
+    local old = screenGui:FindFirstChild("FloatingMinimizer")
+    if old then old:Destroy() end
+
+    -- ============================================
+    -- Bolinha
+    -- ============================================
+    local floating = Instance.new("TextButton")
+    floating.Name = "FloatingMinimizer"
+    floating.Parent = screenGui
+    floating.BackgroundColor3 = cfg.BackgroundColor
+    floating.BackgroundTransparency = cfg.BackgroundTransparency
+    floating.BorderSizePixel = 0
+    floating.Position = cfg.Position
+    floating.Size = cfg.Size
+    floating.AutoButtonColor = false
+    floating.Text = ""
+    floating.ZIndex = 100
+    floating.Active = true
+
+    -- Sombra (estilo IceHub)
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.Parent = floating
+    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadow.BackgroundTransparency = 1
+    shadow.BorderSizePixel = 0
+    shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    shadow.Size = UDim2.new(1, 16, 1, 16)
+    shadow.ZIndex = -1
+    shadow.Image = "rbxassetid://6014261993"
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.5
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+
+    -- Corner circular
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = floating
+
+    -- Stroke (estilo IceHub)
+    local stroke = Instance.new("UIStroke")
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Color = cfg.StrokeColor
+    stroke.Thickness = 1
+    stroke.Transparency = cfg.StrokeTransparency
+    stroke.Parent = floating
+
+    -- Conteúdo (imagem ou texto)
+    local icon, label
+
+    if cfg.UseImage and cfg.Image ~= "" then
+        icon = Instance.new("ImageLabel")
+        icon.Name = "Icon"
+        icon.Parent = floating
+        icon.AnchorPoint = Vector2.new(0.5, 0.5)
+        icon.BackgroundTransparency = 1
+        icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+        icon.Size = UDim2.new(0.65, 0, 0.65, 0)
+        icon.Image = cfg.Image
+        icon.ImageColor3 = cfg.ImageColor
+        icon.ZIndex = 2
+    else
+        label = Instance.new("TextLabel")
+        label.Name = "Label"
+        label.Parent = floating
+        label.BackgroundTransparency = 1
+        label.Size = UDim2.new(1, 0, 1, 0)
+        label.Font = cfg.Font
+        label.Text = cfg.Text
+        label.TextColor3 = cfg.TextColor
+        label.TextSize = cfg.TextSize
+        label.TextXAlignment = Enum.TextXAlignment.Center
+        label.TextYAlignment = Enum.TextYAlignment.Center
+        label.ZIndex = 2
+    end
+
+    -- ============================================
+    -- Estado inicial: UI visível → bolinha escondida
+    -- ============================================
+    local uiVisible = mainFrameShadow.Visible
+    if cfg.StartHidden then
+        floating.Visible = not uiVisible
+    end
+
+    -- ============================================
+    -- Drag
+    -- ============================================
+    local dragging = false
+    local dragStart, startPos
+    local moved = false
+
+    floating.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            moved = false
+            dragStart = input.Position
+            startPos = floating.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    floating.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            -- marca como moved se passar de 3px
+            if math.abs(delta.X) > 3 or math.abs(delta.Y) > 3 then
+                moved = true
+            end
+            floating.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    -- ============================================
+    -- Toggle UI
+    -- ============================================
+    local function setUIState(visible)
+        uiVisible = visible
+        if visible then
+            mainFrameShadow.Visible = true
+            floating.Visible = false
+        else
+            mainFrameShadow.Visible = false
+            floating.Visible = true
+        end
+        if cfg.OnToggle then pcall(cfg.OnToggle, visible) end
+    end
+
+    -- Clique (só se não arrastou)
+    floating.MouseButton1Click:Connect(function()
+        if not moved then
+            setUIState(true)  -- clicar na bolinha → volta UI
+        end
+    end)
+
+    -- ============================================
+    -- Hook no botão Minimize da lib
+    -- ============================================
+    local mainFrame = mainFrameShadow:FindFirstChild("MainFrame")
+    if mainFrame then
+        local topFrame = mainFrame:FindFirstChild("TopFrame")
+        if topFrame then
+            local minimizeBtn = topFrame:FindFirstChild("Minimize")
+            if minimizeBtn then
+                minimizeBtn.MouseButton1Click:Connect(function()
+                    task.wait(0.3)
+                    -- Se a lib minimizou pro topo, escondemos tudo
+                    -- e mostramos a bolinha
+                    setUIState(false)
+                end)
+            end
+        end
+    end
+
+    -- ============================================
+    -- API
+    -- ============================================
+    local api = {}
+
+    function api.Show()        setUIState(true)  end
+    function api.Hide()        setUIState(false) end
+    function api.Toggle()      setUIState(not uiVisible) end
+    function api.GetState()    return uiVisible end
+    function api.Destroy()     floating:Destroy() end
+
+    function api.SetText(text)
+        if label then label.Text = text end
+    end
+
+    function api.SetTextColor(color)
+        if label then label.TextColor3 = color end
+    end
+
+    function api.SetImage(imageId)
+        if icon then
+            icon.Image = imageId
+        elseif label then
+            -- troca pra imagem
+            label:Destroy()
+            label = nil
+            icon = Instance.new("ImageLabel")
+            icon.Name = "Icon"
+            icon.Parent = floating
+            icon.AnchorPoint = Vector2.new(0.5, 0.5)
+            icon.BackgroundTransparency = 1
+            icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+            icon.Size = UDim2.new(0.65, 0, 0.65, 0)
+            icon.Image = imageId
+            icon.ZIndex = 2
+        end
+    end
+
+    function api.SetPosition(pos)
+        floating.Position = pos
+    end
+
+    api.Instance = floating
+
+    return api
+end
+
+return FloatingMinimizer
