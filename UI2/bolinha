@@ -122,10 +122,10 @@ function FloatingMinimizer.Create(userConfig)
     end
 
     local dragging = false
-    local dragStart = nil
-    local startPos = nil
+    local dragOffset = Vector2.new(0, 0)
     local moved = false
     local downTime = 0
+    local startAbsPos = nil
 
     local function endDrag()
         if not dragging then return end
@@ -169,8 +169,10 @@ function FloatingMinimizer.Create(userConfig)
         dragging = true
         moved = false
         downTime = tick()
-        dragStart = input.Position
-        startPos = floating.Position
+
+        local mousePos = UserInputService:GetMouseLocation()
+        startAbsPos = floating.AbsolutePosition
+        dragOffset = Vector2.new(mousePos.X - startAbsPos.X, mousePos.Y - startAbsPos.Y)
 
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End
@@ -183,24 +185,17 @@ function FloatingMinimizer.Create(userConfig)
     RunService.RenderStepped:Connect(function()
         if not dragging then return end
 
-        local mousePos
-        if UserInputService.TouchEnabled and not UserInputService.MouseEnabled then
-            local touchInput = UserInputService:GetLastInputType()
-            mousePos = UserInputService:GetMouseLocation()
-        else
-            mousePos = UserInputService:GetMouseLocation()
-        end
+        local mousePos = UserInputService:GetMouseLocation()
 
-        local delta = Vector2.new(mousePos.X - dragStart.X, mousePos.Y - dragStart.Y)
+        local newX = mousePos.X - dragOffset.X
+        local newY = mousePos.Y - dragOffset.Y
 
+        local delta = Vector2.new(newX - startAbsPos.X, newY - startAbsPos.Y)
         if math.abs(delta.X) > cfg.DragThreshold or math.abs(delta.Y) > cfg.DragThreshold then
             moved = true
         end
 
-        floating.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
+        floating.Position = UDim2.new(0, newX, 0, newY)
     end)
 
     UserInputService.InputEnded:Connect(function(input)
