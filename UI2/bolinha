@@ -4,6 +4,7 @@
 
 local FloatingMinimizer = {}
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local DEFAULT = {
     Size = UDim2.new(0, 45, 0, 45),
@@ -121,16 +122,14 @@ function FloatingMinimizer.Create(userConfig)
     end
 
     local dragging = false
-    local dragInputType = nil
-    local dragStart, startPos
+    local dragStart = nil
+    local startPos = nil
     local moved = false
     local downTime = 0
-    local activeInput = nil
 
     local function endDrag()
         if not dragging then return end
         dragging = false
-        activeInput = nil
 
         if cfg.SnapToEdges then
             local vp = workspace.CurrentCamera.ViewportSize
@@ -170,8 +169,6 @@ function FloatingMinimizer.Create(userConfig)
         dragging = true
         moved = false
         downTime = tick()
-        dragInputType = input.UserInputType
-        activeInput = input
         dragStart = input.Position
         startPos = floating.Position
 
@@ -183,14 +180,19 @@ function FloatingMinimizer.Create(userConfig)
         end)
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
+    RunService.RenderStepped:Connect(function()
         if not dragging then return end
-        if input.UserInputType ~= dragInputType then return end
-        if input.UserInputType == Enum.UserInputType.Touch and activeInput and input ~= activeInput then
-            return
+
+        local mousePos
+        if UserInputService.TouchEnabled and not UserInputService.MouseEnabled then
+            local touchInput = UserInputService:GetLastInputType()
+            mousePos = UserInputService:GetMouseLocation()
+        else
+            mousePos = UserInputService:GetMouseLocation()
         end
 
-        local delta = input.Position - dragStart
+        local delta = Vector2.new(mousePos.X - dragStart.X, mousePos.Y - dragStart.Y)
+
         if math.abs(delta.X) > cfg.DragThreshold or math.abs(delta.Y) > cfg.DragThreshold then
             moved = true
         end
@@ -202,7 +204,9 @@ function FloatingMinimizer.Create(userConfig)
     end)
 
     UserInputService.InputEnded:Connect(function(input)
-        if dragging and input == activeInput then
+        if not dragging then return end
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
             endDrag()
         end
     end)
