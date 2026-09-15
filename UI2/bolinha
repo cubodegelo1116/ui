@@ -125,7 +125,12 @@ function FloatingMinimizer.Create(userConfig)
     local dragOffset = Vector2.new(0, 0)
     local moved = false
     local downTime = 0
-    local startAbsPos = nil
+
+    local function getMousePos()
+        local pos = UserInputService:GetMouseLocation()
+        pos = Vector2.new(pos.X, pos.Y - 36)
+        return pos
+    end
 
     local function endDrag()
         if not dragging then return end
@@ -170,8 +175,8 @@ function FloatingMinimizer.Create(userConfig)
         moved = false
         downTime = tick()
 
-        local mousePos = UserInputService:GetMouseLocation()
-        startAbsPos = floating.AbsolutePosition
+        local mousePos = getMousePos()
+        local startAbsPos = floating.AbsolutePosition
         dragOffset = Vector2.new(mousePos.X - startAbsPos.X, mousePos.Y - startAbsPos.Y)
 
         input.Changed:Connect(function()
@@ -185,13 +190,12 @@ function FloatingMinimizer.Create(userConfig)
     RunService.RenderStepped:Connect(function()
         if not dragging then return end
 
-        local mousePos = UserInputService:GetMouseLocation()
-
+        local mousePos = getMousePos()
         local newX = mousePos.X - dragOffset.X
         local newY = mousePos.Y - dragOffset.Y
 
-        local delta = Vector2.new(newX - startAbsPos.X, newY - startAbsPos.Y)
-        if math.abs(delta.X) > cfg.DragThreshold or math.abs(delta.Y) > cfg.DragThreshold then
+        if math.abs(newX - floating.AbsolutePosition.X) > cfg.DragThreshold
+        or math.abs(newY - floating.AbsolutePosition.Y) > cfg.DragThreshold then
             moved = true
         end
 
