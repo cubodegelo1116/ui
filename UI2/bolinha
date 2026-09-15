@@ -1,15 +1,6 @@
--- ============================================
--- IceHub Floating Minimizer (módulo standalone)
--- Uso:
---   local bolinha = loadstring(game:HttpGet("SEU_LINK"))()
---   local mini = bolinha.Create({ Text = "IH" })
--- ============================================
-
 local FloatingMinimizer = {}
+local UserInputService = game:GetService("UserInputService")
 
--- ============================================
--- Configuração padrão (pode sobrescrever no Create)
--- ============================================
 local DEFAULT = {
     Size = UDim2.new(0, 45, 0, 45),
     Position = UDim2.new(0, 20, 0.5, -22),
@@ -24,13 +15,12 @@ local DEFAULT = {
     Image = "",
     ImageColor = Color3.fromRGB(255, 255, 255),
     UseImage = false,
-    StartHidden = true,      -- começa escondida se UI visível?
-    OnToggle = nil,
+    Visible = true,
+    SnapToEdges = false,
+    SnapMargin = 10,
+    DragThreshold = 6,
 }
 
--- ============================================
--- Cria a bolinha
--- ============================================
 function FloatingMinimizer.Create(userConfig)
     local cfg = {}
     for k, v in pairs(DEFAULT) do cfg[k] = v end
@@ -38,16 +28,12 @@ function FloatingMinimizer.Create(userConfig)
         for k, v in pairs(userConfig) do cfg[k] = v end
     end
 
-    local tweenService = game:GetService("TweenService")
-
-    -- Espera a IceHub existir (caso crie a bolinha antes da UI)
     local screenGui
     for _ = 1, 50 do
         screenGui = game.CoreGui:FindFirstChild("IceHub")
         if screenGui then break end
         task.wait(0.1)
     end
-
     if not screenGui then
         warn("[FloatingMinimizer] IceHub não encontrada.")
         return nil
@@ -59,13 +45,9 @@ function FloatingMinimizer.Create(userConfig)
         return nil
     end
 
-    -- Remove instância anterior
     local old = screenGui:FindFirstChild("FloatingMinimizer")
     if old then old:Destroy() end
 
-    -- ============================================
-    -- Bolinha
-    -- ============================================
     local floating = Instance.new("TextButton")
     floating.Name = "FloatingMinimizer"
     floating.Parent = screenGui
@@ -78,8 +60,9 @@ function FloatingMinimizer.Create(userConfig)
     floating.Text = ""
     floating.ZIndex = 100
     floating.Active = true
+    floating.Visible = cfg.Visible
+    floating.ClipsDescendants = false
 
-    -- Sombra (estilo IceHub)
     local shadow = Instance.new("ImageLabel")
     shadow.Name = "Shadow"
     shadow.Parent = floating
@@ -95,12 +78,10 @@ function FloatingMinimizer.Create(userConfig)
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceCenter = Rect.new(49, 49, 450, 450)
 
-    -- Corner circular
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(1, 0)
     corner.Parent = floating
 
-    -- Stroke (estilo IceHub)
     local stroke = Instance.new("UIStroke")
     stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     stroke.Color = cfg.StrokeColor
@@ -108,9 +89,7 @@ function FloatingMinimizer.Create(userConfig)
     stroke.Transparency = cfg.StrokeTransparency
     stroke.Parent = floating
 
-    -- Conteúdo (imagem ou texto)
     local icon, label
-
     if cfg.UseImage and cfg.Image ~= "" then
         icon = Instance.new("ImageLabel")
         icon.Name = "Icon"
@@ -137,103 +116,99 @@ function FloatingMinimizer.Create(userConfig)
         label.ZIndex = 2
     end
 
-    -- ============================================
-    -- Estado inicial: UI visível → bolinha escondida
-    -- ============================================
-    local uiVisible = mainFrameShadow.Visible
-    if cfg.StartHidden then
-        floating.Visible = not uiVisible
-    end
-
-    -- ============================================
-    -- Drag
-    -- ============================================
     local dragging = false
+    local dragInputType = nil
     local dragStart, startPos
     local moved = false
+    local downTime = 0
+    local activeInput = nil
+
+    local function endDrag()
+        if not dragging then return end
+        dragging = false
+        activeInput = nil
+
+        if cfg.SnapToEdges then
+            local vp = workspace.CurrentCamera.ViewportSize
+            local absPos = floating.AbsolutePosition
+            local absSize = floating.AbsoluteSize
+            local centerX = absPos.X + absSize.X / 2
+            local x
+
+            if centerX < vp.X / 2 then
+                x = cfg.SnapMargin
+            else
+                x = vp.X - absSize.X - cfg.SnapMargin
+            end
+
+            local y = math.clamp(absPos.Y, cfg.SnapMargin, vp.Y - absSize.Y - cfg.SnapMargin)
+
+            local tween = game:GetService("TweenService"):Create(
+                floating, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Position = UDim2.new(0, x, 0, y) }
+            )
+            tween:Play()
+        end
+
+        if not moved and (tick() - downTime) < 0.5 then
+            mainFrameShadow.Visible = not mainFrameShadow.Visible
+        end
+    end
 
     floating.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            moved = false
-            dragStart = input.Position
-            startPos = floating.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+        if input.UserInputType ~= Enum.UserInputType.MouseButton1
+        and input.UserInputType ~= Enum.UserInputType.Touch then
+            return
         end
-    end)
 
-    floating.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            -- marca como moved se passar de 3px
-            if math.abs(delta.X) > 3 or math.abs(delta.Y) > 3 then
-                moved = true
+        if dragging then return end
+
+        dragging = true
+        moved = false
+        downTime = tick()
+        dragInputType = input.UserInputType
+        activeInput = input
+        dragStart = input.Position
+        startPos = floating.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End
+            or input.UserInputState == Enum.UserInputState.Cancel then
+                endDrag()
             end
-            floating.Position = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+        end)
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if not dragging then return end
+        if input.UserInputType ~= dragInputType then return end
+        if input.UserInputType == Enum.UserInputType.Touch and activeInput and input ~= activeInput then
+            return
+        end
+
+        local delta = input.Position - dragStart
+        if math.abs(delta.X) > cfg.DragThreshold or math.abs(delta.Y) > cfg.DragThreshold then
+            moved = true
+        end
+
+        floating.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if dragging and input == activeInput then
+            endDrag()
         end
     end)
 
-    -- ============================================
-    -- Toggle UI
-    -- ============================================
-    local function setUIState(visible)
-        uiVisible = visible
-        if visible then
-            mainFrameShadow.Visible = true
-            floating.Visible = false
-        else
-            mainFrameShadow.Visible = false
-            floating.Visible = true
-        end
-        if cfg.OnToggle then pcall(cfg.OnToggle, visible) end
-    end
-
-    -- Clique (só se não arrastou)
-    floating.MouseButton1Click:Connect(function()
-        if not moved then
-            setUIState(true)  -- clicar na bolinha → volta UI
-        end
-    end)
-
-    -- ============================================
-    -- Hook no botão Minimize da lib
-    -- ============================================
-    local mainFrame = mainFrameShadow:FindFirstChild("MainFrame")
-    if mainFrame then
-        local topFrame = mainFrame:FindFirstChild("TopFrame")
-        if topFrame then
-            local minimizeBtn = topFrame:FindFirstChild("Minimize")
-            if minimizeBtn then
-                minimizeBtn.MouseButton1Click:Connect(function()
-                    task.wait(0.3)
-                    -- Se a lib minimizou pro topo, escondemos tudo
-                    -- e mostramos a bolinha
-                    setUIState(false)
-                end)
-            end
-        end
-    end
-
-    -- ============================================
-    -- API
-    -- ============================================
     local api = {}
 
-    function api.Show()        setUIState(true)  end
-    function api.Hide()        setUIState(false) end
-    function api.Toggle()      setUIState(not uiVisible) end
-    function api.GetState()    return uiVisible end
-    function api.Destroy()     floating:Destroy() end
+    function api.Hide()      mainFrameShadow.Visible = false end
+    function api.Show()      mainFrameShadow.Visible = true  end
+    function api.Toggle()    mainFrameShadow.Visible = not mainFrameShadow.Visible end
+    function api.IsOpen()    return mainFrameShadow.Visible end
 
     function api.SetText(text)
         if label then label.Text = text end
@@ -247,7 +222,6 @@ function FloatingMinimizer.Create(userConfig)
         if icon then
             icon.Image = imageId
         elseif label then
-            -- troca pra imagem
             label:Destroy()
             label = nil
             icon = Instance.new("ImageLabel")
@@ -264,6 +238,14 @@ function FloatingMinimizer.Create(userConfig)
 
     function api.SetPosition(pos)
         floating.Position = pos
+    end
+
+    function api.SetVisible(v)
+        floating.Visible = v
+    end
+
+    function api.Destroy()
+        floating:Destroy()
     end
 
     api.Instance = floating
