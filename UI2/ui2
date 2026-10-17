@@ -1262,7 +1262,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line2.BorderColor3           = Color3.fromRGB(0, 0, 0)
     line2.BorderSizePixel        = 0
     line2.Position               = UDim2.new(0, 110, 0, 30)
-    line2.Size                   = UDim2.new(0, 0, 1, -56)
+    line2.Size                   = UDim2.new(0, 0, 1, -30)
+    line2.ZIndex                 = 6
     line2Stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
     line2Stroke.LineJoinMode     = Enum.LineJoinMode.Bevel
     line2Stroke.Color            = Color3.fromRGB(49, 49, 49)
