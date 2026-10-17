@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════
--- IceHub — LIB VIBECODADA EHEHEHEHEHEHEHHEHE 
+-- IceHub — fixed: otimizações + resize + containers responsivos + BottomBar
 -- ═══════════════════════════════════════════════════════════════════════
 
 local IceHub = {}
@@ -118,7 +118,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     local TutorialImage       = Instance.new("ImageLabel")
     local tutorialImageCorner = Instance.new("UICorner")
 
-    local SettingsPage, Settings
+    local SettingsPage, Settings, BottomBar
 
     local settingsListLayout       = Instance.new("UIListLayout")
     local TemplateLabel            = Instance.new("TextButton")
@@ -233,14 +233,14 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     end)
     task.wait(0.5)
 
-    -- ── TabContainer (coluna das abas) — agora escala em Y ─────────────
+    -- ── TabContainer (coluna das abas) — termina onde a BottomBar começa
     TabContainer.Name                   = "TabContainer"
     TabContainer.Parent                 = MainFrame
     TabContainer.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     TabContainer.BackgroundTransparency = 0.1
     TabContainer.BorderColor3           = Color3.fromRGB(20, 20, 20)
     TabContainer.Position               = UDim2.new(0, 0, 0, 30)
-    TabContainer.Size                   = UDim2.new(0, 110, 1, -30)
+    TabContainer.Size                   = UDim2.new(0, 110, 1, -56)
     tabContainerCorner.CornerRadius     = UDim.new(0, 3)
     tabContainerCorner.Parent           = TabContainer
 
@@ -909,7 +909,6 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                 if page.Visible then lastVisiblePage = page end
                 page.Visible = false
             end
-            -- Mantém a largura do usuário, só encolhe em Y
             tweenService:Create(MainFrameShadow, TweenInfo.new(0.25), {
                 Size = UDim2.new(0, savedWidth + 53, 0, 65)
             }):Play()
@@ -968,8 +967,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     local resizeStartSize  = nil
     local resizeStartPos   = nil
 
-    local SHADOW_OFFSET_X = 478 - 425 -- 53
-    local SHADOW_OFFSET_Y = 262 - 210 -- 52
+    local SHADOW_OFFSET_X = 478 - 425
+    local SHADOW_OFFSET_Y = 262 - 210
     local MIN_RESIZE_W    = 320
     local MIN_RESIZE_H    = 160
 
@@ -1263,7 +1262,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line2.BorderColor3           = Color3.fromRGB(0, 0, 0)
     line2.BorderSizePixel        = 0
     line2.Position               = UDim2.new(0, 110, 0, 30)
-    line2.Size                   = UDim2.new(0, 0, 1, -30)
+    line2.Size                   = UDim2.new(0, 0, 1, -56)
     line2Stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
     line2Stroke.LineJoinMode     = Enum.LineJoinMode.Bevel
     line2Stroke.Color            = Color3.fromRGB(49, 49, 49)
@@ -1279,6 +1278,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line3.BorderSizePixel        = 0
     line3.Position               = UDim2.new(0, 0, 1, -26)
     line3.Size                   = UDim2.new(0, 110, 0, 0)
+    line3.ZIndex                 = 3
     line3Stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
     line3Stroke.LineJoinMode     = Enum.LineJoinMode.Bevel
     line3Stroke.Color            = Color3.fromRGB(49, 49, 49)
@@ -1286,14 +1286,28 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line3Stroke.Transparency     = 0.2
     line3Stroke.Parent           = line3
 
+    -- ── BottomBar (Settings + versão no rodapé da coluna de abas) ─────
+    BottomBar = Instance.new("Frame")
+    BottomBar.Name                   = "BottomBar"
+    BottomBar.Parent                 = MainFrame
+    BottomBar.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
+    BottomBar.BackgroundTransparency = 0.1
+    BottomBar.BorderColor3           = Color3.fromRGB(20, 20, 20)
+    BottomBar.Position               = UDim2.new(0, 0, 1, -26)
+    BottomBar.Size                   = UDim2.new(0, 110, 0, 26)
+    BottomBar.ZIndex                 = 2
+    local bottomBarCorner = Instance.new("UICorner")
+    bottomBarCorner.CornerRadius = UDim.new(0, 3)
+    bottomBarCorner.Parent       = BottomBar
+
     -- ── Botão Settings ─────────────────────────────────────────────────
     Settings = Instance.new("ImageButton")
     Settings.Name               = "Settings"
-    Settings.Parent             = MainFrame
+    Settings.Parent             = BottomBar
     Settings.BackgroundTransparency = 1
-    Settings.Position           = UDim2.new(0, 6, 1, -26)
+    Settings.Position           = UDim2.new(0, 6, 0, 3)
     Settings.Size               = UDim2.new(0, 20, 0, 20)
-    Settings.ZIndex             = 2
+    Settings.ZIndex             = 3
     Settings.Image              = "rbxassetid://3926307971"
     Settings.ImageColor3        = Color3.fromRGB(102, 102, 102)
     Settings.ImageRectOffset    = Vector2.new(324, 124)
@@ -1314,17 +1328,18 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     end)
 
     versionLabel.Name               = "Title"
-    versionLabel.Parent             = MainFrame
+    versionLabel.Parent             = BottomBar
     versionLabel.BackgroundColor3   = Color3.fromRGB(20, 20, 20)
     versionLabel.BackgroundTransparency = 1
     versionLabel.BorderColor3       = Color3.fromRGB(20, 20, 20)
-    versionLabel.Position           = UDim2.new(0, 30, 1, -25)
+    versionLabel.Position           = UDim2.new(0, 30, 0, 1)
     versionLabel.Size               = UDim2.new(0, 41, 0, 23)
     versionLabel.Font               = Enum.Font.Gotham
     versionLabel.Text               = subtitle or ""
     versionLabel.TextColor3         = Color3.fromRGB(153, 153, 153)
     versionLabel.TextSize           = 13
     versionLabel.TextTransparency   = 0.4
+    versionLabel.ZIndex             = 3
     versionLabelCorner.CornerRadius = UDim.new(0, 4)
     versionLabelCorner.Parent       = versionLabel
 
