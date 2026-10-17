@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════
--- IceHub lib - SIM VIBECODADA E FDS HAHAHAHAHAHAHAA
+-- IceHub — LIB VIBECODADA EHEHEHEHEHEHEHHEHE 
 -- ═══════════════════════════════════════════════════════════════════════
 
 local IceHub = {}
@@ -24,12 +24,12 @@ local config = (function()
     return { _themes = {}, _event_connection = {} }
 end)()
 
-local gameMode     = nil
-local eventConn    = config._event_connection      or {}
+local gameMode      = nil
+local eventConn     = config._event_connection       or {}
 local christmasConn = eventConn._CHRISTMAS_CONNECTION or {}
 local halloweenConn = eventConn._HALLOWEEN_CONNECTION or {}
-local isChristmas  = christmasConn._christmas
-local isHalloween  = halloweenConn._halloween
+local isChristmas   = christmasConn._christmas
+local isHalloween   = halloweenConn._halloween
 
 -- Tema (locals)
 local titleColor, buttonColor, labelColor, versionText
@@ -118,7 +118,6 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     local TutorialImage       = Instance.new("ImageLabel")
     local tutorialImageCorner = Instance.new("UICorner")
 
-    -- Declarados cedo (menuButton referencia antes de existir)
     local SettingsPage, Settings
 
     local settingsListLayout       = Instance.new("UIListLayout")
@@ -185,7 +184,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     local versionLabel       = Instance.new("TextLabel")
     local versionLabelCorner = Instance.new("UICorner")
 
-    -- ── Estado (privacidade + tamanho salvo) ───────────────────────────
+    -- ── Estado ─────────────────────────────────────────────────────────
     local avatarHidden   = false
     local usernameHidden = false
     local savedWidth     = 425
@@ -234,14 +233,14 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     end)
     task.wait(0.5)
 
-    -- ── TabContainer ───────────────────────────────────────────────────
+    -- ── TabContainer (coluna das abas) — agora escala em Y ─────────────
     TabContainer.Name                   = "TabContainer"
     TabContainer.Parent                 = MainFrame
     TabContainer.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     TabContainer.BackgroundTransparency = 0.1
     TabContainer.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    TabContainer.Position               = UDim2.new(0, 0, 0.138095304, 0)
-    TabContainer.Size                   = UDim2.new(0, 110, 0, 181)
+    TabContainer.Position               = UDim2.new(0, 0, 0, 30)
+    TabContainer.Size                   = UDim2.new(0, 110, 1, -30)
     tabContainerCorner.CornerRadius     = UDim.new(0, 3)
     tabContainerCorner.Parent           = TabContainer
 
@@ -250,8 +249,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     tabScrollFrame.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
     tabScrollFrame.BackgroundTransparency = 1
     tabScrollFrame.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    tabScrollFrame.Position               = UDim2.new(0.0421545468, 0, 0.0333336256, 0)
-    tabScrollFrame.Size                   = UDim2.new(0, 100, 0, 144)
+    tabScrollFrame.Position               = UDim2.new(0, 5, 0, 5)
+    tabScrollFrame.Size                   = UDim2.new(1, -10, 1, -10)
     tabScrollFrame.ZIndex                 = 2
     tabScrollFrame.CanvasSize             = UDim2.new(0, 0, 3, 0)
     tabScrollFrame.ScrollBarThickness     = 0
@@ -280,8 +279,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     MenuPage.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
     MenuPage.BackgroundTransparency = 0.5
     MenuPage.BorderColor3           = Color3.fromRGB(30, 30, 30)
-    MenuPage.Position               = UDim2.new(0.266000002, 0, 0.159999996, 0)
-    MenuPage.Size                   = UDim2.new(0, 303, 0, 170)
+    MenuPage.Position               = UDim2.new(0, 113, 0, 34)
+    MenuPage.Size                   = UDim2.new(1, -122, 1, -41)
     MenuPage.CanvasSize             = UDim2.new(0, 0, 2.9, 0)
     MenuPage.ScrollBarThickness     = 0
     MenuPage.Visible                = true
@@ -375,13 +374,13 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
             ) or "rbxasset://textures/ui/GuiImagePlaceholder.png"
         end)
     end
-    playerImageCorner.CornerRadius  = UDim.new(0, 4)
-    playerImageCorner.Parent        = PlayerImageLabel
+    playerImageCorner.CornerRadius    = UDim.new(0, 4)
+    playerImageCorner.Parent          = PlayerImageLabel
     playerImageStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    playerImageStroke.Color         = Color3.fromRGB(39, 39, 39)
-    playerImageStroke.Thickness     = 0.8
-    playerImageStroke.Transparency  = 0.4
-    playerImageStroke.Parent        = PlayerImageLabel
+    playerImageStroke.Color           = Color3.fromRGB(39, 39, 39)
+    playerImageStroke.Thickness       = 0.8
+    playerImageStroke.Transparency    = 0.4
+    playerImageStroke.Parent          = PlayerImageLabel
 
     NameLabel.Name                   = "NameLabel"
     NameLabel.Parent                 = LocalFrame
@@ -396,15 +395,15 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     else
         NameLabel.Text = "Hey, " .. Players.LocalPlayer.DisplayName .. " !"
     end
-    NameLabel.TextColor3         = labelColor
-    NameLabel.TextSize           = 14
-    nameLabelCorner.CornerRadius = UDim.new(0, 4)
-    nameLabelCorner.Parent       = NameLabel
-    nameLabelStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    nameLabelStroke.Color        = Color3.fromRGB(39, 39, 39)
-    nameLabelStroke.Thickness    = 0.8
-    nameLabelStroke.Transparency = 0.4
-    nameLabelStroke.Parent       = NameLabel
+    NameLabel.TextColor3             = labelColor
+    NameLabel.TextSize               = 14
+    nameLabelCorner.CornerRadius     = UDim.new(0, 4)
+    nameLabelCorner.Parent           = NameLabel
+    nameLabelStroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
+    nameLabelStroke.Color            = Color3.fromRGB(39, 39, 39)
+    nameLabelStroke.Thickness        = 0.8
+    nameLabelStroke.Transparency     = 0.4
+    nameLabelStroke.Parent           = NameLabel
 
     local DiscordText                  = Instance.new("TextLabel")
     DiscordText.Name                   = "DiscordText"
@@ -516,8 +515,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     TutorialPage.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
     TutorialPage.BackgroundTransparency = 1
     TutorialPage.BorderColor3           = Color3.fromRGB(30, 30, 30)
-    TutorialPage.Position               = UDim2.new(0, 0, 0.136466324, 0)
-    TutorialPage.Size                   = UDim2.new(0, 425, 0, 181)
+    TutorialPage.Position               = UDim2.new(0, 0, 0, 30)
+    TutorialPage.Size                   = UDim2.new(1, 0, 1, -30)
     TutorialPage.Visible                = false
     TutorialPage.ScrollBarThickness     = 1
 
@@ -525,7 +524,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     ClickBlock.Parent                 = TutorialPage
     ClickBlock.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
     ClickBlock.BackgroundTransparency = 1
-    ClickBlock.Size                   = UDim2.new(0, 425, 0, 181)
+    ClickBlock.Size                   = UDim2.new(1, 0, 1, 0)
     ClickBlock.Visible                = false
     ClickBlock.AutoButtonColor        = false
     ClickBlock.Font                   = Enum.Font.SourceSans
@@ -538,7 +537,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     TutorialFrame.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
     TutorialFrame.BorderColor3           = Color3.fromRGB(30, 30, 30)
     TutorialFrame.Position               = UDim2.new(0, 0, -0.5, 0)
-    TutorialFrame.Size                   = UDim2.new(0, 425, 0, 181)
+    TutorialFrame.Size                   = UDim2.new(1, 0, 1, 0)
     tutorialFrameCorner.CornerRadius     = UDim.new(0, 4)
     tutorialFrameCorner.Parent           = TutorialFrame
 
@@ -546,8 +545,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Understand.Parent             = TutorialFrame
     Understand.BackgroundColor3   = Color3.fromRGB(20, 20, 20)
     Understand.BorderColor3       = Color3.fromRGB(20, 20, 20)
-    Understand.Position           = UDim2.new(0.0199999996, 0, 0.828000009, 0)
-    Understand.Size               = UDim2.new(0, 410, 0, 25)
+    Understand.Position           = UDim2.new(0, 5, 1, -30)
+    Understand.Size               = UDim2.new(1, -10, 0, 25)
     Understand.AutoButtonColor    = false
     Understand.Font               = Enum.Font.SourceSans
     Understand.Text               = "Okay, I understand."
@@ -560,8 +559,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     TutorialImage.Parent             = TutorialFrame
     TutorialImage.BackgroundColor3   = Color3.fromRGB(30, 30, 30)
     TutorialImage.BorderColor3       = Color3.fromRGB(30, 30, 30)
-    TutorialImage.Position           = UDim2.new(0.0178458244, 0, 0.0309286155, 0)
-    TutorialImage.Size               = UDim2.new(0, 410, 0, 140)
+    TutorialImage.Position           = UDim2.new(0, 5, 0, 5)
+    TutorialImage.Size               = UDim2.new(1, -10, 1, -40)
     TutorialImage.Image              = "http://www.roblox.com/asset/?id=11922448198"
     tutorialImageCorner.CornerRadius = UDim.new(0, 4)
     tutorialImageCorner.Parent       = TutorialImage
@@ -574,8 +573,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     SettingsPage.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
     SettingsPage.BackgroundTransparency = 0.5
     SettingsPage.BorderColor3           = Color3.fromRGB(30, 30, 30)
-    SettingsPage.Position               = UDim2.new(0.273000062, 0, 0.160000026, 0)
-    SettingsPage.Size                   = UDim2.new(0, 303, 0, 170)
+    SettingsPage.Position               = UDim2.new(0, 113, 0, 34)
+    SettingsPage.Size                   = UDim2.new(1, -122, 1, -41)
     SettingsPage.Visible                = false
     SettingsPage.CanvasSize             = UDim2.new(0, 0, 2.5, 0)
     SettingsPage.ScrollBarThickness     = 0
@@ -791,14 +790,14 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
         end)
     end)
 
-    -- ── TopFrame (drag + botões) ───────────────────────────────────────
+    -- ── TopFrame (barra superior) ──────────────────────────────────────
     TopFrame.Name                   = "TopFrame"
     TopFrame.Parent                 = MainFrame
     TopFrame.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     TopFrame.BackgroundTransparency = 0.1
     TopFrame.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    TopFrame.Position               = UDim2.new(0, 0, -0.00476175966, 0)
-    TopFrame.Size                   = UDim2.new(0, 425, 0, 30)
+    TopFrame.Position               = UDim2.new(0, 0, 0, 0)
+    TopFrame.Size                   = UDim2.new(1, 0, 0, 30)
     topFrameCorner.CornerRadius     = UDim.new(0, 4)
     topFrameCorner.Parent           = TopFrame
 
@@ -850,7 +849,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Close.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     Close.BackgroundTransparency = 1
     Close.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    Close.Position               = UDim2.new(0.929411769, 0, 0, 0)
+    Close.Position               = UDim2.new(1, -30, 0, 0)
     Close.Size                   = UDim2.new(0, 30, 0, 30)
     Close.AutoButtonColor        = false
     Close.Font                   = Enum.Font.GothamMedium
@@ -865,7 +864,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Minimize.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     Minimize.BackgroundTransparency = 1
     Minimize.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    Minimize.Position               = UDim2.new(0.858823538, 0, 0, 0)
+    Minimize.Position               = UDim2.new(1, -60, 0, 0)
     Minimize.Size                   = UDim2.new(0, 30, 0, 30)
     Minimize.AutoButtonColor        = false
     Minimize.Font                   = Enum.Font.GothamMedium
@@ -910,8 +909,13 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                 if page.Visible then lastVisiblePage = page end
                 page.Visible = false
             end
-            tweenService:Create(MainFrameShadow, TweenInfo.new(0.25), { Size = UDim2.new(0, 460, 0, 65) }):Play()
-            tweenService:Create(MainFrame, TweenInfo.new(0.25), { Size = UDim2.new(0, 425, 0, 30) }):Play()
+            -- Mantém a largura do usuário, só encolhe em Y
+            tweenService:Create(MainFrameShadow, TweenInfo.new(0.25), {
+                Size = UDim2.new(0, savedWidth + 53, 0, 65)
+            }):Play()
+            tweenService:Create(MainFrame, TweenInfo.new(0.25), {
+                Size = UDim2.new(0, savedWidth, 0, 30)
+            }):Play()
             Minimize.Text = "+"
             isMinimized = true
         end
@@ -922,8 +926,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Title.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     Title.BackgroundTransparency = 1
     Title.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    Title.Position               = UDim2.new(0.0305882357, 0, 0.0333323143, 0)
-    Title.Size                   = UDim2.new(0, 200, 0, 28)
+    Title.Position               = UDim2.new(0, 13, 0, 1)
+    Title.Size                   = UDim2.new(1, -75, 0, 28)
     Title.Font                   = Enum.Font.Gotham
     Title.Text                   = hubDisplayName .. " - " .. gameName .. " " .. (versionText or "")
     Title.TextColor3             = titleColor
@@ -947,17 +951,16 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     resizeHandle.ZIndex                 = 10
     resizeHandle.AutoButtonColor        = false
 
-    -- Grip visual: 3 pontinhos em diagonal
     for i = 1, 3 do
         local dot = Instance.new("Frame")
-        dot.Name            = "Dot" .. i
-        dot.Parent          = resizeHandle
-        dot.AnchorPoint     = Vector2.new(1, 1)
+        dot.Name             = "Dot" .. i
+        dot.Parent           = resizeHandle
+        dot.AnchorPoint      = Vector2.new(1, 1)
         dot.BackgroundColor3 = Color3.fromRGB(120, 120, 120)
-        dot.BorderSizePixel = 0
-        dot.Size            = UDim2.new(0, 2, 0, 2)
-        dot.Position        = UDim2.new(1, -1 - (i - 1) * 3, 1, -1 - (i - 1) * 3)
-        dot.ZIndex          = 11
+        dot.BorderSizePixel  = 0
+        dot.Size             = UDim2.new(0, 2, 0, 2)
+        dot.Position         = UDim2.new(1, -1 - (i - 1) * 3, 1, -1 - (i - 1) * 3)
+        dot.ZIndex           = 11
     end
 
     local isResizing       = false
@@ -1044,7 +1047,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     ClosePage.BackgroundTransparency = 1
     ClosePage.BorderColor3           = Color3.fromRGB(20, 20, 20)
     ClosePage.Position               = UDim2.new(0.5, 0, 0.5, 0)
-    ClosePage.Size                   = UDim2.new(0, 425, 0, 210)
+    ClosePage.Size                   = UDim2.new(1, 0, 1, 0)
     ClosePage.Visible                = false
     ClosePage.ZIndex                 = 2
     ClosePage.AutoButtonColor        = false
@@ -1165,8 +1168,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     BlurFrame.BackgroundColor3       = Color3.fromRGB(20, 20, 20)
     BlurFrame.BackgroundTransparency = 1
     BlurFrame.BorderColor3           = Color3.fromRGB(20, 20, 20)
-    BlurFrame.Position               = UDim2.new(0, 0, 0.137999997, 0)
-    BlurFrame.Size                   = UDim2.new(0, 425, 0, 180)
+    BlurFrame.Position               = UDim2.new(0, 0, 0, 30)
+    BlurFrame.Size                   = UDim2.new(1, 0, 1, -30)
     BlurFrame.Visible                = false
     BlurFrame.ZIndex                 = 3
     BlurFrame.AutoButtonColor        = false
@@ -1183,8 +1186,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     helpScrollFrame.BackgroundTransparency = 1
     helpScrollFrame.BorderSizePixel        = 0
     helpScrollFrame.ClipsDescendants       = false
-    helpScrollFrame.Position               = UDim2.new(0.029000029, 0, 0.755722404, 0)
-    helpScrollFrame.Size                   = UDim2.new(0, 400, 0, 38)
+    helpScrollFrame.Position               = UDim2.new(0, 12, 1, -50)
+    helpScrollFrame.Size                   = UDim2.new(1, -24, 0, 38)
     helpScrollFrame.ZIndex                 = 3
     helpScrollFrame.BottomImage            = ""
     helpScrollFrame.CanvasSize             = UDim2.new(0, 0, 0, 0)
@@ -1196,7 +1199,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     HelpTextLabel.BackgroundTransparency = 0.1
     HelpTextLabel.BorderColor3           = Color3.fromRGB(33, 33, 33)
     HelpTextLabel.Position               = UDim2.new(0, 0, 0.0521737821, 0)
-    HelpTextLabel.Size                   = UDim2.new(0, 400, 0, 30)
+    HelpTextLabel.Size                   = UDim2.new(1, 0, 0, 30)
     HelpTextLabel.ZIndex                 = 3
     HelpTextLabel.Font                   = Enum.Font.Gotham
     HelpTextLabel.Text                   = ""
@@ -1211,8 +1214,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     helpPattern.AnchorPoint            = Vector2.new(0.5, 0.5)
     helpPattern.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
     helpPattern.BackgroundTransparency = 1
-    helpPattern.Position               = UDim2.new(0.501874983, 0, 0.508333325, 0)
-    helpPattern.Size                   = UDim2.new(0, 398, 0, 29)
+    helpPattern.Position               = UDim2.new(0.5, 0, 0.5, 0)
+    helpPattern.Size                   = UDim2.new(1, -2, 0, 29)
     helpPattern.ZIndex                 = -1
     helpPattern.Image                  = "rbxassetid://2151741365"
     helpPattern.ImageTransparency      = 0.9
@@ -1228,8 +1231,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     mainPattern.Parent                 = MainFrame
     mainPattern.BackgroundColor3       = Color3.fromRGB(255, 255, 255)
     mainPattern.BackgroundTransparency = 1
-    mainPattern.Position               = UDim2.new(-0.00117647054, 0, -0.00476190494, 0)
-    mainPattern.Size                   = UDim2.new(0, 425, 0, 210)
+    mainPattern.Position               = UDim2.new(0, 0, 0, 0)
+    mainPattern.Size                   = UDim2.new(1, 0, 1, 0)
     mainPattern.ZIndex                 = -1
     mainPattern.Image                  = "rbxassetid://2151741365"
     mainPattern.ImageTransparency      = 0.6
@@ -1244,8 +1247,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line1.BackgroundTransparency = 1
     line1.BorderColor3           = Color3.fromRGB(0, 0, 0)
     line1.BorderSizePixel        = 0
-    line1.Position               = UDim2.new(0, 0, 0.138095245, 0)
-    line1.Size                   = UDim2.new(0, 425, 0, 0)
+    line1.Position               = UDim2.new(0, 0, 0, 30)
+    line1.Size                   = UDim2.new(1, 0, 0, 0)
     line1Stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
     line1Stroke.LineJoinMode     = Enum.LineJoinMode.Bevel
     line1Stroke.Color            = Color3.fromRGB(49, 49, 49)
@@ -1259,8 +1262,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line2.BackgroundTransparency = 1
     line2.BorderColor3           = Color3.fromRGB(0, 0, 0)
     line2.BorderSizePixel        = 0
-    line2.Position               = UDim2.new(0.258823544, 0, 0.13333334, 0)
-    line2.Size                   = UDim2.new(0, 0, 0, 182)
+    line2.Position               = UDim2.new(0, 110, 0, 30)
+    line2.Size                   = UDim2.new(0, 0, 1, -30)
     line2Stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
     line2Stroke.LineJoinMode     = Enum.LineJoinMode.Bevel
     line2Stroke.Color            = Color3.fromRGB(49, 49, 49)
@@ -1274,7 +1277,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     line3.BackgroundTransparency = 1
     line3.BorderColor3           = Color3.fromRGB(0, 0, 0)
     line3.BorderSizePixel        = 0
-    line3.Position               = UDim2.new(0, 0, 0.857485235, 0)
+    line3.Position               = UDim2.new(0, 0, 1, -26)
     line3.Size                   = UDim2.new(0, 110, 0, 0)
     line3Stroke.ApplyStrokeMode  = Enum.ApplyStrokeMode.Border
     line3Stroke.LineJoinMode     = Enum.LineJoinMode.Bevel
@@ -1288,7 +1291,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     Settings.Name               = "Settings"
     Settings.Parent             = MainFrame
     Settings.BackgroundTransparency = 1
-    Settings.Position           = UDim2.new(0.0149999997, 0, 0.883, 0)
+    Settings.Position           = UDim2.new(0, 6, 1, -26)
     Settings.Size               = UDim2.new(0, 20, 0, 20)
     Settings.ZIndex             = 2
     Settings.Image              = "rbxassetid://3926307971"
@@ -1315,7 +1318,7 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
     versionLabel.BackgroundColor3   = Color3.fromRGB(20, 20, 20)
     versionLabel.BackgroundTransparency = 1
     versionLabel.BorderColor3       = Color3.fromRGB(20, 20, 20)
-    versionLabel.Position           = UDim2.new(0.162352934, 0, 0.883, 0)
+    versionLabel.Position           = UDim2.new(0, 30, 1, -25)
     versionLabel.Size               = UDim2.new(0, 41, 0, 23)
     versionLabel.Font               = Enum.Font.Gotham
     versionLabel.Text               = subtitle or ""
@@ -1341,8 +1344,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
             newTabPage.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
             newTabPage.BackgroundTransparency = 0.5
             newTabPage.BorderColor3           = Color3.fromRGB(30, 30, 30)
-            newTabPage.Position               = UDim2.new(0.273000062, 0, 0.160000026, 0)
-            newTabPage.Size                   = UDim2.new(0, 303, 0, 170)
+            newTabPage.Position               = UDim2.new(0, 113, 0, 34)
+            newTabPage.Size                   = UDim2.new(1, -122, 1, -41)
             newTabPage.Visible                = false
             newTabPage.CanvasSize             = UDim2.new(0, 0, 2.20000005, 0)
             newTabPage.ScrollBarThickness     = 0
@@ -1412,15 +1415,15 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                         NewNotify = function(_, message, duration)
                             task.spawn(function()
                                 duration = duration or 5
-                                local notifyShadow       = Instance.new("ImageLabel")
-                                local notifyFrame        = Instance.new("Frame")
-                                local notifyFrameCorner  = Instance.new("UICorner")
-                                local notifyText         = Instance.new("TextLabel")
-                                local timerBar           = Instance.new("Frame")
-                                local timerBarCorner     = Instance.new("UICorner")
-                                local patternImage       = Instance.new("ImageLabel")
-                                local notifyStroke       = Instance.new("UIStroke")
-                                local belowTimerBar      = Instance.new("Frame")
+                                local notifyShadow        = Instance.new("ImageLabel")
+                                local notifyFrame         = Instance.new("Frame")
+                                local notifyFrameCorner   = Instance.new("UICorner")
+                                local notifyText          = Instance.new("TextLabel")
+                                local timerBar            = Instance.new("Frame")
+                                local timerBarCorner      = Instance.new("UICorner")
+                                local patternImage        = Instance.new("ImageLabel")
+                                local notifyStroke        = Instance.new("UIStroke")
+                                local belowTimerBar       = Instance.new("Frame")
                                 local belowTimerBarCorner = Instance.new("UICorner")
 
                                 notifyShadow.Name                   = "NotifyShadow"
@@ -1488,15 +1491,15 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                                 notifyStroke.Transparency    = 0.2
                                 notifyStroke.Parent          = notifyFrame
 
-                                belowTimerBar.Name                   = "BelowTimeBar"
-                                belowTimerBar.Parent                 = notifyFrame
-                                belowTimerBar.BackgroundColor3       = Color3.fromRGB(67, 67, 67)
-                                belowTimerBar.BorderColor3           = Color3.fromRGB(67, 67, 67)
-                                belowTimerBar.AnchorPoint            = Vector2.new(0.5, 0)
-                                belowTimerBar.Position               = UDim2.new(0.5, 0, 0.906666696, 0)
-                                belowTimerBar.Size                   = UDim2.new(0, 219, 0, 4)
-                                belowTimerBarCorner.CornerRadius     = UDim.new(0, 4)
-                                belowTimerBarCorner.Parent           = belowTimerBar
+                                belowTimerBar.Name               = "BelowTimeBar"
+                                belowTimerBar.Parent             = notifyFrame
+                                belowTimerBar.BackgroundColor3   = Color3.fromRGB(67, 67, 67)
+                                belowTimerBar.BorderColor3       = Color3.fromRGB(67, 67, 67)
+                                belowTimerBar.AnchorPoint        = Vector2.new(0.5, 0)
+                                belowTimerBar.Position           = UDim2.new(0.5, 0, 0.906666696, 0)
+                                belowTimerBar.Size               = UDim2.new(0, 219, 0, 4)
+                                belowTimerBarCorner.CornerRadius = UDim.new(0, 4)
+                                belowTimerBarCorner.Parent       = belowTimerBar
 
                                 tweenService:Create(notifyShadow, TweenInfo.new(0.5), {
                                     Position = UDim2.new(1, 0, 1, 0)
@@ -2346,8 +2349,8 @@ function IceHub.CreateMain(hubName, gameName, subtitle)
                             waitingFrame.BackgroundColor3       = Color3.fromRGB(30, 30, 30)
                             waitingFrame.BorderColor3           = Color3.fromRGB(30, 30, 30)
                             waitingFrame.BorderSizePixel        = 0
-                            waitingFrame.Position               = UDim2.new(0, 0, -0.00476190494, 0)
-                            waitingFrame.Size                   = UDim2.new(0, 425, 0, 211)
+                            waitingFrame.Position               = UDim2.new(0, 0, 0, 0)
+                            waitingFrame.Size                   = UDim2.new(1, 0, 1, 0)
                             waitingFrame.ZIndex                 = 5
                             waitingFrame.AutoButtonColor        = false
                             waitingFrame.Font                   = Enum.Font.SourceSans
