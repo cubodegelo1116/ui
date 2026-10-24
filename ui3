@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.7            ║
+	║  Version: 2.9            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.8-UI2-COMPAT"
+local CURRENT_VERSION = "2.9-UI2-COMPAT"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -2776,11 +2776,274 @@ function UI.CreateWindow(title, subtitle)
 	-- Maps the old CreateMain -> NewTab -> NewSection API to this library.
 	-- Both colon calls (obj:Method(...)) and dot calls (obj.Method(...)) work.
 	-- ════════════════════════════════════════════════════════════
-	local function UnpackCompatArgs(owner, a, b, c, d, e)
+	local function UnpackCompatArgs(owner, a, b, c, d, e, f)
 		if a == owner then
-			return b, c, d, e
+			return b, c, d, e, f
 		end
-		return a, b, c, d
+		return a, b, c, d, e
+	end
+
+	-- Searchable dropdown matching the old UI2 NewSearchDropdown API.
+	-- The search field filters options while typing; Refresh() replaces the list.
+	local function CreateCompatSearchDropdown(page, title, searchPlaceholder, items, callback)
+		if not page then error("Page required for NewSearchDropdown", 2) end
+		title = ValidateString(title, true) or "Dropdown"
+		searchPlaceholder = ValidateString(searchPlaceholder, true) or "Pesquisar..."
+		callback = typeof(callback) == "function" and callback or nil
+
+		local currentOptions = {}
+		local selectedValue = nil
+		local optionButtons = {}
+		local isOpen = false
+		local function NormalizeOptions(values)
+			local normalized = {}
+			if typeof(values) == "table" then
+				for _, value in ipairs(values) do
+					if value ~= nil then table.insert(normalized, tostring(value)) end
+				end
+			end
+			return normalized
+		end
+		currentOptions = NormalizeOptions(items)
+		selectedValue = currentOptions[1]
+
+		local Row = Instance.new("Frame")
+		Row.Name = title .. "SearchDropdown"
+		Row.Size = UDim2.new(1, -24, 0, 32)
+		Row.BackgroundTransparency = 1
+		Row.Parent = page
+
+		local Button = Instance.new("TextButton")
+		Button.Name = "SearchDropdownButton"
+		Button.Size = UDim2.new(1, 0, 1, 0)
+		Button.BackgroundColor3 = Theme.Button
+		Button.BorderSizePixel = 0
+		Button.TextColor3 = Theme.Text
+		Button.TextSize = 13
+		Button.Font = Enum.Font.Gotham
+		Button.TextXAlignment = Enum.TextXAlignment.Left
+		Button.AutoButtonColor = false
+		Button.TextStrokeTransparency = 1
+		Button.Parent = Row
+		Button:SetAttribute("ThemeRole", "Button")
+		local ButtonCorner = Instance.new("UICorner")
+		ButtonCorner.CornerRadius = UDim.new(0, 3)
+		ButtonCorner.Parent = Button
+		local ButtonStroke = Instance.new("UIStroke")
+		ButtonStroke.Color = Theme.Border
+		ButtonStroke.Thickness = 1
+		ButtonStroke.Parent = Button
+		ButtonStroke:SetAttribute("ThemeRole", "Border")
+
+		local Panel = Instance.new("Frame")
+		Panel.Name = "SearchDropdownPanel"
+		Panel.Visible = false
+		Panel.BackgroundColor3 = Theme.TitleBar
+		Panel.BorderSizePixel = 0
+		Panel.ClipsDescendants = true
+		Panel.ZIndex = 80
+		Panel.Parent = ScreenGui
+		Panel:SetAttribute("ThemeRole", "TitleBar")
+		local PanelCorner = Instance.new("UICorner")
+		PanelCorner.CornerRadius = UDim.new(0, 4)
+		PanelCorner.Parent = Panel
+		local PanelStroke = Instance.new("UIStroke")
+		PanelStroke.Color = Theme.Border
+		PanelStroke.Thickness = 1
+		PanelStroke.Parent = Panel
+		PanelStroke:SetAttribute("ThemeRole", "Border")
+
+		local SearchBox = Instance.new("TextBox")
+		SearchBox.Name = "SearchBox"
+		SearchBox.Position = UDim2.new(0, 5, 0, 5)
+		SearchBox.Size = UDim2.new(1, -10, 0, 28)
+		SearchBox.BackgroundColor3 = Theme.Button
+		SearchBox.BorderSizePixel = 0
+		SearchBox.TextColor3 = Theme.Text
+		SearchBox.PlaceholderColor3 = Theme.TextDark
+		SearchBox.PlaceholderText = searchPlaceholder
+		SearchBox.Text = ""
+		SearchBox.ClearTextOnFocus = false
+		SearchBox.Font = Enum.Font.Gotham
+		SearchBox.TextSize = 12
+		SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+		SearchBox.ZIndex = 81
+		SearchBox.Parent = Panel
+		SearchBox:SetAttribute("ThemeRole", "Button")
+		SearchBox.TextStrokeTransparency = 1
+		local SearchPadding = Instance.new("UIPadding")
+		SearchPadding.PaddingLeft = UDim.new(0, 8)
+		SearchPadding.Parent = SearchBox
+		local SearchCorner = Instance.new("UICorner")
+		SearchCorner.CornerRadius = UDim.new(0, 3)
+		SearchCorner.Parent = SearchBox
+		local SearchStroke = Instance.new("UIStroke")
+		SearchStroke.Color = Theme.Border
+		SearchStroke.Thickness = 1
+		SearchStroke.Parent = SearchBox
+		SearchStroke:SetAttribute("ThemeRole", "Border")
+
+		local List = Instance.new("ScrollingFrame")
+		List.Name = "Options"
+		List.Position = UDim2.new(0, 5, 0, 38)
+		List.Size = UDim2.new(1, -10, 1, -43)
+		List.BackgroundTransparency = 1
+		List.BorderSizePixel = 0
+		List.ScrollBarThickness = 3
+		List.ScrollBarImageColor3 = Theme.Border
+		List.ScrollingDirection = Enum.ScrollingDirection.Y
+		List.CanvasSize = UDim2.new(0, 0, 0, 0)
+		List.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		List.ZIndex = 81
+		List.Parent = Panel
+		local ListLayout = Instance.new("UIListLayout")
+		ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		ListLayout.Padding = UDim.new(0, 3)
+		ListLayout.Parent = List
+		local ListPadding = Instance.new("UIPadding")
+		ListPadding.PaddingTop = UDim.new(0, 2)
+		ListPadding.PaddingBottom = UDim.new(0, 2)
+		ListPadding.Parent = List
+
+		local function UpdateButtonText()
+			Button.Text = "  " .. title .. ": " .. (selectedValue and tostring(selectedValue) or "Nenhum")
+		end
+
+		local function UpdateFilter()
+			local query = string.lower(SearchBox.Text or "")
+			for value, optionButton in pairs(optionButtons) do
+				optionButton.Visible = query == "" or string.find(string.lower(value), query, 1, true) ~= nil
+			end
+			task.defer(function()
+				if List and List.Parent then
+					List.CanvasPosition = Vector2.new(0, 0)
+					List.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 5)
+				end
+			end)
+		end
+
+		local function RebuildOptions()
+			for _, child in ipairs(List:GetChildren()) do
+				if child:IsA("TextButton") then child:Destroy() end
+			end
+			table.clear(optionButtons)
+			for index, value in ipairs(currentOptions) do
+				local Option = Instance.new("TextButton")
+				Option.Name = "Option"
+				Option.LayoutOrder = index
+				Option.Size = UDim2.new(1, -2, 0, 27)
+				Option.BackgroundColor3 = Theme.Button
+				Option.BorderSizePixel = 0
+				Option.Text = "  " .. value
+				Option.TextColor3 = Theme.Text
+				Option.TextSize = 12
+				Option.Font = Enum.Font.Gotham
+				Option.TextXAlignment = Enum.TextXAlignment.Left
+				Option.AutoButtonColor = false
+				Option.ZIndex = 82
+				Option.TextStrokeTransparency = 1
+				Option.Parent = List
+				Option:SetAttribute("ThemeRole", "Button")
+				local OptionCorner = Instance.new("UICorner")
+				OptionCorner.CornerRadius = UDim.new(0, 3)
+				OptionCorner.Parent = Option
+				optionButtons[value] = Option
+				Option.MouseButton1Click:Connect(function()
+					selectedValue = value
+					UpdateButtonText()
+					Panel.Visible = false
+					isOpen = false
+					if callback then
+						local ok, err = pcall(callback, value)
+						if not ok then warn("[PDDEV] NewSearchDropdown callback error: " .. tostring(err)) end
+					end
+				end)
+			end
+			UpdateFilter()
+		end
+
+		local function UpdatePanelPosition()
+			if not (Button and Button.Parent and Panel and Panel.Parent) then return end
+			local pos = Button.AbsolutePosition
+			local size = Button.AbsoluteSize
+			local width = math.max(size.X, 220)
+			Panel.Position = UDim2.fromOffset(pos.X, pos.Y + size.Y + 3)
+			Panel.Size = UDim2.fromOffset(width, 184)
+		end
+
+		Button.MouseButton1Click:Connect(function()
+			isOpen = not isOpen
+			if isOpen then
+				UpdatePanelPosition()
+				Panel.Visible = true
+				UpdateFilter()
+			else
+				Panel.Visible = false
+			end
+		end)
+		SearchBox:GetPropertyChangedSignal("Text"):Connect(UpdateFilter)
+		ConnectGlobal(UIS.InputBegan, function(input)
+			if not isOpen or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			local point = input.Position
+			local bp, bs = Button.AbsolutePosition, Button.AbsoluteSize
+			local pp, ps = Panel.AbsolutePosition, Panel.AbsoluteSize
+			local overButton = point.X >= bp.X and point.X <= bp.X + bs.X and point.Y >= bp.Y and point.Y <= bp.Y + bs.Y
+			local overPanel = point.X >= pp.X and point.X <= pp.X + ps.X and point.Y >= pp.Y and point.Y <= pp.Y + ps.Y
+			if not overButton and not overPanel then
+				isOpen = false
+				Panel.Visible = false
+			end
+		end)
+		Main:GetPropertyChangedSignal("Position"):Connect(UpdatePanelPosition)
+		Main:GetPropertyChangedSignal("Size"):Connect(UpdatePanelPosition)
+
+		local DropdownAPI = { Instance = Row, Button = Button, SearchBox = SearchBox, Panel = Panel }
+		function DropdownAPI.SetOptions(newOptions)
+			if typeof(newOptions) ~= "table" then return false end
+			currentOptions = NormalizeOptions(newOptions)
+			if not table.find(currentOptions, selectedValue) then selectedValue = currentOptions[1] end
+			UpdateButtonText()
+			RebuildOptions()
+			return true
+		end
+		function DropdownAPI.Refresh(a, b)
+			local newOptions = (a == DropdownAPI) and b or a
+			return DropdownAPI.SetOptions(newOptions or {})
+		end
+		function DropdownAPI.SetValue(value)
+			value = tostring(value)
+			if not table.find(currentOptions, value) then return false end
+			selectedValue = value
+			UpdateButtonText()
+			if callback then
+				local ok, err = pcall(callback, value)
+				if not ok then warn("[PDDEV] NewSearchDropdown callback error: " .. tostring(err)) end
+			end
+			return true
+		end
+		function DropdownAPI.GetValue() return selectedValue end
+		function DropdownAPI.GetOptions() return CopyTable(currentOptions) end
+		UpdateButtonText()
+		RebuildOptions()
+		return DropdownAPI
+	end
+
+	local function CompatNewSearchDropdown(owner, a1, a2, a3, a4, a5, a6)
+		local dropdownLabel, helpText, placeholder, items, callback
+		if a1 == owner then
+			dropdownLabel, helpText, placeholder, items, callback = a2, a3, a4, a5, a6
+		else
+			dropdownLabel, helpText, placeholder, items, callback = a1, a2, a3, a4, a5
+		end
+		-- Also tolerate a shorter form: NewSearchDropdown(label, placeholder, items, callback).
+		if typeof(placeholder) == "table" then
+			callback = typeof(items) == "function" and items or callback
+			items = placeholder
+			placeholder = helpText
+		end
+		local page = owner and owner.Page
+		if not page and owner then page = owner._compatPage end
+		return CreateCompatSearchDropdown(page, dropdownLabel, placeholder, items, callback)
 	end
 
 	local compatThemeName = "Default"
@@ -2798,8 +3061,16 @@ function UI.CreateWindow(title, subtitle)
 			tab.Page.Name = tabName
 		end
 
+		function tab.NewSearchDropdown(a1, a2, a3, a4, a5, a6)
+			return CompatNewSearchDropdown(tab, a1, a2, a3, a4, a5, a6)
+		end
+
 		function tab.NewSection()
-			local section = {}
+			local section = { _compatPage = tab.Page }
+
+			function section.NewSearchDropdown(a1, a2, a3, a4, a5, a6)
+				return CompatNewSearchDropdown(section, a1, a2, a3, a4, a5, a6)
+			end
 
 			function section.NewNotify(a1, a2, a3)
 				local message, duration = UnpackCompatArgs(section, a1, a2, a3)
