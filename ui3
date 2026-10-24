@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.4            ║
+	║  Version: 2.5            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.4"
+local CURRENT_VERSION = "2.5"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -74,6 +74,8 @@ function UI.CreateWindow(title, subtitle)
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local trackedConnections = {}
+	local activeColorPickerClose = nil
+	local themeRefreshQueued = false
 
 	local function ConnectGlobal(signal, callback)
 		local connection = signal:Connect(callback)
@@ -211,20 +213,34 @@ function UI.CreateWindow(title, subtitle)
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
 
-	-- Completely remove text outlines/glow effects from every text control.
-	-- TextStrokeTransparency alone is not enough if another script inserts UIStroke/UIGradient.
+	-- Normalize text styling immediately; don't remove ordinary UIStroke borders from buttons/tabs.
 	local function RemoveTextHighlight(object)
 		if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then
 			return
 		end
 
 		object.TextStrokeTransparency = 1
-		object.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+		object.TextStrokeColor3 = Color3.new(0, 0, 0)
+		object.RichText = false
 		object:SetAttribute("PDDEV_NoTextStroke", true)
 
 		local function RemoveTextEffect(child)
-			if child:IsA("UIStroke") or child:IsA("UIGradient") then
+			-- A UIGradient directly on a text object can create colored/bright glyphs.
+			if child:IsA("UIGradient") or child:GetAttribute("PDDEV_TextGlow") == true then
 				child:Destroy()
+				return
+			end
+			-- Preserve explicitly tagged component borders; remove untagged strokes
+			-- attached directly to text controls, which are often used as fake text glow.
+			if child:IsA("UIStroke") then
+				task.defer(function()
+					if child.Parent == object then
+						local role = child:GetAttribute("ThemeRole")
+						if role ~= "Border" and role ~= "TabBorder" and child:GetAttribute("PDDEV_KeepTextControlStroke") ~= true then
+							child:Destroy()
+						end
+					end
+				end)
 			end
 		end
 
@@ -241,6 +257,17 @@ function UI.CreateWindow(title, subtitle)
 			end)
 			object.ChildAdded:Connect(RemoveTextEffect)
 		end
+	end
+
+	local function QueueThemeRefresh()
+		if themeRefreshQueued then return end
+		themeRefreshQueued = true
+		task.defer(function()
+			themeRefreshQueued = false
+			if ScreenGui.Parent and ApplyTheme then
+				ApplyTheme()
+			end
+		end)
 	end
 
 	-- Wrap by measured pixel width, including very long words without spaces.
@@ -306,10 +333,71 @@ function UI.CreateWindow(title, subtitle)
 		return table.concat(lines, "\n")
 	end
 
+	-- Manually wrap labels by their current pixel width. This is reliable for
+	-- labels inside ScrollingFrames and also responds when the main window resizes.
+	local function SetupResponsiveText(label, initialText, minimumHeight)
+		local rawText = tostring(initialText or "")
+		local formatting = false
+		local lastFormattedText = nil
+		local lastWidth = -1
+
+		local function Refresh(force)
+			if not label.Parent then return end
+			local width = label.AbsoluteSize.X
+			if width <= 1 then return end
+			if not force and math.abs(width - lastWidth) < 1 then return end
+			lastWidth = width
+
+			local wrapped = WrapTextToWidth(rawText, label.Font, label.TextSize, width)
+			local bounds = TextService:GetTextSize(
+				wrapped,
+				label.TextSize,
+				label.Font,
+				Vector2.new(width, 10000)
+			)
+			local height = math.max(tonumber(minimumHeight) or (label.TextSize + 4), math.ceil(bounds.Y) + 3)
+			local oldSize = label.Size
+			formatting = true
+			label.TextWrapped = false -- text is explicitly wrapped above, preventing overflow
+			label.TextTruncate = Enum.TextTruncate.None
+			lastFormattedText = wrapped
+			label.Text = wrapped
+			label.Size = UDim2.new(oldSize.X.Scale, oldSize.X.Offset, 0, height)
+			formatting = false
+		end
+
+		label:GetPropertyChangedSignal("Text"):Connect(function()
+			if formatting or label.Text == lastFormattedText then return end
+			rawText = label.Text
+			lastWidth = -1
+			task.defer(function() Refresh(true) end)
+		end)
+		label:GetPropertyChangedSignal("TextSize"):Connect(function()
+			lastWidth = -1
+			task.defer(function() Refresh(true) end)
+		end)
+		label:GetPropertyChangedSignal("Font"):Connect(function()
+			lastWidth = -1
+			task.defer(function() Refresh(true) end)
+		end)
+		label:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+			task.defer(function() Refresh(false) end)
+		end)
+		task.defer(function() Refresh(true) end)
+		return function(newText)
+			rawText = tostring(newText or "")
+			lastWidth = -1
+			Refresh(true)
+		end
+	end
+
 	for _, object in ipairs(ScreenGui:GetDescendants()) do
 		RemoveTextHighlight(object)
 	end
-	ScreenGui.DescendantAdded:Connect(RemoveTextHighlight)
+	ScreenGui.DescendantAdded:Connect(function(object)
+		RemoveTextHighlight(object)
+		QueueThemeRefresh()
+	end)
 
 	ScreenGui.Destroying:Connect(function()
 		for _, connection in ipairs(trackedConnections) do
@@ -619,7 +707,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
-		Btn.Size = UDim2.new(1, 0, 0, 32)
+		Btn.Size = UDim2.new(1, -24, 0, 32)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
@@ -667,7 +755,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = text
-		Frame.Size = UDim2.new(1, 0, 0, 32)
+		Frame.Size = UDim2.new(1, -24, 0, 32)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -761,7 +849,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = text
-		Frame.Size = UDim2.new(1, 0, 0, 46)
+		Frame.Size = UDim2.new(1, -24, 0, 46)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -908,17 +996,20 @@ function UI.CreateWindow(title, subtitle)
 
 		local Label = Instance.new("TextLabel")
 		Label.Name = "TextLabel"
-		Label.Size = UDim2.new(1, 0, 0, 20)
+		Label.Size = UDim2.new(1, -24, 0, 18)
 		Label.BackgroundTransparency = 1
 		Label.Text = text
 		Label.TextColor3 = Theme.Text
 		Label.TextSize = 13
 		Label.Font = Enum.Font.GothamMedium
 		Label.TextXAlignment = Enum.TextXAlignment.Left
-		Label.TextYAlignment = Enum.TextYAlignment.Center
+		Label.TextYAlignment = Enum.TextYAlignment.Top
+		Label.TextWrapped = false
+		Label.TextTruncate = Enum.TextTruncate.None
 		Label.Parent = page
 		Label:SetAttribute("ThemeRole", "Text")
-		Label.TextStrokeTransparency = 1
+		RemoveTextHighlight(Label)
+		SetupResponsiveText(Label, text, 18)
 
 		return Label
 	end
@@ -934,11 +1025,12 @@ function UI.CreateWindow(title, subtitle)
 
 		local Box = Instance.new("Frame")
 		Box.Name = title
-		-- Leave room for the page's 12px left/right padding so the card stays in bounds.
+		-- Page already has 12px horizontal padding, so -24 fills the remaining content width.
 		Box.Size = UDim2.new(1, -24, 0, 0)
 		Box.AutomaticSize = Enum.AutomaticSize.Y
 		Box.BackgroundColor3 = Theme.Button
 		Box.BorderSizePixel = 0
+		Box.ClipsDescendants = false
 		Box.Parent = page
 		Box:SetAttribute("ThemeRole", "Button")
 
@@ -961,9 +1053,11 @@ function UI.CreateWindow(title, subtitle)
 
 		local Layout = Instance.new("UIListLayout")
 		Layout.Padding = UDim.new(0, 4)
+		Layout.SortOrder = Enum.SortOrder.LayoutOrder
 		Layout.Parent = Box
 
 		local TitleLabel = Instance.new("TextLabel")
+		TitleLabel.Name = "ParagraphTitle"
 		TitleLabel.Size = UDim2.new(1, -24, 0, 18)
 		TitleLabel.BackgroundTransparency = 1
 		TitleLabel.Text = title
@@ -971,14 +1065,15 @@ function UI.CreateWindow(title, subtitle)
 		TitleLabel.TextSize = 13
 		TitleLabel.Font = Enum.Font.GothamMedium
 		TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-		TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
+		TitleLabel.TextYAlignment = Enum.TextYAlignment.Top
 		TitleLabel.Parent = Box
 		TitleLabel:SetAttribute("ThemeRole", "Text")
-		TitleLabel.TextStrokeTransparency = 1
+		RemoveTextHighlight(TitleLabel)
+		SetupResponsiveText(TitleLabel, title, 18)
 
 		local TextLabel = Instance.new("TextLabel")
+		TextLabel.Name = "ParagraphText"
 		TextLabel.Size = UDim2.new(1, -24, 0, 16)
-		TextLabel.AutomaticSize = Enum.AutomaticSize.None
 		TextLabel.BackgroundTransparency = 1
 		TextLabel.Text = text
 		TextLabel.TextColor3 = Theme.TextDark
@@ -986,41 +1081,13 @@ function UI.CreateWindow(title, subtitle)
 		TextLabel.Font = Enum.Font.Gotham
 		TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 		TextLabel.TextYAlignment = Enum.TextYAlignment.Top
-		TextLabel.TextWrapped = true
+		TextLabel.TextWrapped = false
 		TextLabel.TextTruncate = Enum.TextTruncate.None
 		TextLabel.ClipsDescendants = false
 		TextLabel.Parent = Box
 		TextLabel:SetAttribute("ThemeRole", "TextDark")
-		TextLabel.TextStrokeTransparency = 1
-
-		local lastMeasuredWidth = 0
-		local function RefreshParagraphLayout()
-			if not TextLabel.Parent then return end
-			local width = TextLabel.AbsoluteSize.X
-			if width <= 1 then
-				width = Box.AbsoluteSize.X - Padding.PaddingLeft.Offset - Padding.PaddingRight.Offset
-			end
-			if width <= 1 or math.abs(width - lastMeasuredWidth) < 1 then return end
-			lastMeasuredWidth = width
-
-			local wrappedText = WrapTextToWidth(text, TextLabel.Font, TextLabel.TextSize, width)
-			if TextLabel.Text ~= wrappedText then TextLabel.Text = wrappedText end
-			local bounds = TextService:GetTextSize(
-				wrappedText,
-				TextLabel.TextSize,
-				TextLabel.Font,
-				Vector2.new(width, 10000)
-			)
-			TextLabel.Size = UDim2.new(1, -24, 0, math.max(TextLabel.TextSize + 3, math.ceil(bounds.Y) + 3))
-		end
-
-		TextLabel:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-			task.defer(RefreshParagraphLayout)
-		end)
-		Box:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-			task.defer(RefreshParagraphLayout)
-		end)
-		task.defer(RefreshParagraphLayout)
+		RemoveTextHighlight(TextLabel)
+		SetupResponsiveText(TextLabel, text, 15)
 
 		return Box
 	end
@@ -1036,7 +1103,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = text
-		Frame.Size = UDim2.new(1, 0, 0, 32)
+		Frame.Size = UDim2.new(1, -24, 0, 32)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -1286,7 +1353,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
-		Btn.Size = UDim2.new(1, 0, 0, 32)
+		Btn.Size = UDim2.new(1, -24, 0, 32)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
@@ -1363,7 +1430,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = "TextBox"
-		Frame.Size = UDim2.new(1, 0, 0, 32)
+		Frame.Size = UDim2.new(1, -24, 0, 32)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -1435,7 +1502,7 @@ function UI.CreateWindow(title, subtitle)
 
         local Row = Instance.new("Frame")
         Row.Name = text .. "_ColorPicker"
-        Row.Size = UDim2.new(1, 0, 0, 34)
+        Row.Size = UDim2.new(1, -24, 0, 34)
         Row.BackgroundTransparency = 1
         Row.Parent = page
 
@@ -1503,6 +1570,21 @@ function UI.CreateWindow(title, subtitle)
         HexLabel:SetAttribute("ThemeRole", "Text")
         HexLabel.ZIndex = PickerButton.ZIndex + 1
 
+        -- Modal shield sits over every control while the picker is open, preventing click-through.
+        local ModalShield = Instance.new("TextButton")
+        ModalShield.Name = "ColorPickerModalShield"
+        ModalShield.Size = UDim2.fromScale(1, 1)
+        ModalShield.Position = UDim2.fromScale(0, 0)
+        ModalShield.BackgroundTransparency = 1
+        ModalShield.BorderSizePixel = 0
+        ModalShield.Text = ""
+        ModalShield.AutoButtonColor = false
+        ModalShield.Active = true
+        ModalShield.Visible = false
+        ModalShield.ZIndex = 59
+        ModalShield.Parent = ScreenGui
+        ModalShield:SetAttribute("PDDEV_ModalShield", true)
+
         -- Photoshop-style HSV picker: saturation/value square + rainbow hue strip.
         local Popup = Instance.new("Frame")
         Popup.Name = "ColorPickerPopup"
@@ -1510,6 +1592,7 @@ function UI.CreateWindow(title, subtitle)
         Popup.BackgroundColor3 = Theme.TitleBar
         Popup.BorderSizePixel = 0
         Popup.Visible = false
+        Popup.Active = true
         Popup.ZIndex = 60
         Popup.Parent = ScreenGui
         Popup:SetAttribute("ThemeRole", "TitleBar")
@@ -1779,10 +1862,30 @@ function UI.CreateWindow(title, subtitle)
             Popup.Position = UDim2.fromOffset(x, y)
         end
 
-        local function SetOpen(open)
-            Popup.Visible = open == true and Main.Visible and page.Visible
-            if Popup.Visible then UpdatePopupPosition() end
+        local SetOpen
+        SetOpen = function(open)
+            if open == true then
+                if activeColorPickerClose and activeColorPickerClose ~= SetOpen then
+                    activeColorPickerClose(false)
+                end
+                Popup.Visible = Main.Visible and page.Visible
+                ModalShield.Visible = Popup.Visible
+                if Popup.Visible then
+                    activeColorPickerClose = SetOpen
+                    UpdatePopupPosition()
+                end
+            else
+                Popup.Visible = false
+                ModalShield.Visible = false
+                if activeColorPickerClose == SetOpen then
+                    activeColorPickerClose = nil
+                end
+            end
         end
+
+        ModalShield.MouseButton1Click:Connect(function()
+            SetOpen(false)
+        end)
 
         page:GetPropertyChangedSignal("Visible"):Connect(function()
             if not page.Visible then SetOpen(false) end
@@ -1810,17 +1913,8 @@ function UI.CreateWindow(title, subtitle)
                 activeDrag = nil
             end
         end)
-        ConnectGlobal(UIS.InputBegan, function(input)
-            if not Popup.Visible or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-            local p = input.Position
-            local popupPos, popupSize = Popup.AbsolutePosition, Popup.AbsoluteSize
-            local btnPos, btnSize = PickerButton.AbsolutePosition, PickerButton.AbsoluteSize
-            local insidePopup = p.X >= popupPos.X and p.X <= popupPos.X + popupSize.X
-                and p.Y >= popupPos.Y and p.Y <= popupPos.Y + popupSize.Y
-            local insideButton = p.X >= btnPos.X and p.X <= btnPos.X + btnSize.X
-                and p.Y >= btnPos.Y and p.Y <= btnPos.Y + btnSize.Y
-            if not insidePopup and not insideButton then SetOpen(false) end
-        end)
+        -- Outside clicks are handled by ModalShield.MouseButton1Click so the shield
+        -- remains visible for the full click and prevents click-through.
         PickerButton:GetPropertyChangedSignal("AbsolutePosition"):Connect(UpdatePopupPosition)
         Main:GetPropertyChangedSignal("Position"):Connect(UpdatePopupPosition)
         Main:GetPropertyChangedSignal("Size"):Connect(UpdatePopupPosition)
@@ -1985,21 +2079,73 @@ function UI.CreateWindow(title, subtitle)
 	local Tabs = {}
 	local CurrentTab = nil
 
-	local function CreateTab(name)
-		name = ValidateString(name, true) or "Tab"
+	-- The menu icon reuses the image asset already used by this library's floating button.
+	local BuiltInTabImages = {
+		menu = "rbxassetid://7733960981",
+		minimize = "rbxassetid://7733960981",
+		default = "rbxassetid://7733960981",
+		pddev = "rbxassetid://7733960981",
+	}
 
-		-- Display full tab names on multiple compact lines, without truncation.
+	local BuiltInTabIcons = {
+		home = "⌂",
+		settings = "⚙",
+		config = "⚙",
+		palette = "◉",
+		colors = "◉",
+		info = "ⓘ",
+		about = "ⓘ",
+		flask = "⚗",
+		test = "✓",
+		user = "♙",
+		shield = "⬟",
+		game = "▶",
+		search = "⌕",
+		code = "⌘",
+		bell = "♧",
+	}
+
+	local function ResolveTabIcon(icon)
+		if typeof(icon) == "number" then
+			if icon > 0 then return "image", "rbxassetid://" .. tostring(math.floor(icon)) end
+			return nil, nil
+		end
+		if typeof(icon) == "table" then
+			if icon.Image or icon.image then
+				local image = icon.Image or icon.image
+				if typeof(image) == "number" then image = "rbxassetid://" .. tostring(math.floor(image)) end
+				return "image", tostring(image)
+			end
+			icon = icon.Icon or icon.icon or icon.Name or icon.name
+		end
+		if typeof(icon) ~= "string" or icon == "" then return nil, nil end
+		local lower = string.lower(icon)
+		if BuiltInTabImages[lower] then return "image", BuiltInTabImages[lower] end
+		if tonumber(icon) then return "image", "rbxassetid://" .. tostring(math.floor(tonumber(icon))) end
+		if lower:match("^rbxassetid://") or lower:match("^rbxasset://") or lower:match("^rbxthumb://") or lower:match("^https?://") then
+			return "image", icon
+		end
+		if BuiltInTabIcons[lower] then return "glyph", BuiltInTabIcons[lower] end
+		return nil, nil
+	end
+
+	local function CreateTab(name, icon)
+		name = ValidateString(name, true) or "Tab"
+		local iconType, iconValue = ResolveTabIcon(icon)
+
+		-- Keep names readable while fitting the full text inside a compact tab.
 		local panelWidth = TabFrame.AbsoluteSize.X > 0 and TabFrame.AbsoluteSize.X or TabFrame.Size.X.Offset
-		local tabTextWidth = math.max(48, panelWidth - 28)
-		local tabFontSize = 9
-		local displayName = WrapTextToWidth(name, Enum.Font.Gotham, tabFontSize, tabTextWidth - 8)
+		local tabFontSize = 10
+		local textInset = iconType and 34 or 12
+		local tabTextWidth = math.max(34, panelWidth - 12 - textInset - 8)
+		local displayName = WrapTextToWidth(name, Enum.Font.Gotham, tabFontSize, tabTextWidth)
 		local tabTextBounds = TextService:GetTextSize(
 			displayName,
 			tabFontSize,
 			Enum.Font.Gotham,
 			Vector2.new(tabTextWidth, 10000)
 		)
-		local tabHeight = math.max(27, math.ceil(tabTextBounds.Y) + 8)
+		local tabHeight = math.max(iconType and 32 or 28, math.ceil(tabTextBounds.Y) + 8)
 
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = name
@@ -2007,36 +2153,72 @@ function UI.CreateWindow(title, subtitle)
 		TabBtn.Position = UDim2.new(0, 6, 0, 0)
 		TabBtn.BackgroundColor3 = Theme.TabBackground
 		TabBtn.BorderSizePixel = 0
-		TabBtn.Text = displayName
+		TabBtn.Text = ""
 		TabBtn.TextColor3 = Theme.TextDark
 		TabBtn.TextSize = tabFontSize
-		TabBtn.TextTruncate = Enum.TextTruncate.None
-		TabBtn.TextWrapped = true
-		TabBtn.TextScaled = false
-		TabBtn.TextXAlignment = Enum.TextXAlignment.Center
-		TabBtn.TextYAlignment = Enum.TextYAlignment.Center
-		TabBtn.AutoButtonColor = false
 		TabBtn.TextStrokeTransparency = 1
+		TabBtn.AutoButtonColor = false
+		TabBtn.ClipsDescendants = true
 		TabBtn.Parent = TabFrame
 		TabBtn:SetAttribute("ThemeRole", "TabBackground")
-
-		local TabPadding = Instance.new("UIPadding")
-		TabPadding.PaddingLeft = UDim.new(0, 4)
-		TabPadding.PaddingRight = UDim.new(0, 4)
-		TabPadding.PaddingTop = UDim.new(0, 3)
-		TabPadding.PaddingBottom = UDim.new(0, 3)
-		TabPadding.Parent = TabBtn
+		RemoveTextHighlight(TabBtn)
 
 		local TabBtnCorner = Instance.new("UICorner")
 		TabBtnCorner.CornerRadius = UDim.new(0, 3)
 		TabBtnCorner.Parent = TabBtn
 
-		-- Visible border around every tab.
 		local TabStroke = Instance.new("UIStroke")
+		TabStroke.Name = "TabBorder"
 		TabStroke.Color = Theme.TabBorder
 		TabStroke.Thickness = 1
 		TabStroke.Parent = TabBtn
 		TabStroke:SetAttribute("ThemeRole", "TabBorder")
+
+		local iconWidget
+		if iconType == "image" then
+			iconWidget = Instance.new("ImageLabel")
+			iconWidget.Name = "TabIcon"
+			iconWidget.Image = iconValue
+			iconWidget.ImageColor3 = Color3.new(1, 1, 1)
+			iconWidget.BackgroundTransparency = 1
+			iconWidget.Size = UDim2.fromOffset(16, 16)
+			iconWidget.Position = UDim2.new(0, 7, 0.5, -8)
+			iconWidget.ScaleType = Enum.ScaleType.Fit
+			iconWidget.Parent = TabBtn
+		elseif iconType == "glyph" then
+			iconWidget = Instance.new("TextLabel")
+			iconWidget.Name = "TabIcon"
+			iconWidget.Size = UDim2.fromOffset(18, 20)
+			iconWidget.Position = UDim2.new(0, 6, 0.5, -10)
+			iconWidget.BackgroundTransparency = 1
+			iconWidget.Text = iconValue
+			iconWidget.TextColor3 = Theme.TextDark
+			iconWidget.TextSize = 16
+			iconWidget.Font = Enum.Font.GothamMedium
+			iconWidget.TextXAlignment = Enum.TextXAlignment.Center
+			iconWidget.TextYAlignment = Enum.TextYAlignment.Center
+			iconWidget.Parent = TabBtn
+			iconWidget:SetAttribute("ThemeRole", "TabIcon")
+			RemoveTextHighlight(iconWidget)
+		end
+
+		local TabLabel = Instance.new("TextLabel")
+		TabLabel.Name = "TabText"
+		TabLabel.BackgroundTransparency = 1
+		TabLabel.Text = displayName
+		TabLabel.TextColor3 = Theme.TextDark
+		TabLabel.TextSize = tabFontSize
+		TabLabel.Font = Enum.Font.Gotham
+		TabLabel.TextWrapped = false
+		TabLabel.TextTruncate = Enum.TextTruncate.None
+		TabLabel.TextXAlignment = iconType and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
+		TabLabel.TextYAlignment = Enum.TextYAlignment.Center
+		TabLabel.TextStrokeTransparency = 1
+		TabLabel.Position = UDim2.new(0, iconType and 28 or 4, 0, 3)
+		TabLabel.Size = UDim2.new(1, -(iconType and 32 or 8), 1, -6)
+		TabLabel.Parent = TabBtn
+		TabLabel:SetAttribute("ThemeRole", "TabText")
+		RemoveTextHighlight(TabLabel)
 
 		local Page = Instance.new("ScrollingFrame")
 		Page.Name = name .. "_Page"
@@ -2067,75 +2249,92 @@ function UI.CreateWindow(title, subtitle)
 			Page.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 24)
 		end)
 
-		-- Tab object with API
 		local Tab = {}
 		Tab.Page = Page
 		Tab.Button = TabBtn
+		Tab.Label = TabLabel
+		Tab.Icon = iconWidget
 		Tab.Name = name
 
-		Tab.AddButton = function(text, callback)
-			return AddButton(Page, text, callback)
+		Tab.AddButton = function(text, callback) return AddButton(Page, text, callback) end
+		Tab.AddToggle = function(text, default, callback) return AddToggle(Page, text, default, callback) end
+		Tab.AddSlider = function(text, min, max, default, callback) return AddSlider(Page, text, min, max, default, callback) end
+		Tab.AddTextLabel = function(text) return AddTextLabel(Page, text) end
+		Tab.AddParagraph = function(title, text) return AddParagraph(Page, title, text) end
+		Tab.AddDropdown = function(text, options, callback) return AddDropdown(Page, text, options, callback) end
+		Tab.AddCooldownButton = function(text, cooldown, callback) return AddCooldownButton(Page, text, cooldown, callback) end
+		Tab.AddTextBox = function(placeholder, callback) return AddTextBox(Page, placeholder, callback) end
+		Tab.AddColorPicker = function(text, defaultColor, callback) return AddColorPicker(Page, text, defaultColor, callback) end
+		Tab.Notification = function(title, message, duration, kind) return ShowNotification(title, message, duration, kind) end
+
+		function Tab.SetIcon(newIcon)
+			if iconWidget then iconWidget:Destroy(); iconWidget = nil end
+			iconType, iconValue = ResolveTabIcon(newIcon)
+			Tab.Icon = nil
+			if iconType == "image" then
+				iconWidget = Instance.new("ImageLabel")
+				iconWidget.Name = "TabIcon"
+				iconWidget.Image = iconValue
+				iconWidget.ImageColor3 = Color3.new(1, 1, 1)
+				iconWidget.BackgroundTransparency = 1
+				iconWidget.Size = UDim2.fromOffset(16, 16)
+				iconWidget.Position = UDim2.new(0, 7, 0.5, -8)
+				iconWidget.ScaleType = Enum.ScaleType.Fit
+				iconWidget.Parent = TabBtn
+			elseif iconType == "glyph" then
+				iconWidget = Instance.new("TextLabel")
+				iconWidget.Name = "TabIcon"
+				iconWidget.Size = UDim2.fromOffset(18, 20)
+				iconWidget.Position = UDim2.new(0, 6, 0.5, -10)
+				iconWidget.BackgroundTransparency = 1
+				iconWidget.Text = iconValue
+				iconWidget.TextColor3 = (Tab == CurrentTab) and Theme.Text or Theme.TextDark
+				iconWidget.TextSize = 16
+				iconWidget.Font = Enum.Font.GothamMedium
+				iconWidget.TextXAlignment = Enum.TextXAlignment.Center
+				iconWidget.TextYAlignment = Enum.TextYAlignment.Center
+				iconWidget.Parent = TabBtn
+				iconWidget:SetAttribute("ThemeRole", "TabIcon")
+				RemoveTextHighlight(iconWidget)
+			end
+			Tab.Icon = iconWidget
+			local newInset = iconType and 34 or 12
+			TabLabel.Position = UDim2.new(0, iconType and 28 or 4, 0, 3)
+			TabLabel.Size = UDim2.new(1, -(iconType and 32 or 8), 1, -6)
+			local width = math.max(34, panelWidth - 12 - newInset - 8)
+			local wrapped = WrapTextToWidth(name, Enum.Font.Gotham, tabFontSize, width)
+			TabLabel.Text = wrapped
+			local bounds = TextService:GetTextSize(wrapped, tabFontSize, Enum.Font.Gotham, Vector2.new(width, 10000))
+			TabBtn.Size = UDim2.new(1, -12, 0, math.max(iconType and 32 or 28, math.ceil(bounds.Y) + 8))
+			local nextY = 8
+			for _, tabItem in ipairs(Tabs) do
+				tabItem.Button.Position = UDim2.new(0, 6, 0, nextY)
+				nextY = nextY + tabItem.Button.Size.Y.Offset + 4
+			end
+			TabFrame.CanvasSize = UDim2.new(0, 0, 0, nextY + 4)
 		end
 
-		Tab.AddToggle = function(text, default, callback)
-			return AddToggle(Page, text, default, callback)
-		end
-
-		Tab.AddSlider = function(text, min, max, default, callback)
-			return AddSlider(Page, text, min, max, default, callback)
-		end
-
-		Tab.AddTextLabel = function(text)
-			return AddTextLabel(Page, text)
-		end
-
-		Tab.AddParagraph = function(title, text)
-			return AddParagraph(Page, title, text)
-		end
-
-		Tab.AddDropdown = function(text, options, callback)
-			return AddDropdown(Page, text, options, callback)
-		end
-
-		Tab.AddCooldownButton = function(text, cooldown, callback)
-			return AddCooldownButton(Page, text, cooldown, callback)
-		end
-
-		Tab.AddTextBox = function(placeholder, callback)
-			return AddTextBox(Page, placeholder, callback)
-		end
-
-		Tab.AddColorPicker = function(text, defaultColor, callback)
-			return AddColorPicker(Page, text, defaultColor, callback)
-		end
-
-		Tab.Notification = function(title, message, duration, kind)
-			return ShowNotification(title, message, duration, kind)
-		end
-
-		-- Tab switching
 		TabBtn.MouseButton1Click:Connect(function()
 			if CurrentTab then
 				CurrentTab.Page.Visible = false
 				CurrentTab.Button.BackgroundColor3 = Theme.TabBackground
-				CurrentTab.Button.TextColor3 = Theme.TextDark
 				CurrentTab.Button:SetAttribute("ThemeRole", "TabBackground")
-				local oldStroke = CurrentTab.Button:FindFirstChildOfClass("UIStroke")
+				CurrentTab.Label.TextColor3 = Theme.TextDark
+				if CurrentTab.Icon and CurrentTab.Icon:IsA("TextLabel") then CurrentTab.Icon.TextColor3 = Theme.TextDark end
+				local oldStroke = CurrentTab.Button:FindFirstChild("TabBorder")
 				if oldStroke then oldStroke.Color = Theme.TabBorder end
 			end
 
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
-			TabBtn.TextColor3 = Theme.Text
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
+			TabLabel.TextColor3 = Theme.Text
+			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
 			TabStroke.Color = Theme.Accent
-
 			CurrentTab = Tab
 		end)
 
 		table.insert(Tabs, Tab)
-
-		-- Reflow tabs using each button's measured height. The side panel scrolls if needed.
 		local nextY = 8
 		for _, tabItem in ipairs(Tabs) do
 			tabItem.Button.Position = UDim2.new(0, 6, 0, nextY)
@@ -2143,12 +2342,12 @@ function UI.CreateWindow(title, subtitle)
 		end
 		TabFrame.CanvasSize = UDim2.new(0, 0, 0, nextY + 4)
 
-		-- Auto-select first tab
 		if #Tabs == 1 then
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
-			TabBtn.TextColor3 = Theme.Text
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
+			TabLabel.TextColor3 = Theme.Text
+			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
 			TabStroke.Color = Theme.Accent
 			CurrentTab = Tab
 		end
@@ -2324,9 +2523,19 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "TabBorder" then
 					if object:IsA("UIStroke") then
 						object.Color = Theme.TabBorder
-						object.Thickness = 1 -- Borda visível das abas
+						object.Thickness = 1
 					elseif object:IsA("GuiObject") then
 						object.BackgroundColor3 = Theme.TabBorder
+					end
+				elseif role == "TabText" then
+					if object:IsA("TextLabel") then
+						object.TextColor3 = (CurrentTab and CurrentTab.Label == object) and Theme.Text or Theme.TextDark
+						object.TextStrokeTransparency = 1
+					end
+				elseif role == "TabIcon" then
+					if object:IsA("TextLabel") then
+						object.TextColor3 = (CurrentTab and CurrentTab.Icon == object) and Theme.Text or Theme.TextDark
+						object.TextStrokeTransparency = 1
 					end
 				end
 			end
@@ -2335,13 +2544,12 @@ function UI.CreateWindow(title, subtitle)
 		-- Atualiza a cor do texto das tabs mesmo quando não estão selecionadas
 		for _, tab in ipairs(Tabs) do
 			if tab.Button then
-				if tab == CurrentTab then
-					tab.Button.TextColor3 = Theme.Text
-				else
-					tab.Button.TextColor3 = Theme.TextDark
-				end
 				tab.Button.TextStrokeTransparency = 1
-				local tabStroke = tab.Button:FindFirstChildOfClass("UIStroke")
+				if tab.Label then tab.Label.TextColor3 = (tab == CurrentTab) and Theme.Text or Theme.TextDark end
+				if tab.Icon and tab.Icon:IsA("TextLabel") then
+					tab.Icon.TextColor3 = (tab == CurrentTab) and Theme.Text or Theme.TextDark
+				end
+				local tabStroke = tab.Button:FindFirstChild("TabBorder")
 				if tabStroke then
 					tabStroke.Thickness = 1
 					tabStroke.Transparency = 0.12
@@ -2427,6 +2635,10 @@ function UI.CreateWindow(title, subtitle)
 		DropdownHover = Color3.fromRGB(47, 48, 54),
 	})
 
+	-- Apply the default palette before returning the window. This prevents
+	-- bright default strokes/text styles from remaining until the first theme change.
+	ApplyTheme()
+
 	-- ════════════════════════════════════════════════════════════
 	-- PUBLIC API
 	-- ════════════════════════════════════════════════════════════
@@ -2437,6 +2649,8 @@ function UI.CreateWindow(title, subtitle)
 
 		-- Tab management
 		CreateTab = CreateTab,
+		BuiltInTabIcons = CopyTable(BuiltInTabIcons),
+		BuiltInTabImages = CopyTable(BuiltInTabImages),
 
 		-- Components (accessed via tabs)
 		AddButton = AddButton,
