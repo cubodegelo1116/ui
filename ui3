@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.3            ║
+	║  Version: 2.4            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.3"
+local CURRENT_VERSION = "2.4"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -90,23 +90,23 @@ function UI.CreateWindow(title, subtitle)
 	-- ════════════════════════════════════════════════════════════
 
 	local Theme = {
-		Background = Color3.fromRGB(24, 24, 27),
-		TitleBar = Color3.fromRGB(31, 31, 35),
-		TabBackground = Color3.fromRGB(27, 27, 31),
-		TabSelected = Color3.fromRGB(48, 50, 58),
-		Button = Color3.fromRGB(39, 39, 44),
-		ButtonHover = Color3.fromRGB(51, 52, 59),
-		Text = Color3.fromRGB(240, 240, 244),
-		TextDark = Color3.fromRGB(160, 161, 170),
-		Accent = Color3.fromRGB(105, 155, 255),
-		ToggleOn = Color3.fromRGB(105, 155, 255),
+		Background = Color3.fromRGB(23, 23, 26),
+		TitleBar = Color3.fromRGB(30, 30, 34),
+		TabBackground = Color3.fromRGB(26, 26, 30),
+		TabSelected = Color3.fromRGB(43, 45, 51),
+		Button = Color3.fromRGB(37, 37, 42),
+		ButtonHover = Color3.fromRGB(47, 48, 54),
+		Text = Color3.fromRGB(232, 232, 236),
+		TextDark = Color3.fromRGB(157, 158, 166),
+		Accent = Color3.fromRGB(100, 132, 194),
+		ToggleOn = Color3.fromRGB(100, 132, 194),
 		ToggleOff = Color3.fromRGB(66, 67, 75),
-		Border = Color3.fromRGB(53, 54, 61),
+		Border = Color3.fromRGB(48, 49, 55),
 		Cooldown = Color3.fromRGB(115, 53, 58),
 		Error = Color3.fromRGB(220, 75, 75),
 		Success = Color3.fromRGB(75, 190, 120),
 		Warning = Color3.fromRGB(230, 180, 75),
-		TabBorder = Color3.fromRGB(53, 54, 61),
+		TabBorder = Color3.fromRGB(48, 49, 55),
 		DropdownHover = Color3.fromRGB(51, 52, 59),
 	}
 
@@ -211,15 +211,27 @@ function UI.CreateWindow(title, subtitle)
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
 
-	-- Remove text outlines globally, including controls created later.
-	-- The property-change guard prevents other theme/component code from re-enabling them.
+	-- Completely remove text outlines/glow effects from every text control.
+	-- TextStrokeTransparency alone is not enough if another script inserts UIStroke/UIGradient.
 	local function RemoveTextHighlight(object)
 		if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then
 			return
 		end
 
 		object.TextStrokeTransparency = 1
+		object.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		object:SetAttribute("PDDEV_NoTextStroke", true)
+
+		local function RemoveTextEffect(child)
+			if child:IsA("UIStroke") or child:IsA("UIGradient") then
+				child:Destroy()
+			end
+		end
+
+		for _, child in ipairs(object:GetChildren()) do
+			RemoveTextEffect(child)
+		end
+
 		if not object:GetAttribute("PDDEV_TextStrokeGuard") then
 			object:SetAttribute("PDDEV_TextStrokeGuard", true)
 			object:GetPropertyChangedSignal("TextStrokeTransparency"):Connect(function()
@@ -227,7 +239,71 @@ function UI.CreateWindow(title, subtitle)
 					object.TextStrokeTransparency = 1
 				end
 			end)
+			object.ChildAdded:Connect(RemoveTextEffect)
 		end
+	end
+
+	-- Wrap by measured pixel width, including very long words without spaces.
+	local function WrapTextToWidth(value, font, textSize, maxWidth)
+		value = tostring(value or "")
+		maxWidth = math.max(24, tonumber(maxWidth) or 80)
+		local lines = {}
+
+		local function Measure(line)
+			return TextService:GetTextSize(line, textSize, font, Vector2.new(10000, 1000)).X
+		end
+
+		local function SplitLongWord(word)
+			local chars = {}
+			local i = 1
+			while i <= #word do
+				local first = string.byte(word, i)
+				local length = 1
+				if first >= 240 then length = 4
+				elseif first >= 224 then length = 3
+				elseif first >= 192 then length = 2 end
+				table.insert(chars, string.sub(word, i, math.min(#word, i + length - 1)))
+				i += length
+			end
+
+			local chunks, chunk = {}, ""
+			for _, char in ipairs(chars) do
+				if chunk ~= "" and Measure(chunk .. char) > maxWidth then
+					table.insert(chunks, chunk)
+					chunk = char
+				else
+					chunk ..= char
+				end
+			end
+			if chunk ~= "" then table.insert(chunks, chunk) end
+			return chunks
+		end
+
+		for paragraph in (value .. "\n"):gmatch("(.-)\n") do
+			if paragraph == "" then
+				table.insert(lines, "")
+			else
+				local line = ""
+				for word in paragraph:gmatch("%S+") do
+					local candidate = (line == "") and word or (line .. " " .. word)
+					if Measure(candidate) <= maxWidth then
+						line = candidate
+					else
+						if line ~= "" then table.insert(lines, line); line = "" end
+						if Measure(word) <= maxWidth then
+							line = word
+						else
+							local chunks = SplitLongWord(word)
+							for index = 1, #chunks - 1 do table.insert(lines, chunks[index]) end
+							line = chunks[#chunks] or ""
+						end
+					end
+				end
+				if line ~= "" then table.insert(lines, line) end
+			end
+		end
+
+		return table.concat(lines, "\n")
 	end
 
 	for _, object in ipairs(ScreenGui:GetDescendants()) do
@@ -858,7 +934,8 @@ function UI.CreateWindow(title, subtitle)
 
 		local Box = Instance.new("Frame")
 		Box.Name = title
-		Box.Size = UDim2.new(1, 0, 0, 0)
+		-- Leave room for the page's 12px left/right padding so the card stays in bounds.
+		Box.Size = UDim2.new(1, -24, 0, 0)
 		Box.AutomaticSize = Enum.AutomaticSize.Y
 		Box.BackgroundColor3 = Theme.Button
 		Box.BorderSizePixel = 0
@@ -887,7 +964,7 @@ function UI.CreateWindow(title, subtitle)
 		Layout.Parent = Box
 
 		local TitleLabel = Instance.new("TextLabel")
-		TitleLabel.Size = UDim2.new(1, 0, 0, 18)
+		TitleLabel.Size = UDim2.new(1, -24, 0, 18)
 		TitleLabel.BackgroundTransparency = 1
 		TitleLabel.Text = title
 		TitleLabel.TextColor3 = Theme.Text
@@ -900,8 +977,8 @@ function UI.CreateWindow(title, subtitle)
 		TitleLabel.TextStrokeTransparency = 1
 
 		local TextLabel = Instance.new("TextLabel")
-		TextLabel.Size = UDim2.new(1, 0, 0, 0)
-		TextLabel.AutomaticSize = Enum.AutomaticSize.Y
+		TextLabel.Size = UDim2.new(1, -24, 0, 16)
+		TextLabel.AutomaticSize = Enum.AutomaticSize.None
 		TextLabel.BackgroundTransparency = 1
 		TextLabel.Text = text
 		TextLabel.TextColor3 = Theme.TextDark
@@ -910,9 +987,40 @@ function UI.CreateWindow(title, subtitle)
 		TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 		TextLabel.TextYAlignment = Enum.TextYAlignment.Top
 		TextLabel.TextWrapped = true
+		TextLabel.TextTruncate = Enum.TextTruncate.None
+		TextLabel.ClipsDescendants = false
 		TextLabel.Parent = Box
 		TextLabel:SetAttribute("ThemeRole", "TextDark")
 		TextLabel.TextStrokeTransparency = 1
+
+		local lastMeasuredWidth = 0
+		local function RefreshParagraphLayout()
+			if not TextLabel.Parent then return end
+			local width = TextLabel.AbsoluteSize.X
+			if width <= 1 then
+				width = Box.AbsoluteSize.X - Padding.PaddingLeft.Offset - Padding.PaddingRight.Offset
+			end
+			if width <= 1 or math.abs(width - lastMeasuredWidth) < 1 then return end
+			lastMeasuredWidth = width
+
+			local wrappedText = WrapTextToWidth(text, TextLabel.Font, TextLabel.TextSize, width)
+			if TextLabel.Text ~= wrappedText then TextLabel.Text = wrappedText end
+			local bounds = TextService:GetTextSize(
+				wrappedText,
+				TextLabel.TextSize,
+				TextLabel.Font,
+				Vector2.new(width, 10000)
+			)
+			TextLabel.Size = UDim2.new(1, -24, 0, math.max(TextLabel.TextSize + 3, math.ceil(bounds.Y) + 3))
+		end
+
+		TextLabel:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+			task.defer(RefreshParagraphLayout)
+		end)
+		Box:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+			task.defer(RefreshParagraphLayout)
+		end)
+		task.defer(RefreshParagraphLayout)
 
 		return Box
 	end
@@ -1829,7 +1937,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local MessageLabel = Instance.new("TextLabel")
 		MessageLabel.Name = "Message"
-		MessageLabel.Size = UDim2.new(1, -22, 0, 30)
+		MessageLabel.Size = UDim2.new(1, -22, 0, 34)
 		MessageLabel.Position = UDim2.new(0, 12, 0, 29)
 		MessageLabel.BackgroundTransparency = 1
 		MessageLabel.Text = message
@@ -1839,7 +1947,7 @@ function UI.CreateWindow(title, subtitle)
 		MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
 		MessageLabel.TextYAlignment = Enum.TextYAlignment.Top
 		MessageLabel.TextWrapped = true
-		MessageLabel.TextTruncate = Enum.TextTruncate.AtEnd
+		MessageLabel.TextTruncate = Enum.TextTruncate.None
 		MessageLabel.ZIndex = 102
 		MessageLabel.Parent = Toast
 		MessageLabel:SetAttribute("ThemeRole", "TextDark")
@@ -1880,15 +1988,18 @@ function UI.CreateWindow(title, subtitle)
 	local function CreateTab(name)
 		name = ValidateString(name, true) or "Tab"
 
-		-- Calculate enough height for the full name; tabs wrap instead of using "...".
-		local tabTextWidth = math.max(76, TabFrame.Size.X.Offset - 30)
+		-- Display full tab names on multiple compact lines, without truncation.
+		local panelWidth = TabFrame.AbsoluteSize.X > 0 and TabFrame.AbsoluteSize.X or TabFrame.Size.X.Offset
+		local tabTextWidth = math.max(48, panelWidth - 28)
+		local tabFontSize = 9
+		local displayName = WrapTextToWidth(name, Enum.Font.Gotham, tabFontSize, tabTextWidth - 8)
 		local tabTextBounds = TextService:GetTextSize(
-			name,
-			11,
+			displayName,
+			tabFontSize,
 			Enum.Font.Gotham,
-			Vector2.new(tabTextWidth, 1000)
+			Vector2.new(tabTextWidth, 10000)
 		)
-		local tabHeight = math.max(32, math.ceil(tabTextBounds.Y) + 12)
+		local tabHeight = math.max(27, math.ceil(tabTextBounds.Y) + 8)
 
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = name
@@ -1896,9 +2007,9 @@ function UI.CreateWindow(title, subtitle)
 		TabBtn.Position = UDim2.new(0, 6, 0, 0)
 		TabBtn.BackgroundColor3 = Theme.TabBackground
 		TabBtn.BorderSizePixel = 0
-		TabBtn.Text = name
+		TabBtn.Text = displayName
 		TabBtn.TextColor3 = Theme.TextDark
-		TabBtn.TextSize = 11
+		TabBtn.TextSize = tabFontSize
 		TabBtn.TextTruncate = Enum.TextTruncate.None
 		TabBtn.TextWrapped = true
 		TabBtn.TextScaled = false
@@ -2136,7 +2247,11 @@ function UI.CreateWindow(title, subtitle)
 	ApplyTheme = function()
 		for _, object in ipairs(ScreenGui:GetDescendants()) do
 			if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
-				object.TextStrokeTransparency = 1
+				RemoveTextHighlight(object)
+			elseif object:IsA("UIStroke") then
+				-- Keep borders crisp and subtle; never use thick/glowing-looking strokes.
+				object.Thickness = math.min(object.Thickness, 1)
+				object.Transparency = math.max(object.Transparency, 0.12)
 			end
 			local role = object:GetAttribute("ThemeRole")
 
@@ -2229,6 +2344,7 @@ function UI.CreateWindow(title, subtitle)
 				local tabStroke = tab.Button:FindFirstChildOfClass("UIStroke")
 				if tabStroke then
 					tabStroke.Thickness = 1
+					tabStroke.Transparency = 0.12
 					tabStroke.Color = (tab == CurrentTab) and Theme.Accent or Theme.TabBorder
 				end
 			end
@@ -2293,22 +2409,22 @@ function UI.CreateWindow(title, subtitle)
 		DropdownHover = Color3.fromRGB(72, 35, 40),
 	})
 
-	RegisterTheme("Neon", {
-		Background = Color3.fromRGB(10, 10, 15),
-		TitleBar = Color3.fromRGB(15, 15, 25),
-		TabBackground = Color3.fromRGB(8, 8, 12),
-		TabSelected = Color3.fromRGB(40, 0, 80),
-		Button = Color3.fromRGB(20, 20, 30),
-		ButtonHover = Color3.fromRGB(30, 30, 45),
-		Text = Color3.fromRGB(255, 255, 255),
-		TextDark = Color3.fromRGB(200, 200, 200),
-		Accent = Color3.fromRGB(255, 0, 255),
-		ToggleOn = Color3.fromRGB(0, 255, 200),
-		ToggleOff = Color3.fromRGB(50, 50, 80),
-		Border = Color3.fromRGB(100, 0, 200),
-		Cooldown = Color3.fromRGB(255, 0, 0),
-		TabBorder = Color3.fromRGB(100, 0, 200),
-		DropdownHover = Color3.fromRGB(30, 30, 45),
+	RegisterTheme("Minimal", {
+		Background = Color3.fromRGB(23, 23, 26),
+		TitleBar = Color3.fromRGB(30, 30, 34),
+		TabBackground = Color3.fromRGB(26, 26, 30),
+		TabSelected = Color3.fromRGB(43, 45, 51),
+		Button = Color3.fromRGB(37, 37, 42),
+		ButtonHover = Color3.fromRGB(47, 48, 54),
+		Text = Color3.fromRGB(232, 232, 236),
+		TextDark = Color3.fromRGB(157, 158, 166),
+		Accent = Color3.fromRGB(100, 132, 194),
+		ToggleOn = Color3.fromRGB(100, 132, 194),
+		ToggleOff = Color3.fromRGB(66, 67, 75),
+		Border = Color3.fromRGB(48, 49, 55),
+		Cooldown = Color3.fromRGB(115, 53, 58),
+		TabBorder = Color3.fromRGB(48, 49, 55),
+		DropdownHover = Color3.fromRGB(47, 48, 54),
 	})
 
 	-- ════════════════════════════════════════════════════════════
