@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.2            ║
+	║  Version: 2.3            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.2"
+local CURRENT_VERSION = "2.3"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -70,6 +70,7 @@ function UI.CreateWindow(title, subtitle)
 
 	local UIS = game:GetService("UserInputService")
 	local TweenService = game:GetService("TweenService")
+	local TextService = game:GetService("TextService")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local trackedConnections = {}
@@ -209,6 +210,31 @@ function UI.CreateWindow(title, subtitle)
 
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
+
+	-- Remove text outlines globally, including controls created later.
+	-- The property-change guard prevents other theme/component code from re-enabling them.
+	local function RemoveTextHighlight(object)
+		if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then
+			return
+		end
+
+		object.TextStrokeTransparency = 1
+		object:SetAttribute("PDDEV_NoTextStroke", true)
+		if not object:GetAttribute("PDDEV_TextStrokeGuard") then
+			object:SetAttribute("PDDEV_TextStrokeGuard", true)
+			object:GetPropertyChangedSignal("TextStrokeTransparency"):Connect(function()
+				if object.Parent and object.TextStrokeTransparency ~= 1 then
+					object.TextStrokeTransparency = 1
+				end
+			end)
+		end
+	end
+
+	for _, object in ipairs(ScreenGui:GetDescendants()) do
+		RemoveTextHighlight(object)
+	end
+	ScreenGui.DescendantAdded:Connect(RemoveTextHighlight)
+
 	ScreenGui.Destroying:Connect(function()
 		for _, connection in ipairs(trackedConnections) do
 			connection:Disconnect()
@@ -427,12 +453,19 @@ function UI.CreateWindow(title, subtitle)
 	-- TABS & CONTENT AREA
 	-- ════════════════════════════════════════════════════════════
 
-	local TabFrame = Instance.new("Frame")
+	local TabFrame = Instance.new("ScrollingFrame")
 	TabFrame.Name = "TabsPanel"
 	TabFrame.Size = UDim2.new(0, 110, 1, -36)
 	TabFrame.Position = UDim2.new(0, 0, 0, 36)
 	TabFrame.BackgroundColor3 = Theme.TabBackground
 	TabFrame.BorderSizePixel = 0
+	TabFrame.ScrollBarThickness = 3
+	TabFrame.ScrollBarImageColor3 = Theme.Border
+	TabFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+	TabFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+	TabFrame.AutomaticCanvasSize = Enum.AutomaticSize.None
+	TabFrame.Active = true
+	TabFrame.ClipsDescendants = true
 	TabFrame.Parent = Main
 	TabFrame:SetAttribute("ThemeRole", "TabBackground")
 
@@ -1273,320 +1306,435 @@ function UI.CreateWindow(title, subtitle)
 
 
 	-- ─────────────────────────────────────────────────────────
-	-- COLOR PICKER COMPONENT (RGB)
+	-- COLOR PICKER COMPONENT (HSV: saturation/value square + hue strip)
 	-- ─────────────────────────────────────────────────────────
 
-	function AddColorPicker(page, text, defaultColor, callback)
-		if not page then error("Page required for AddColorPicker", 2) end
-		text = ValidateString(text, true) or "Color"
-		if typeof(defaultColor) ~= "Color3" then defaultColor = Theme.Accent end
+    function AddColorPicker(page, text, defaultColor, callback)
+        if not page then error("Page required for AddColorPicker", 2) end
+        text = ValidateString(text, true) or "Color"
+        if typeof(defaultColor) ~= "Color3" then defaultColor = Theme.Accent end
 
-		local currentColor = defaultColor
-		local channels = {
-			math.floor(defaultColor.R * 255 + 0.5),
-			math.floor(defaultColor.G * 255 + 0.5),
-			math.floor(defaultColor.B * 255 + 0.5),
-		}
+        local currentColor = defaultColor
+        local hue, saturation, value = defaultColor:ToHSV()
+        local activeDrag = nil
 
-		local Row = Instance.new("Frame")
-		Row.Name = text .. "_ColorPicker"
-		Row.Size = UDim2.new(1, 0, 0, 34)
-		Row.BackgroundTransparency = 1
-		Row.Parent = page
+        local function Hex(color)
+            return string.format("#%02X%02X%02X",
+                math.floor(color.R * 255 + 0.5),
+                math.floor(color.G * 255 + 0.5),
+                math.floor(color.B * 255 + 0.5))
+        end
 
-		local Label = Instance.new("TextLabel")
-		Label.Name = "Label"
-		Label.Size = UDim2.new(1, -96, 1, 0)
-		Label.BackgroundTransparency = 1
-		Label.Text = text
-		Label.TextColor3 = Theme.Text
-		Label.TextSize = 13
-		Label.Font = Enum.Font.Gotham
-		Label.TextXAlignment = Enum.TextXAlignment.Left
-		Label.TextTruncate = Enum.TextTruncate.AtEnd
-		Label.Parent = Row
-		Label:SetAttribute("ThemeRole", "Text")
-		Label.TextStrokeTransparency = 1
+        local Row = Instance.new("Frame")
+        Row.Name = text .. "_ColorPicker"
+        Row.Size = UDim2.new(1, 0, 0, 34)
+        Row.BackgroundTransparency = 1
+        Row.Parent = page
 
-		local PickerButton = Instance.new("TextButton")
-		PickerButton.Name = "ColorValue"
-		PickerButton.Size = UDim2.new(0, 92, 0, 28)
-		PickerButton.Position = UDim2.new(1, -92, 0.5, -14)
-		PickerButton.BackgroundColor3 = Theme.Button
-		PickerButton.BorderSizePixel = 0
-		PickerButton.Text = ""
-		PickerButton.AutoButtonColor = false
-		PickerButton.Parent = Row
-		PickerButton:SetAttribute("ThemeRole", "Button")
-		PickerButton.TextStrokeTransparency = 1
+        local Label = Instance.new("TextLabel")
+        Label.Name = "Label"
+        Label.Size = UDim2.new(1, -96, 1, 0)
+        Label.BackgroundTransparency = 1
+        Label.Text = text
+        Label.TextColor3 = Theme.Text
+        Label.TextSize = 13
+        Label.Font = Enum.Font.Gotham
+        Label.TextXAlignment = Enum.TextXAlignment.Left
+        Label.TextTruncate = Enum.TextTruncate.None
+        Label.TextStrokeTransparency = 1
+        Label.Parent = Row
+        Label:SetAttribute("ThemeRole", "Text")
 
-		local ButtonCorner = Instance.new("UICorner")
-		ButtonCorner.CornerRadius = UDim.new(0, 3)
-		ButtonCorner.Parent = PickerButton
+        local PickerButton = Instance.new("TextButton")
+        PickerButton.Name = "ColorValue"
+        PickerButton.Size = UDim2.new(0, 92, 0, 28)
+        PickerButton.Position = UDim2.new(1, -92, 0.5, -14)
+        PickerButton.BackgroundColor3 = Theme.Button
+        PickerButton.BorderSizePixel = 0
+        PickerButton.Text = ""
+        PickerButton.AutoButtonColor = false
+        PickerButton.TextStrokeTransparency = 1
+        PickerButton.Parent = Row
+        PickerButton:SetAttribute("ThemeRole", "Button")
 
-		local ButtonStroke = Instance.new("UIStroke")
-		ButtonStroke.Color = Theme.Border
-		ButtonStroke.Thickness = 1
-		ButtonStroke.Parent = PickerButton
-		ButtonStroke:SetAttribute("ThemeRole", "Border")
+        local ButtonCorner = Instance.new("UICorner")
+        ButtonCorner.CornerRadius = UDim.new(0, 3)
+        ButtonCorner.Parent = PickerButton
 
-		local Swatch = Instance.new("Frame")
-		Swatch.Name = "Swatch"
-		Swatch.Size = UDim2.new(0, 18, 0, 18)
-		Swatch.Position = UDim2.new(0, 5, 0.5, -9)
-		Swatch.BackgroundColor3 = currentColor
-		Swatch.BorderSizePixel = 0
-		Swatch.Parent = PickerButton
-		Swatch.ZIndex = PickerButton.ZIndex + 1
+        local ButtonStroke = Instance.new("UIStroke")
+        ButtonStroke.Color = Theme.Border
+        ButtonStroke.Thickness = 1
+        ButtonStroke.Parent = PickerButton
+        ButtonStroke:SetAttribute("ThemeRole", "Border")
 
-		local SwatchCorner = Instance.new("UICorner")
-		SwatchCorner.CornerRadius = UDim.new(0, 2)
-		SwatchCorner.Parent = Swatch
+        local Swatch = Instance.new("Frame")
+        Swatch.Name = "Swatch"
+        Swatch.Size = UDim2.new(0, 18, 0, 18)
+        Swatch.Position = UDim2.new(0, 5, 0.5, -9)
+        Swatch.BackgroundColor3 = currentColor
+        Swatch.BorderSizePixel = 0
+        Swatch.Parent = PickerButton
+        Swatch.ZIndex = PickerButton.ZIndex + 1
 
-		local HexLabel = Instance.new("TextLabel")
-		HexLabel.Name = "HexValue"
-		HexLabel.Size = UDim2.new(1, -29, 1, 0)
-		HexLabel.Position = UDim2.new(0, 26, 0, 0)
-		HexLabel.BackgroundTransparency = 1
-		HexLabel.TextColor3 = Theme.Text
-		HexLabel.TextSize = 10
-		HexLabel.Font = Enum.Font.Code
-		HexLabel.TextXAlignment = Enum.TextXAlignment.Center
-		HexLabel.Text = ""
-		HexLabel.Parent = PickerButton
-		HexLabel:SetAttribute("ThemeRole", "Text")
-		HexLabel.ZIndex = PickerButton.ZIndex + 1
-		HexLabel.TextStrokeTransparency = 1
+        local SwatchCorner = Instance.new("UICorner")
+        SwatchCorner.CornerRadius = UDim.new(0, 2)
+        SwatchCorner.Parent = Swatch
 
-		local Popup = Instance.new("Frame")
-		Popup.Name = "ColorPickerPopup"
-		Popup.Size = UDim2.new(0, 248, 0, 128)
-		Popup.BackgroundColor3 = Theme.TitleBar
-		Popup.BorderSizePixel = 0
-		Popup.Visible = false
-		Popup.ZIndex = 60
-		Popup.Parent = ScreenGui
-		Popup:SetAttribute("ThemeRole", "TitleBar")
+        local HexLabel = Instance.new("TextLabel")
+        HexLabel.Name = "HexValue"
+        HexLabel.Size = UDim2.new(1, -29, 1, 0)
+        HexLabel.Position = UDim2.new(0, 26, 0, 0)
+        HexLabel.BackgroundTransparency = 1
+        HexLabel.TextColor3 = Theme.Text
+        HexLabel.TextSize = 10
+        HexLabel.Font = Enum.Font.Code
+        HexLabel.TextXAlignment = Enum.TextXAlignment.Center
+        HexLabel.Text = Hex(currentColor)
+        HexLabel.TextStrokeTransparency = 1
+        HexLabel.Parent = PickerButton
+        HexLabel:SetAttribute("ThemeRole", "Text")
+        HexLabel.ZIndex = PickerButton.ZIndex + 1
 
-		local PopupCorner = Instance.new("UICorner")
-		PopupCorner.CornerRadius = UDim.new(0, 3)
-		PopupCorner.Parent = Popup
+        -- Photoshop-style HSV picker: saturation/value square + rainbow hue strip.
+        local Popup = Instance.new("Frame")
+        Popup.Name = "ColorPickerPopup"
+        Popup.Size = UDim2.fromOffset(314, 226)
+        Popup.BackgroundColor3 = Theme.TitleBar
+        Popup.BorderSizePixel = 0
+        Popup.Visible = false
+        Popup.ZIndex = 60
+        Popup.Parent = ScreenGui
+        Popup:SetAttribute("ThemeRole", "TitleBar")
 
-		local PopupStroke = Instance.new("UIStroke")
-		PopupStroke.Color = Theme.Border
-		PopupStroke.Thickness = 1
-		PopupStroke.Parent = Popup
-		PopupStroke:SetAttribute("ThemeRole", "Border")
+        local PopupCorner = Instance.new("UICorner")
+        PopupCorner.CornerRadius = UDim.new(0, 3)
+        PopupCorner.Parent = Popup
 
-		local PopupTitle = Instance.new("TextLabel")
-		PopupTitle.Name = "Title"
-		PopupTitle.Size = UDim2.new(1, -34, 0, 22)
-		PopupTitle.Position = UDim2.new(0, 9, 0, 4)
-		PopupTitle.BackgroundTransparency = 1
-		PopupTitle.Text = text
-		PopupTitle.TextColor3 = Theme.Text
-		PopupTitle.TextSize = 12
-		PopupTitle.Font = Enum.Font.GothamMedium
-		PopupTitle.TextXAlignment = Enum.TextXAlignment.Left
-		PopupTitle.TextTruncate = Enum.TextTruncate.AtEnd
-		PopupTitle.ZIndex = 61
-		PopupTitle.Parent = Popup
-		PopupTitle:SetAttribute("ThemeRole", "Text")
-		PopupTitle.TextStrokeTransparency = 1
+        local PopupStroke = Instance.new("UIStroke")
+        PopupStroke.Color = Theme.Border
+        PopupStroke.Thickness = 1
+        PopupStroke.Parent = Popup
+        PopupStroke:SetAttribute("ThemeRole", "Border")
 
-		local CloseButton = Instance.new("TextButton")
-		CloseButton.Name = "Close"
-		CloseButton.Size = UDim2.new(0, 22, 0, 22)
-		CloseButton.Position = UDim2.new(1, -26, 0, 3)
-		CloseButton.BackgroundTransparency = 1
-		CloseButton.Text = "x"
-		CloseButton.TextColor3 = Theme.TextDark
-		CloseButton.TextSize = 14
-		CloseButton.Font = Enum.Font.Gotham
-		CloseButton.AutoButtonColor = false
-		CloseButton.ZIndex = 62
-		CloseButton.Parent = Popup
-		CloseButton:SetAttribute("ThemeRole", "TextDark")
-		CloseButton.TextStrokeTransparency = 1
+        local PopupTitle = Instance.new("TextLabel")
+        PopupTitle.Name = "Title"
+        PopupTitle.Size = UDim2.new(1, -40, 0, 22)
+        PopupTitle.Position = UDim2.new(0, 10, 0, 5)
+        PopupTitle.BackgroundTransparency = 1
+        PopupTitle.Text = text
+        PopupTitle.TextColor3 = Theme.Text
+        PopupTitle.TextSize = 12
+        PopupTitle.Font = Enum.Font.GothamMedium
+        PopupTitle.TextXAlignment = Enum.TextXAlignment.Left
+        PopupTitle.TextTruncate = Enum.TextTruncate.None
+        PopupTitle.TextStrokeTransparency = 1
+        PopupTitle.ZIndex = 61
+        PopupTitle.Parent = Popup
+        PopupTitle:SetAttribute("ThemeRole", "Text")
 
-		local channelNames = {"R", "G", "B"}
-		local tracks = {}
-		local fills = {}
-		local handles = {}
-		local activeChannel = nil
+        local CloseButton = Instance.new("TextButton")
+        CloseButton.Name = "Close"
+        CloseButton.Size = UDim2.new(0, 22, 0, 22)
+        CloseButton.Position = UDim2.new(1, -27, 0, 3)
+        CloseButton.BackgroundTransparency = 1
+        CloseButton.Text = "×"
+        CloseButton.TextColor3 = Theme.TextDark
+        CloseButton.TextSize = 15
+        CloseButton.Font = Enum.Font.Gotham
+        CloseButton.AutoButtonColor = false
+        CloseButton.TextStrokeTransparency = 1
+        CloseButton.ZIndex = 62
+        CloseButton.Parent = Popup
+        CloseButton:SetAttribute("ThemeRole", "TextDark")
 
-		local function UpdateColor(shouldNotify)
-			currentColor = Color3.fromRGB(channels[1], channels[2], channels[3])
-			HexLabel.Text = string.format("#%02X%02X%02X", channels[1], channels[2], channels[3])
-			Swatch.BackgroundColor3 = currentColor
-			for index = 1, 3 do
-				fills[index].Size = UDim2.new(channels[index] / 255, 0, 1, 0)
-				handles[index].Position = UDim2.new(channels[index] / 255, -5, 0.5, -5)
-			end
-			if shouldNotify ~= false and typeof(callback) == "function" then
-				callback(currentColor)
-			end
-		end
+        local SVField = Instance.new("Frame")
+        SVField.Name = "SaturationValueField"
+        SVField.Size = UDim2.fromOffset(176, 158)
+        SVField.Position = UDim2.fromOffset(12, 34)
+        SVField.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+        SVField.BorderSizePixel = 0
+        SVField.Active = true
+        SVField.ClipsDescendants = false
+        SVField.ZIndex = 61
+        SVField.Parent = Popup
 
-		local function SetChannel(index, screenX)
-			local track = tracks[index]
-			if not track or track.AbsoluteSize.X <= 0 then return end
-			local percent = Clamp((screenX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
-			channels[index] = math.floor(percent * 255 + 0.5)
-			UpdateColor(true)
-		end
+        local WhiteOverlay = Instance.new("Frame")
+        WhiteOverlay.Name = "WhiteOverlay"
+        WhiteOverlay.Size = UDim2.fromScale(1, 1)
+        WhiteOverlay.BackgroundColor3 = Color3.new(1, 1, 1)
+        WhiteOverlay.BorderSizePixel = 0
+        WhiteOverlay.Active = true
+        WhiteOverlay.ZIndex = 62
+        WhiteOverlay.Parent = SVField
+        local WhiteGradient = Instance.new("UIGradient")
+        WhiteGradient.Rotation = 0
+        WhiteGradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0),
+            NumberSequenceKeypoint.new(1, 1),
+        })
+        WhiteGradient.Parent = WhiteOverlay
 
-		for index = 1, 3 do
-			local channelIndex = index
-			local rowY = 29 + (index - 1) * 29
-			local ChannelLabel = Instance.new("TextLabel")
-			ChannelLabel.Name = channelNames[index] .. "Label"
-			ChannelLabel.Size = UDim2.new(0, 18, 0, 18)
-			ChannelLabel.Position = UDim2.new(0, 9, 0, rowY)
-			ChannelLabel.BackgroundTransparency = 1
-			ChannelLabel.Text = channelNames[index]
-			ChannelLabel.TextColor3 = Theme.TextDark
-			ChannelLabel.TextSize = 11
-			ChannelLabel.Font = Enum.Font.GothamMedium
-			ChannelLabel.TextXAlignment = Enum.TextXAlignment.Left
-			ChannelLabel.ZIndex = 61
-			ChannelLabel.Parent = Popup
-			ChannelLabel:SetAttribute("ThemeRole", "TextDark")
-			ChannelLabel.TextStrokeTransparency = 1
+        local BlackOverlay = Instance.new("Frame")
+        BlackOverlay.Name = "BlackOverlay"
+        BlackOverlay.Size = UDim2.fromScale(1, 1)
+        BlackOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+        BlackOverlay.BorderSizePixel = 0
+        BlackOverlay.Active = true
+        BlackOverlay.ZIndex = 63
+        BlackOverlay.Parent = SVField
+        local BlackGradient = Instance.new("UIGradient")
+        BlackGradient.Rotation = 90
+        BlackGradient.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(1, 0),
+        })
+        BlackGradient.Parent = BlackOverlay
 
-			local Track = Instance.new("TextButton")
-			Track.Name = channelNames[index] .. "Track"
-			Track.Size = UDim2.new(1, -42, 0, 18)
-			Track.Position = UDim2.new(0, 30, 0, rowY)
-			Track.BackgroundTransparency = 1
-			Track.BorderSizePixel = 0
-			Track.Text = ""
-			Track.AutoButtonColor = false
-			Track.ZIndex = 61
-			Track.Parent = Popup
-			tracks[index] = Track
+        local SVMarker = Instance.new("Frame")
+        SVMarker.Name = "SelectionMarker"
+        SVMarker.Size = UDim2.fromOffset(12, 12)
+        SVMarker.AnchorPoint = Vector2.new(0.5, 0.5)
+        SVMarker.Position = UDim2.new(saturation, 0, 1 - value, 0)
+        SVMarker.BackgroundTransparency = 1
+        SVMarker.BorderSizePixel = 0
+        SVMarker.Active = true
+        SVMarker.ZIndex = 64
+        SVMarker.Parent = SVField
+        local SVMarkerCorner = Instance.new("UICorner")
+        SVMarkerCorner.CornerRadius = UDim.new(1, 0)
+        SVMarkerCorner.Parent = SVMarker
+        local SVMarkerStroke = Instance.new("UIStroke")
+        SVMarkerStroke.Color = Color3.new(1, 1, 1)
+        SVMarkerStroke.Thickness = 2
+        SVMarkerStroke.Parent = SVMarker
 
-			local Bar = Instance.new("Frame")
-			Bar.Name = "Bar"
-			Bar.Size = UDim2.new(1, 0, 0, 5)
-			Bar.Position = UDim2.new(0, 0, 0.5, -2.5)
-			Bar.BackgroundColor3 = Theme.ToggleOff
-			Bar.BorderSizePixel = 0
-			Bar:SetAttribute("ThemeRole", "ToggleOff")
-			Bar.ZIndex = 61
-			Bar.Parent = Track
+        local HueBar = Instance.new("Frame")
+        HueBar.Name = "HueBar"
+        HueBar.Size = UDim2.fromOffset(18, 158)
+        HueBar.Position = UDim2.fromOffset(196, 34)
+        HueBar.BackgroundColor3 = Color3.new(1, 1, 1)
+        HueBar.BorderSizePixel = 0
+        HueBar.Active = true
+        HueBar.ZIndex = 61
+        HueBar.Parent = Popup
+        local HueGradient = Instance.new("UIGradient")
+        HueGradient.Rotation = 90
+        HueGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.00, Color3.fromHSV(0.00, 1, 1)),
+            ColorSequenceKeypoint.new(0.1667, Color3.fromHSV(0.1667, 1, 1)),
+            ColorSequenceKeypoint.new(0.3333, Color3.fromHSV(0.3333, 1, 1)),
+            ColorSequenceKeypoint.new(0.5000, Color3.fromHSV(0.5000, 1, 1)),
+            ColorSequenceKeypoint.new(0.6667, Color3.fromHSV(0.6667, 1, 1)),
+            ColorSequenceKeypoint.new(0.8333, Color3.fromHSV(0.8333, 1, 1)),
+            ColorSequenceKeypoint.new(1.0000, Color3.fromHSV(1.00, 1, 1)),
+        })
+        HueGradient.Parent = HueBar
 
-			local Fill = Instance.new("Frame")
-			Fill.Name = "Fill"
-			Fill.Size = UDim2.new(channels[index] / 255, 0, 1, 0)
-			Fill.BackgroundColor3 = Theme.Accent
-			Fill.BorderSizePixel = 0
-			Fill.ZIndex = 62
-			Fill.Parent = Bar
-			Fill:SetAttribute("ThemeRole", "Accent")
-			fills[index] = Fill
+        local HueHandle = Instance.new("Frame")
+        HueHandle.Name = "HueHandle"
+        HueHandle.Size = UDim2.fromOffset(24, 4)
+        HueHandle.AnchorPoint = Vector2.new(0.5, 0.5)
+        HueHandle.Position = UDim2.new(0.5, 0, hue, 0)
+        HueHandle.BackgroundColor3 = Color3.new(1, 1, 1)
+        HueHandle.BorderSizePixel = 0
+        HueHandle.Active = true
+        HueHandle.ZIndex = 63
+        HueHandle.Parent = HueBar
+        local HueHandleStroke = Instance.new("UIStroke")
+        HueHandleStroke.Color = Color3.new(0, 0, 0)
+        HueHandleStroke.Thickness = 1
+        HueHandleStroke.Parent = HueHandle
 
-			local Handle = Instance.new("Frame")
-			Handle.Name = "Handle"
-			Handle.Size = UDim2.new(0, 10, 0, 10)
-			Handle.Position = UDim2.new(channels[index] / 255, -5, 0.5, -5)
-			Handle.BackgroundColor3 = Theme.Text
-			Handle.BorderSizePixel = 0
-			Handle.ZIndex = 63
-			Handle.Parent = Bar
-			local HandleCorner = Instance.new("UICorner")
-			HandleCorner.CornerRadius = UDim.new(0, 2)
-			HandleCorner.Parent = Handle
-			handles[index] = Handle
+        local Preview = Instance.new("Frame")
+        Preview.Name = "ColorPreview"
+        Preview.Size = UDim2.fromOffset(72, 54)
+        Preview.Position = UDim2.fromOffset(226, 34)
+        Preview.BackgroundColor3 = currentColor
+        Preview.BorderSizePixel = 0
+        Preview.ZIndex = 61
+        Preview.Parent = Popup
+        local PreviewStroke = Instance.new("UIStroke")
+        PreviewStroke.Color = Theme.Border
+        PreviewStroke.Thickness = 1
+        PreviewStroke.Parent = Preview
+        PreviewStroke:SetAttribute("ThemeRole", "Border")
 
-			Track.InputBegan:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1 then
-					activeChannel = channelIndex
-					SetChannel(channelIndex, input.Position.X)
-				end
-			end)
-		end
+        local HexCaption = Instance.new("TextLabel")
+        HexCaption.Name = "HexCaption"
+        HexCaption.Size = UDim2.fromOffset(72, 16)
+        HexCaption.Position = UDim2.fromOffset(226, 94)
+        HexCaption.BackgroundTransparency = 1
+        HexCaption.Text = "HEX"
+        HexCaption.TextColor3 = Theme.TextDark
+        HexCaption.TextSize = 10
+        HexCaption.Font = Enum.Font.GothamMedium
+        HexCaption.TextXAlignment = Enum.TextXAlignment.Left
+        HexCaption.TextStrokeTransparency = 1
+        HexCaption.ZIndex = 61
+        HexCaption.Parent = Popup
+        HexCaption:SetAttribute("ThemeRole", "TextDark")
 
-		local function UpdatePopupPosition()
-			if not Popup.Visible then return end
-			local pos = PickerButton.AbsolutePosition
-			local size = PickerButton.AbsoluteSize
-			local camera = workspace.CurrentCamera
-			local viewport = camera and camera.ViewportSize or Vector2.new(1024, 768)
-			local popupWidth, popupHeight = 248, 128
-			local x = Clamp(pos.X + size.X - popupWidth, 6, math.max(6, viewport.X - popupWidth - 6))
-			local y = pos.Y + size.Y + 4
-			if y + popupHeight > viewport.Y - 6 then
-				y = math.max(6, pos.Y - popupHeight - 4)
-			end
-			Popup.Position = UDim2.fromOffset(x, y)
-		end
+        local PopupHex = Instance.new("TextLabel")
+        PopupHex.Name = "PopupHex"
+        PopupHex.Size = UDim2.fromOffset(78, 20)
+        PopupHex.Position = UDim2.fromOffset(222, 110)
+        PopupHex.BackgroundTransparency = 1
+        PopupHex.Text = Hex(currentColor)
+        PopupHex.TextColor3 = Theme.Text
+        PopupHex.TextSize = 11
+        PopupHex.Font = Enum.Font.Code
+        PopupHex.TextXAlignment = Enum.TextXAlignment.Left
+        PopupHex.TextStrokeTransparency = 1
+        PopupHex.ZIndex = 61
+        PopupHex.Parent = Popup
+        PopupHex:SetAttribute("ThemeRole", "Text")
 
-		local function SetOpen(value)
-			Popup.Visible = value == true and Main.Visible and page.Visible
-			if Popup.Visible then UpdatePopupPosition() end
-		end
+        local PickerHint = Instance.new("TextLabel")
+        PickerHint.Name = "PickerHint"
+        PickerHint.Size = UDim2.fromOffset(286, 18)
+        PickerHint.Position = UDim2.fromOffset(12, 199)
+        PickerHint.BackgroundTransparency = 1
+        PickerHint.Text = "Arraste no quadrado para saturacao/brilho"
+        PickerHint.TextColor3 = Theme.TextDark
+        PickerHint.TextSize = 10
+        PickerHint.Font = Enum.Font.Gotham
+        PickerHint.TextXAlignment = Enum.TextXAlignment.Left
+        PickerHint.TextStrokeTransparency = 1
+        PickerHint.ZIndex = 61
+        PickerHint.Parent = Popup
+        PickerHint:SetAttribute("ThemeRole", "TextDark")
 
-		page:GetPropertyChangedSignal("Visible"):Connect(function()
-			if not page.Visible then SetOpen(false) end
-		end)
-		Main:GetPropertyChangedSignal("Visible"):Connect(function()
-			if not Main.Visible then SetOpen(false) end
-		end)
+        local function UpdateColor(shouldNotify)
+            hue = Clamp(hue, 0, 1)
+            saturation = Clamp(saturation, 0, 1)
+            value = Clamp(value, 0, 1)
+            currentColor = Color3.fromHSV(hue, saturation, value)
+            local hex = Hex(currentColor)
+            HexLabel.Text = hex
+            PopupHex.Text = hex
+            Swatch.BackgroundColor3 = currentColor
+            Preview.BackgroundColor3 = currentColor
+            SVField.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
+            SVMarker.Position = UDim2.new(saturation, 0, 1 - value, 0)
+            HueHandle.Position = UDim2.new(0.5, 0, hue, 0)
+            if shouldNotify ~= false and typeof(callback) == "function" then
+                callback(currentColor)
+            end
+        end
 
-		PickerButton.MouseButton1Click:Connect(function()
-			SetOpen(not Popup.Visible)
-		end)
-		CloseButton.MouseButton1Click:Connect(function()
-			SetOpen(false)
-		end)
+        local function SetSVFromScreen(screenX, screenY)
+            if SVField.AbsoluteSize.X <= 0 or SVField.AbsoluteSize.Y <= 0 then return end
+            saturation = Clamp((screenX - SVField.AbsolutePosition.X) / SVField.AbsoluteSize.X, 0, 1)
+            value = 1 - Clamp((screenY - SVField.AbsolutePosition.Y) / SVField.AbsoluteSize.Y, 0, 1)
+            UpdateColor(true)
+        end
 
-		ConnectGlobal(UIS.InputChanged, function(input)
-			if activeChannel and Popup.Visible and input.UserInputType == Enum.UserInputType.MouseMovement then
-				SetChannel(activeChannel, input.Position.X)
-			end
-		end)
-		ConnectGlobal(UIS.InputEnded, function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				activeChannel = nil
-			end
-		end)
-		ConnectGlobal(UIS.InputBegan, function(input)
-			if not Popup.Visible or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-			local p = input.Position
-			local popupPos, popupSize = Popup.AbsolutePosition, Popup.AbsoluteSize
-			local btnPos, btnSize = PickerButton.AbsolutePosition, PickerButton.AbsoluteSize
-			local insidePopup = p.X >= popupPos.X and p.X <= popupPos.X + popupSize.X
-				and p.Y >= popupPos.Y and p.Y <= popupPos.Y + popupSize.Y
-			local insideButton = p.X >= btnPos.X and p.X <= btnPos.X + btnSize.X
-				and p.Y >= btnPos.Y and p.Y <= btnPos.Y + btnSize.Y
-			if not insidePopup and not insideButton then SetOpen(false) end
-		end)
-		PickerButton:GetPropertyChangedSignal("AbsolutePosition"):Connect(UpdatePopupPosition)
-		Main:GetPropertyChangedSignal("Position"):Connect(UpdatePopupPosition)
-		Main:GetPropertyChangedSignal("Size"):Connect(UpdatePopupPosition)
+        local function SetHueFromScreen(screenY)
+            if HueBar.AbsoluteSize.Y <= 0 then return end
+            hue = Clamp((screenY - HueBar.AbsolutePosition.Y) / HueBar.AbsoluteSize.Y, 0, 1)
+            UpdateColor(true)
+        end
 
-		local function ApplyColor(color, shouldNotify)
-			if typeof(color) ~= "Color3" then return false end
-			channels[1] = math.floor(color.R * 255 + 0.5)
-			channels[2] = math.floor(color.G * 255 + 0.5)
-			channels[3] = math.floor(color.B * 255 + 0.5)
-			UpdateColor(shouldNotify)
-			return true
-		end
+        local function BeginSV(input)
+            if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+            activeDrag = "sv"
+            SetSVFromScreen(input.Position.X, input.Position.Y)
+        end
+        for _, object in ipairs({SVField, WhiteOverlay, BlackOverlay, SVMarker}) do
+            object.InputBegan:Connect(BeginSV)
+        end
+        HueBar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                activeDrag = "hue"
+                SetHueFromScreen(input.Position.Y)
+            end
+        end)
+        HueHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                activeDrag = "hue"
+                SetHueFromScreen(input.Position.Y)
+            end
+        end)
 
-		UpdateColor(false)
-		local PickerAPI = {}
-		function PickerAPI.GetColor()
-			return currentColor
-		end
-		function PickerAPI.SetColor(color, shouldNotify)
-			return ApplyColor(color, shouldNotify ~= false)
-		end
-		function PickerAPI.Open() SetOpen(true) end
-		function PickerAPI.Close() SetOpen(false) end
-		return PickerAPI
-	end
+        local function UpdatePopupPosition()
+            if not Popup.Visible then return end
+            local pos = PickerButton.AbsolutePosition
+            local size = PickerButton.AbsoluteSize
+            local camera = workspace.CurrentCamera
+            local viewport = camera and camera.ViewportSize or Vector2.new(1024, 768)
+            local popupWidth, popupHeight = 314, 226
+            local x = Clamp(pos.X + size.X - popupWidth, 6, math.max(6, viewport.X - popupWidth - 6))
+            local y = pos.Y + size.Y + 4
+            if y + popupHeight > viewport.Y - 6 then
+                y = math.max(6, pos.Y - popupHeight - 4)
+            end
+            Popup.Position = UDim2.fromOffset(x, y)
+        end
+
+        local function SetOpen(open)
+            Popup.Visible = open == true and Main.Visible and page.Visible
+            if Popup.Visible then UpdatePopupPosition() end
+        end
+
+        page:GetPropertyChangedSignal("Visible"):Connect(function()
+            if not page.Visible then SetOpen(false) end
+        end)
+        Main:GetPropertyChangedSignal("Visible"):Connect(function()
+            if not Main.Visible then SetOpen(false) end
+        end)
+        PickerButton.MouseButton1Click:Connect(function()
+            SetOpen(not Popup.Visible)
+        end)
+        CloseButton.MouseButton1Click:Connect(function()
+            SetOpen(false)
+        end)
+
+        ConnectGlobal(UIS.InputChanged, function(input)
+            if not Popup.Visible or input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+            if activeDrag == "sv" then
+                SetSVFromScreen(input.Position.X, input.Position.Y)
+            elseif activeDrag == "hue" then
+                SetHueFromScreen(input.Position.Y)
+            end
+        end)
+        ConnectGlobal(UIS.InputEnded, function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                activeDrag = nil
+            end
+        end)
+        ConnectGlobal(UIS.InputBegan, function(input)
+            if not Popup.Visible or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+            local p = input.Position
+            local popupPos, popupSize = Popup.AbsolutePosition, Popup.AbsoluteSize
+            local btnPos, btnSize = PickerButton.AbsolutePosition, PickerButton.AbsoluteSize
+            local insidePopup = p.X >= popupPos.X and p.X <= popupPos.X + popupSize.X
+                and p.Y >= popupPos.Y and p.Y <= popupPos.Y + popupSize.Y
+            local insideButton = p.X >= btnPos.X and p.X <= btnPos.X + btnSize.X
+                and p.Y >= btnPos.Y and p.Y <= btnPos.Y + btnSize.Y
+            if not insidePopup and not insideButton then SetOpen(false) end
+        end)
+        PickerButton:GetPropertyChangedSignal("AbsolutePosition"):Connect(UpdatePopupPosition)
+        Main:GetPropertyChangedSignal("Position"):Connect(UpdatePopupPosition)
+        Main:GetPropertyChangedSignal("Size"):Connect(UpdatePopupPosition)
+
+        local function ApplyColor(color, shouldNotify)
+            if typeof(color) ~= "Color3" then return false end
+            hue, saturation, value = color:ToHSV()
+            UpdateColor(shouldNotify)
+            return true
+        end
+
+        UpdateColor(false)
+        local PickerAPI = {}
+        function PickerAPI.GetColor() return currentColor end
+        function PickerAPI.GetHex() return Hex(currentColor) end
+        function PickerAPI.SetColor(color, shouldNotify)
+            return ApplyColor(color, shouldNotify ~= false)
+        end
+        function PickerAPI.Open() SetOpen(true) end
+        function PickerAPI.Close() SetOpen(false) end
+        return PickerAPI
+    end
 
 	-- ─────────────────────────────────────────────────────────
 	-- BOTTOM-RIGHT NOTIFICATIONS
@@ -1732,29 +1880,47 @@ function UI.CreateWindow(title, subtitle)
 	local function CreateTab(name)
 		name = ValidateString(name, true) or "Tab"
 
+		-- Calculate enough height for the full name; tabs wrap instead of using "...".
+		local tabTextWidth = math.max(76, TabFrame.Size.X.Offset - 30)
+		local tabTextBounds = TextService:GetTextSize(
+			name,
+			11,
+			Enum.Font.Gotham,
+			Vector2.new(tabTextWidth, 1000)
+		)
+		local tabHeight = math.max(32, math.ceil(tabTextBounds.Y) + 12)
+
 		local TabBtn = Instance.new("TextButton")
 		TabBtn.Name = name
-		TabBtn.Size = UDim2.new(1, -12, 0, 32)
+		TabBtn.Size = UDim2.new(1, -12, 0, tabHeight)
 		TabBtn.Position = UDim2.new(0, 6, 0, 0)
 		TabBtn.BackgroundColor3 = Theme.TabBackground
 		TabBtn.BorderSizePixel = 0
 		TabBtn.Text = name
 		TabBtn.TextColor3 = Theme.TextDark
 		TabBtn.TextSize = 11
-		TabBtn.TextTruncate = Enum.TextTruncate.AtEnd
-		TabBtn.TextWrapped = false
+		TabBtn.TextTruncate = Enum.TextTruncate.None
+		TabBtn.TextWrapped = true
 		TabBtn.TextScaled = false
 		TabBtn.TextXAlignment = Enum.TextXAlignment.Center
+		TabBtn.TextYAlignment = Enum.TextYAlignment.Center
 		TabBtn.AutoButtonColor = false
+		TabBtn.TextStrokeTransparency = 1
 		TabBtn.Parent = TabFrame
 		TabBtn:SetAttribute("ThemeRole", "TabBackground")
-		TabBtn.TextStrokeTransparency = 1
+
+		local TabPadding = Instance.new("UIPadding")
+		TabPadding.PaddingLeft = UDim.new(0, 4)
+		TabPadding.PaddingRight = UDim.new(0, 4)
+		TabPadding.PaddingTop = UDim.new(0, 3)
+		TabPadding.PaddingBottom = UDim.new(0, 3)
+		TabPadding.Parent = TabBtn
 
 		local TabBtnCorner = Instance.new("UICorner")
 		TabBtnCorner.CornerRadius = UDim.new(0, 3)
 		TabBtnCorner.Parent = TabBtn
 
-		-- Borda fina e visível para cada aba
+		-- Visible border around every tab.
 		local TabStroke = Instance.new("UIStroke")
 		TabStroke.Color = Theme.TabBorder
 		TabStroke.Thickness = 1
@@ -1858,10 +2024,13 @@ function UI.CreateWindow(title, subtitle)
 
 		table.insert(Tabs, Tab)
 
-		-- Update tab positions
-		for i, t in ipairs(Tabs) do
-			t.Button.Position = UDim2.new(0, 6, 0, 8 + (i - 1) * 36)
+		-- Reflow tabs using each button's measured height. The side panel scrolls if needed.
+		local nextY = 8
+		for _, tabItem in ipairs(Tabs) do
+			tabItem.Button.Position = UDim2.new(0, 6, 0, nextY)
+			nextY = nextY + tabItem.Button.Size.Y.Offset + 4
 		end
+		TabFrame.CanvasSize = UDim2.new(0, 0, 0, nextY + 4)
 
 		-- Auto-select first tab
 		if #Tabs == 1 then
