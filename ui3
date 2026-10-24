@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.6            ║
+	║  Version: 2.7            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.6"
+local CURRENT_VERSION = "2.7"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -2147,7 +2147,7 @@ function UI.CreateWindow(title, subtitle)
 		phone=10734921524, piechart=10734921727, pin=10734922324, pipette=10734922497,
 		plane=10734922971, play=10734923549, plus=10734924532, power=10734930466,
 		printer=10734930632, puzzle=10734930886, radio=10734931596, recycle=10734932295,
-		redo=10734932822, refreshccw=10734933056, repeat=10734933966, rocket=10734934585,
+		redo=10734932822, refreshccw=10734933056, ["repeat"]=10734933966, rocket=10734934585,
 		ruler=10734941018, save=10734941499, scan=10734942565, scissors=10734942778,
 		search=10734943674, send=10734943902, server=10734949856, settings=10734950309,
 		share=10734950813, shield=10734951847, shoppingcart=10734952479, shuffle=10734953451,
