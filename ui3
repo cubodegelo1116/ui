@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.0            ║
+	║  Version: 2.1            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.0"
+local CURRENT_VERSION = "2.1"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -21,8 +21,6 @@ local MAX_WINDOW_HEIGHT = 700
 local DROPDOWN_ITEM_HEIGHT = 28
 local DROPDOWN_MAX_HEIGHT = 180
 
-
-local UserInputService = game:GetService("UserInputService")
 
 -- ════════════════════════════════════════════════════════════
 -- UTILITY FUNCTIONS
@@ -74,7 +72,14 @@ function UI.CreateWindow(title, subtitle)
 	local TweenService = game:GetService("TweenService")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
-	
+	local trackedConnections = {}
+
+	local function ConnectGlobal(signal, callback)
+		local connection = signal:Connect(callback)
+		table.insert(trackedConnections, connection)
+		return connection
+	end
+
 	if not LocalPlayer then
 		error("LocalPlayer not found", 2)
 	end
@@ -84,24 +89,24 @@ function UI.CreateWindow(title, subtitle)
 	-- ════════════════════════════════════════════════════════════
 
 	local Theme = {
-		Background = Color3.fromRGB(18, 28, 32),
-		TitleBar = Color3.fromRGB(22, 35, 40),
-		TabBackground = Color3.fromRGB(15, 24, 28),
-		TabSelected = Color3.fromRGB(30, 50, 58),
-		Button = Color3.fromRGB(28, 45, 52),
-		ButtonHover = Color3.fromRGB(35, 55, 65),
-		Text = Color3.fromRGB(230, 240, 245),
-		TextDark = Color3.fromRGB(140, 160, 170),
-		Accent = Color3.fromRGB(0, 180, 200),
-		ToggleOn = Color3.fromRGB(0, 190, 140),
-		ToggleOff = Color3.fromRGB(45, 60, 68),
-		Border = Color3.fromRGB(40, 65, 75),
-		Cooldown = Color3.fromRGB(160, 50, 50),
-		Error = Color3.fromRGB(220, 50, 50),
-		Success = Color3.fromRGB(50, 200, 100),
-		Warning = Color3.fromRGB(255, 200, 50),
-		TabBorder = Color3.fromRGB(40, 65, 75),
-		DropdownHover = Color3.fromRGB(35, 55, 65),
+		Background = Color3.fromRGB(24, 24, 27),
+		TitleBar = Color3.fromRGB(31, 31, 35),
+		TabBackground = Color3.fromRGB(27, 27, 31),
+		TabSelected = Color3.fromRGB(48, 50, 58),
+		Button = Color3.fromRGB(39, 39, 44),
+		ButtonHover = Color3.fromRGB(51, 52, 59),
+		Text = Color3.fromRGB(240, 240, 244),
+		TextDark = Color3.fromRGB(160, 161, 170),
+		Accent = Color3.fromRGB(105, 155, 255),
+		ToggleOn = Color3.fromRGB(105, 155, 255),
+		ToggleOff = Color3.fromRGB(66, 67, 75),
+		Border = Color3.fromRGB(53, 54, 61),
+		Cooldown = Color3.fromRGB(115, 53, 58),
+		Error = Color3.fromRGB(220, 75, 75),
+		Success = Color3.fromRGB(75, 190, 120),
+		Warning = Color3.fromRGB(230, 180, 75),
+		TabBorder = Color3.fromRGB(53, 54, 61),
+		DropdownHover = Color3.fromRGB(51, 52, 59),
 	}
 
 	local Themes = {}
@@ -126,15 +131,21 @@ function UI.CreateWindow(title, subtitle)
 
 		for key, value in pairs(colors) do
 			if newTheme[key] ~= nil then
-				newTheme[key] = ValidateColor(value)
+				if typeof(value) ~= "Color3" then
+					warn("UI: RegisterTheme - color '" .. tostring(key) .. "' must be Color3")
+					return nil
+				end
+				newTheme[key] = value
 			else
-				warn("UI: RegisterTheme - unknown color key: " .. key)
+				warn("UI: RegisterTheme - unknown color key: " .. tostring(key))
 			end
 		end
 
 		Themes[name] = newTheme
 		return newTheme
 	end
+
+	local ApplyTheme
 
 	local function SetTheme(themeName)
 		if typeof(themeName) == "string" then
@@ -151,8 +162,14 @@ function UI.CreateWindow(title, subtitle)
 			end
 		elseif typeof(themeName) == "table" then
 			for key, value in pairs(themeName) do
+				if Theme[key] ~= nil and typeof(value) ~= "Color3" then
+					warn("UI: SetTheme - color '" .. tostring(key) .. "' must be Color3")
+					return false
+				end
+			end
+			for key, value in pairs(themeName) do
 				if Theme[key] ~= nil then
-					Theme[key] = ValidateColor(value)
+					Theme[key] = value
 				end
 			end
 		else
@@ -166,7 +183,8 @@ function UI.CreateWindow(title, subtitle)
 
 	local function GetTheme(themeName)
 		if themeName then
-			return Themes[themeName]
+			local selected = Themes[themeName]
+			return selected and CopyTable(selected) or nil
 		end
 		return CopyTable(Theme)
 	end
@@ -191,6 +209,12 @@ function UI.CreateWindow(title, subtitle)
 
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
+	ScreenGui.Destroying:Connect(function()
+		for _, connection in ipairs(trackedConnections) do
+			connection:Disconnect()
+		end
+		table.clear(trackedConnections)
+	end)
 
 	-- ════════════════════════════════════════════════════════════
 	-- MAIN WINDOW FRAME
@@ -198,8 +222,8 @@ function UI.CreateWindow(title, subtitle)
 
 	local Main = Instance.new("Frame")
 	Main.Name = "MainWindow"
-	Main.Size = UDim2.new(0, 520, 0, 380)
-	Main.Position = UDim2.new(0.5, -260, 0.5, -190)
+	Main.Size = UDim2.new(0, 500, 0, 360)
+	Main.Position = UDim2.new(0.5, -250, 0.5, -180)
 	Main.BackgroundColor3 = Theme.Background
 	Main.BorderSizePixel = 0
 	Main.Active = true
@@ -257,7 +281,6 @@ function UI.CreateWindow(title, subtitle)
 	TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 	TitleLabel.Parent = TitleBar
 	TitleLabel:SetAttribute("ThemeRole", "Text")
-	-- Remove a porra do contorno/highlight das palavras
 	TitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 	TitleLabel.TextStrokeTransparency = 1
 
@@ -275,7 +298,6 @@ function UI.CreateWindow(title, subtitle)
 	SubtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 	SubtitleLabel.Parent = TitleBar
 	SubtitleLabel:SetAttribute("ThemeRole", "TextDark")
-	-- Remove a porra do contorno/highlight das palavras
 	SubtitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 	SubtitleLabel.TextStrokeTransparency = 1
 
@@ -295,7 +317,6 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = TitleBar
 		Btn:SetAttribute("ThemeRole", "TextDark")
-		-- Remove a porra do contorno/highlight das palavras
 		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Btn.TextStrokeTransparency = 1
 
@@ -329,13 +350,13 @@ function UI.CreateWindow(title, subtitle)
 		end
 	end)
 
-	TitleBar.InputEnded:Connect(function(input)
+	ConnectGlobal(UIS.InputEnded, function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			dragging = false
 		end
 	end)
 
-	UIS.InputChanged:Connect(function(input)
+	ConnectGlobal(UIS.InputChanged, function(input)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - dragStart
 			Main.Position = UDim2.new(
@@ -379,13 +400,13 @@ function UI.CreateWindow(title, subtitle)
 		end
 	end)
 
-	Resize.InputEnded:Connect(function(input)
+	ConnectGlobal(UIS.InputEnded, function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			resizing = false
 		end
 	end)
 
-	UIS.InputChanged:Connect(function(input)
+	ConnectGlobal(UIS.InputChanged, function(input)
 		if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
 			local delta = input.Position - resizeStart
 
@@ -500,7 +521,6 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 		Btn:SetAttribute("ThemeRole", "Button")
-		-- Remove a porra do contorno/highlight das palavras
 		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Btn.TextStrokeTransparency = 1
 
@@ -555,11 +575,10 @@ function UI.CreateWindow(title, subtitle)
 		Label.TextYAlignment = Enum.TextYAlignment.Center
 		Label.Parent = Frame
 		Label:SetAttribute("ThemeRole", "Text")
-		-- Remove a porra do contorno/highlight das palavras
 		Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Label.TextStrokeTransparency = 1
 
-		local state = default
+		local state = default == true
 
 		local Toggle = Instance.new("TextButton")
 		Toggle.Size = UDim2.new(0, 44, 0, 22)
@@ -586,28 +605,31 @@ function UI.CreateWindow(title, subtitle)
 		CircleCorner.CornerRadius = UDim.new(1, 0)
 		CircleCorner.Parent = Circle
 
-		Toggle.MouseButton1Click:Connect(function()
-			state = not state
+		local function SetState(newState)
+			if typeof(newState) ~= "boolean" or newState == state then
+				return
+			end
 
+			state = newState
 			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
 			local goalColor = state and Theme.ToggleOn or Theme.ToggleOff
-
 			Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
-
 			TweenService:Create(Circle, TweenInfo.new(ANIMATION_SPEED), {Position = goalPos}):Play()
 			TweenService:Create(Toggle, TweenInfo.new(ANIMATION_SPEED), {BackgroundColor3 = goalColor}):Play()
 
-			if callback and typeof(callback) == "function" then
+			if typeof(callback) == "function" then
 				callback(state)
 			end
+		end
+
+		Toggle.MouseButton1Click:Connect(function()
+			SetState(not state)
 		end)
 
 		-- Return API
 		local ToggleAPI = {}
 		function ToggleAPI.SetState(newState)
-			if typeof(newState) == "boolean" and newState ~= state then
-				Toggle.MouseButton1Click:Fire()
-			end
+			SetState(newState)
 		end
 		function ToggleAPI.GetState()
 			return state
@@ -629,7 +651,7 @@ function UI.CreateWindow(title, subtitle)
 
 		-- Validate ranges
 		if min > max then min, max = max, min end
-		default = Clamp(default, min, max)
+		default = Clamp(math.floor(default + 0.5), min, max)
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = text
@@ -648,16 +670,16 @@ function UI.CreateWindow(title, subtitle)
 		Label.TextYAlignment = Enum.TextYAlignment.Center
 		Label.Parent = Frame
 		Label:SetAttribute("ThemeRole", "Text")
-		-- Remove a porra do contorno/highlight das palavras
 		Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Label.TextStrokeTransparency = 1
 
 		local Bar = Instance.new("Frame")
 		Bar.Size = UDim2.new(1, 0, 0, 8)
 		Bar.Position = UDim2.new(0, 0, 0, 28)
-		Bar.BackgroundColor3 = Color3.fromRGB(35, 50, 58)
+		Bar.BackgroundColor3 = Theme.ToggleOff
 		Bar.BorderSizePixel = 0
 		Bar.Parent = Frame
+		Bar:SetAttribute("ThemeRole", "ToggleOff")
 
 		local BarCorner = Instance.new("UICorner")
 		BarCorner.CornerRadius = UDim.new(1, 0)
@@ -670,6 +692,7 @@ function UI.CreateWindow(title, subtitle)
 		end
 
 		local percent = GetPercent(default)
+		local currentValue = default
 
 		local Fill = Instance.new("Frame")
 		Fill.Size = UDim2.new(percent, 0, 1, 0)
@@ -707,12 +730,14 @@ function UI.CreateWindow(title, subtitle)
 
 			local value = math.floor(min + (max - min) * newPercent + 0.5)
 			value = Clamp(value, min, max)
+			currentValue = value
+			percent = GetPercent(value)
 
-			Fill.Size = UDim2.new(newPercent, 0, 1, 0)
-			Handle.Position = UDim2.new(newPercent, -8, 0.5, -8)
+			Fill.Size = UDim2.new(percent, 0, 1, 0)
+			Handle.Position = UDim2.new(percent, -8, 0.5, -8)
 			Label.Text = text .. ": " .. value
 
-			if callback and typeof(callback) == "function" then
+			if typeof(callback) == "function" then
 				callback(value)
 			end
 
@@ -738,13 +763,13 @@ function UI.CreateWindow(title, subtitle)
 			end
 		end)
 
-		UIS.InputChanged:Connect(function(input)
+		ConnectGlobal(UIS.InputChanged, function(input)
 			if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
 				UpdateSlider(input)
 			end
 		end)
 
-		UIS.InputEnded:Connect(function(input)
+		ConnectGlobal(UIS.InputEnded, function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				draggingSlider = false
 			end
@@ -753,16 +778,16 @@ function UI.CreateWindow(title, subtitle)
 		-- Return API
 		local SliderAPI = {}
 		function SliderAPI.SetValue(value)
-			value = tonumber(value) or min
-			value = Clamp(value, min, max)
-			local p = GetPercent(value)
-			Fill.Size = UDim2.new(p, 0, 1, 0)
-			Handle.Position = UDim2.new(p, -8, 0.5, -8)
+			value = Clamp(math.floor((tonumber(value) or min) + 0.5), min, max)
+			currentValue = value
+			percent = GetPercent(value)
+			Fill.Size = UDim2.new(percent, 0, 1, 0)
+			Handle.Position = UDim2.new(percent, -8, 0.5, -8)
 			Label.Text = text .. ": " .. value
-			if callback then callback(value) end
+			if typeof(callback) == "function" then callback(value) end
 		end
 		function SliderAPI.GetValue()
-			return math.floor(min + (max - min) * (Handle.Position.X.Scale or 0) + 0.5)
+			return currentValue
 		end
 
 		return SliderAPI
@@ -788,7 +813,6 @@ function UI.CreateWindow(title, subtitle)
 		Label.TextYAlignment = Enum.TextYAlignment.Center
 		Label.Parent = page
 		Label:SetAttribute("ThemeRole", "Text")
-		-- Remove a porra do contorno/highlight das palavras
 		Label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Label.TextStrokeTransparency = 1
 
@@ -845,7 +869,6 @@ function UI.CreateWindow(title, subtitle)
 		TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
 		TitleLabel.Parent = Box
 		TitleLabel:SetAttribute("ThemeRole", "Text")
-		-- Remove a porra do contorno/highlight das palavras
 		TitleLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		TitleLabel.TextStrokeTransparency = 1
 
@@ -862,7 +885,6 @@ function UI.CreateWindow(title, subtitle)
 		TextLabel.TextWrapped = true
 		TextLabel.Parent = Box
 		TextLabel:SetAttribute("ThemeRole", "TextDark")
-		-- Remove a porra do contorno/highlight das palavras
 		TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		TextLabel.TextStrokeTransparency = 1
 
@@ -896,7 +918,6 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = Frame
 		Btn:SetAttribute("ThemeRole", "Button")
-		-- Remove a porra do contorno/highlight das palavras
 		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Btn.TextStrokeTransparency = 1
 
@@ -992,7 +1013,6 @@ function UI.CreateWindow(title, subtitle)
 				OptBtn.LayoutOrder = i
 				OptBtn.Parent = List
 				OptBtn:SetAttribute("ThemeRole", "Text")
-				-- Remove a porra do contorno/highlight das palavras
 				OptBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 				OptBtn.TextStrokeTransparency = 1
 
@@ -1020,14 +1040,19 @@ function UI.CreateWindow(title, subtitle)
 				#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
 				DROPDOWN_MAX_HEIGHT
 			)
-
-			List.Size = UDim2.new(
-				0,
-				Btn.AbsoluteSize.X,
-				0,
-				listHeight
-			)
+			List.Size = UDim2.new(0, Btn.AbsoluteSize.X, 0, listHeight)
 		end
+
+		local function UpdateListPosition()
+			if not open then return end
+			local absPos = Btn.AbsolutePosition
+			local absSize = Btn.AbsoluteSize
+			List.Position = UDim2.fromOffset(absPos.X, absPos.Y + absSize.Y + 4)
+			List.Size = UDim2.new(0, absSize.X, 0, math.min(#currentOptions * DROPDOWN_ITEM_HEIGHT + 4, DROPDOWN_MAX_HEIGHT))
+		end
+
+		Main:GetPropertyChangedSignal("Position"):Connect(UpdateListPosition)
+		Main:GetPropertyChangedSignal("Size"):Connect(UpdateListPosition)
 
 		-- Initialize
 		UpdateButtonText()
@@ -1038,42 +1063,33 @@ function UI.CreateWindow(title, subtitle)
 			open = not open
 
 			if open then
-				local absPos = Btn.AbsolutePosition
-				local absSize = Btn.AbsoluteSize
-
-				List.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
-				local listHeight = math.min(
-					#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
-					DROPDOWN_MAX_HEIGHT
-				)
-
-				List.Size = UDim2.new(
-					0,
-					absSize.X,
-					0,
-					listHeight
-				)
-				List.Visible = true
+				UpdateListPosition()
+				List.Visible = #currentOptions > 0
 			else
 				List.Visible = false
 			end
 		end)
 
 		-- Close dropdown when clicking outside
-		UserInputService.InputBegan:Connect(function(input, gameProcessed)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 then
-				if open then
-					local mousePos = input.Position
-					local listRect = List.AbsolutePosition + List.AbsoluteSize
-					
-					if mousePos.X < List.AbsolutePosition.X or 
-					   mousePos.X > listRect.X or
-					   mousePos.Y < List.AbsolutePosition.Y or
-					   mousePos.Y > listRect.Y then
-						open = false
-						List.Visible = false
-					end
-				end
+		ConnectGlobal(UIS.InputBegan, function(input)
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 or not open then
+				return
+			end
+
+			local mousePos = input.Position
+			local buttonPos = Btn.AbsolutePosition
+			local buttonSize = Btn.AbsoluteSize
+			local listPos = List.AbsolutePosition
+			local listSize = List.AbsoluteSize
+
+			local insideButton = mousePos.X >= buttonPos.X and mousePos.X <= buttonPos.X + buttonSize.X
+				and mousePos.Y >= buttonPos.Y and mousePos.Y <= buttonPos.Y + buttonSize.Y
+			local insideList = mousePos.X >= listPos.X and mousePos.X <= listPos.X + listSize.X
+				and mousePos.Y >= listPos.Y and mousePos.Y <= listPos.Y + listSize.Y
+
+			if not insideButton and not insideList then
+				open = false
+				List.Visible = false
 			end
 		end)
 
@@ -1134,7 +1150,7 @@ function UI.CreateWindow(title, subtitle)
 	function AddCooldownButton(page, text, cooldown, callback)
 		if not page then error("Page required for AddCooldownButton", 2) end
 		text = ValidateString(text, true) or "Button"
-		cooldown = tonumber(cooldown) or 5
+		cooldown = math.max(0, math.floor(tonumber(cooldown) or 5))
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
@@ -1148,7 +1164,6 @@ function UI.CreateWindow(title, subtitle)
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 		Btn:SetAttribute("ThemeRole", "Button")
-		-- Remove a porra do contorno/highlight das palavras
 		Btn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		Btn.TextStrokeTransparency = 1
 
@@ -1163,27 +1178,29 @@ function UI.CreateWindow(title, subtitle)
 		Stroke:SetAttribute("ThemeRole", "Border")
 
 		local onCooldown = false
-		local cooldownRemaining = 0
+		local cooldownToken = 0
 
 		Btn.MouseButton1Click:Connect(function()
-			if onCooldown then
-				return
-			end
+			if onCooldown then return end
 
 			onCooldown = true
-			cooldownRemaining = cooldown
+			cooldownToken += 1
+			local thisToken = cooldownToken
 
-			if callback and typeof(callback) == "function" then
-				callback()
+			if typeof(callback) == "function" then
+				local ok, err = pcall(callback)
+				if not ok then warn("UI cooldown callback error: " .. tostring(err)) end
 			end
 
 			task.spawn(function()
 				for i = cooldown, 1, -1 do
+					if thisToken ~= cooldownToken then return end
 					Btn.Text = tostring(i)
 					TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.Cooldown}):Play()
 					SafeWait(1)
 				end
 
+				if thisToken ~= cooldownToken then return end
 				Btn.Text = text
 				TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Button}):Play()
 				onCooldown = false
@@ -1196,6 +1213,7 @@ function UI.CreateWindow(title, subtitle)
 			return onCooldown
 		end
 		function CooldownAPI.ResetCooldown()
+			cooldownToken += 1
 			onCooldown = false
 			Btn.Text = text
 			Btn.BackgroundColor3 = Theme.Button
@@ -1230,7 +1248,6 @@ function UI.CreateWindow(title, subtitle)
 		TextBox.ClearTextOnFocus = false
 		TextBox.Parent = Frame
 		TextBox:SetAttribute("ThemeRole", "Button")
-		-- Remove a porra do contorno/highlight das palavras
 		TextBox.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		TextBox.TextStrokeTransparency = 1
 
@@ -1288,7 +1305,6 @@ function UI.CreateWindow(title, subtitle)
 		TabBtn.AutoButtonColor = false
 		TabBtn.Parent = TabFrame
 		TabBtn:SetAttribute("ThemeRole", "TabBackground")
-		-- Remove a porra do contorno/highlight das palavras
 		TabBtn.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 		TabBtn.TextStrokeTransparency = 1
 
@@ -1468,7 +1484,7 @@ function UI.CreateWindow(title, subtitle)
 			end
 		end)
 
-		UIS.InputChanged:Connect(function(input)
+		ConnectGlobal(UIS.InputChanged, function(input)
 			if ballDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 				local delta = input.Position - ballStart
 				Ball.Position = UDim2.new(
@@ -1494,7 +1510,7 @@ function UI.CreateWindow(title, subtitle)
 	-- THEME APPLICATION
 	-- ════════════════════════════════════════════════════════════
 
-	function ApplyTheme()
+	ApplyTheme = function()
 		for _, object in ipairs(ScreenGui:GetDescendants()) do
 			local role = object:GetAttribute("ThemeRole")
 
@@ -1523,11 +1539,14 @@ function UI.CreateWindow(title, subtitle)
 					if object:IsA("GuiObject") then
 						object.BackgroundColor3 = Theme.Button
 					end
+					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+						object.TextColor3 = Theme.Text
+						object.TextStrokeTransparency = 1
+					end
 
 				elseif role == "Text" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.Text
-						-- Remove a porra do contorno/highlight das palavras
 						object.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 						object.TextStrokeTransparency = 1
 					elseif object:IsA("ImageLabel") or object:IsA("ImageButton") then
@@ -1537,7 +1556,6 @@ function UI.CreateWindow(title, subtitle)
 				elseif role == "TextDark" then
 					if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 						object.TextColor3 = Theme.TextDark
-						-- Remove a porra do contorno/highlight das palavras
 						object.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 						object.TextStrokeTransparency = 1
 					end
@@ -1583,7 +1601,6 @@ function UI.CreateWindow(title, subtitle)
 				else
 					tab.Button.TextColor3 = Theme.TextDark
 				end
-				-- Remove a porra do contorno/highlight das palavras
 				tab.Button.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 				tab.Button.TextStrokeTransparency = 1
 			end
