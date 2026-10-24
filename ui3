@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.9            ║
+	║  Version: 2.10           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.9-UI2-COMPAT"
+local CURRENT_VERSION = "2.10-UI2-COMPAT"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3065,11 +3065,52 @@ function UI.CreateWindow(title, subtitle)
 			return CompatNewSearchDropdown(tab, a1, a2, a3, a4, a5, a6)
 		end
 
+		-- UI2-compatible focus textbox. Installed on both the tab and its sections,
+		-- because older GUI scripts use both call styles.
+		local function CompatNewFocusTextBox(owner, a1, a2, a3, a4, a5)
+			local label, placeholder, boxName, callback = UnpackCompatArgs(owner, a1, a2, a3, a4, a5)
+			if typeof(callback) ~= "function" and typeof(boxName) == "function" then
+				callback = boxName
+				boxName = nil
+			end
+			if typeof(placeholder) == "function" then
+				callback, placeholder = placeholder, label
+				label = ""
+			end
+			if label and tostring(label) ~= "" then
+				tab.AddTextLabel(tostring(label))
+			end
+			local boxAPI
+			local function OnFocusLost(value)
+				if typeof(callback) == "function" then
+					task.spawn(function()
+						local ok, err = pcall(callback, value)
+						if not ok then warn("[PDDEV] NewFocusTextBox callback error: " .. tostring(err)) end
+					end)
+				end
+				task.delay(0.1, function()
+					if boxAPI and typeof(boxAPI.Clear) == "function" then
+						boxAPI.Clear()
+					end
+				end)
+			end
+			boxAPI = tab.AddTextBox(placeholder or tostring(boxName or "Enter text..."), OnFocusLost)
+			return boxAPI
+		end
+
+		function tab.NewFocusTextBox(a1, a2, a3, a4, a5)
+			return CompatNewFocusTextBox(tab, a1, a2, a3, a4, a5)
+		end
+
 		function tab.NewSection()
 			local section = { _compatPage = tab.Page }
 
 			function section.NewSearchDropdown(a1, a2, a3, a4, a5, a6)
 				return CompatNewSearchDropdown(section, a1, a2, a3, a4, a5, a6)
+			end
+
+			function section.NewFocusTextBox(a1, a2, a3, a4, a5)
+				return CompatNewFocusTextBox(section, a1, a2, a3, a4, a5)
 			end
 
 			function section.NewNotify(a1, a2, a3)
