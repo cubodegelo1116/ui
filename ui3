@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.10           ║
+	║  Version: 2.11           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.10-UI2-COMPAT"
+local CURRENT_VERSION = "2.11-UI2-COMPAT-UTF8"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -33,12 +33,56 @@ local function ValidateColor(color)
 	error("Expected Color3, got " .. typeof(color), 2)
 end
 
+-- Repair frequent UTF-8 mojibake patterns caused by saving source text with
+-- the wrong encoding. This is deliberately a conservative list of known pairs;
+-- it does not try to reinterpret arbitrary user-entered text or binary data.
+local TEXT_ENCODING_FIXES = {
+    -- Exact malformed sequence reported by the user: "apￃﾳs" -> "após".
+    {"ￃﾳ", "ó"},
+    -- Common double-encoded UTF-8 (fix before the single-encoded forms).
+    {"ÃƒÂ¡", "á"}, {"ÃƒÂ ", "à"}, {"ÃƒÂ¢", "â"}, {"ÃƒÂ£", "ã"},
+    {"ÃƒÂ©", "é"}, {"ÃƒÂª", "ê"}, {"ÃƒÂ­", "í"}, {"ÃƒÂ³", "ó"},
+    {"ÃƒÂ´", "ô"}, {"ÃƒÂµ", "õ"}, {"ÃƒÂº", "ú"}, {"ÃƒÂ§", "ç"},
+    -- Common single-encoded UTF-8 mojibake.
+    {"Ã¡", "á"}, {"Ã ", "à"}, {"Ã¢", "â"}, {"Ã£", "ã"},
+    {"Ã©", "é"}, {"Ãª", "ê"}, {"Ã­", "í"}, {"Ã³", "ó"},
+    {"Ã´", "ô"}, {"Ãµ", "õ"}, {"Ãº", "ú"}, {"Ã§", "ç"},
+    {"Ã€", "À"}, {"Ã‚", "Â"}, {"Ãƒ", "Ã"}, {"Ã‰", "É"},
+    {"ÃŠ", "Ê"}, {"Ã“", "Ó"}, {"Ã”", "Ô"}, {"Ã•", "Õ"},
+    {"Ãš", "Ú"}, {"Ã‡", "Ç"}, {"Ã‘", "Ñ"},
+    {"Âº", "º"}, {"Âª", "ª"}, {"Â°", "°"}, {"Â·", "·"},
+    {"â€™", "’"}, {"â€œ", "“"}, {"â€“", "–"}, {"â€”", "—"}, {"â€¦", "…"},
+}
+
+local function ReplacePlain(text, search, replacement)
+    local startAt = 1
+    while true do
+        local first, last = string.find(text, search, startAt, true)
+        if not first then break end
+        text = string.sub(text, 1, first - 1) .. replacement .. string.sub(text, last + 1)
+        startAt = first + #replacement
+    end
+    return text
+end
+
+local function FixMojibake(value)
+    if typeof(value) ~= "string" then return value end
+    local repaired = value
+    for _, pair in ipairs(TEXT_ENCODING_FIXES) do
+        repaired = ReplacePlain(repaired, pair[1], pair[2])
+    end
+    return repaired
+end
+
+-- Public helper for scripts that need to repair a string before using it.
+UI.FixTextEncoding = FixMojibake
+
 local function ValidateString(value, allowNil)
-	if allowNil and value == nil then return nil end
-	if typeof(value) == "string" then return value end
-	if typeof(value) == "number" then return tostring(value) end
-	if allowNil then return "" end
-	error("Expected string or number, got " .. typeof(value), 2)
+    if allowNil and value == nil then return nil end
+    if typeof(value) == "string" then return FixMojibake(value) end
+    if typeof(value) == "number" then return tostring(value) end
+    if allowNil then return "" end
+    error("Expected string or number, got " .. typeof(value), 2)
 end
 
 local function Clamp(value, min, max)
@@ -209,6 +253,9 @@ function UI.CreateWindow(title, subtitle)
 	ScreenGui.Name = "UI3"
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	-- Prevent Roblox's automatic localization from changing literal UI text
+	-- (for example, converting "seconds" into "segundos").
+	pcall(function() ScreenGui.AutoLocalize = false end)
 
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
@@ -217,6 +264,15 @@ function UI.CreateWindow(title, subtitle)
 	local function RemoveTextHighlight(object)
 		if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then
 			return
+		end
+
+		-- Apply the same opt-out to text controls in case a GUI object overrides it.
+		pcall(function() object.AutoLocalize = false end)
+		if object:IsA("TextBox") then
+			object.PlaceholderText = FixMojibake(object.PlaceholderText)
+			if object.Text ~= "" then object.Text = FixMojibake(object.Text) end
+		else
+			object.Text = FixMojibake(object.Text)
 		end
 
 		object.TextStrokeTransparency = 1
@@ -255,6 +311,21 @@ function UI.CreateWindow(title, subtitle)
 					object.TextStrokeTransparency = 1
 				end
 			end)
+			-- Static labels/buttons can also be updated later (status labels, dropdown
+			-- selection text, cooldown text, etc.), so repair those updates as well.
+			if not object:IsA("TextBox") then
+				object:GetPropertyChangedSignal("Text"):Connect(function()
+					if not object.Parent then return end
+					local repaired = FixMojibake(object.Text)
+					if repaired ~= object.Text then object.Text = repaired end
+				end)
+			else
+				object:GetPropertyChangedSignal("PlaceholderText"):Connect(function()
+					if not object.Parent then return end
+					local repaired = FixMojibake(object.PlaceholderText)
+					if repaired ~= object.PlaceholderText then object.PlaceholderText = repaired end
+				end)
+			end
 			object.ChildAdded:Connect(RemoveTextEffect)
 		end
 	end
@@ -282,7 +353,7 @@ function UI.CreateWindow(title, subtitle)
 
 	-- Wrap by measured pixel width, including very long words without spaces.
 	local function WrapTextToWidth(value, font, textSize, maxWidth)
-		value = tostring(value or "")
+		value = FixMojibake(tostring(value or ""))
 		maxWidth = math.max(24, tonumber(maxWidth) or 80)
 		local lines = {}
 
@@ -346,7 +417,7 @@ function UI.CreateWindow(title, subtitle)
 	-- Manually wrap labels by their current pixel width. This is reliable for
 	-- labels inside ScrollingFrames and also responds when the main window resizes.
 	local function SetupResponsiveText(label, initialText, minimumHeight)
-		local rawText = tostring(initialText or "")
+		local rawText = FixMojibake(tostring(initialText or ""))
 		local formatting = false
 		local lastFormattedText = nil
 		local lastWidth = -1
@@ -378,7 +449,7 @@ function UI.CreateWindow(title, subtitle)
 
 		label:GetPropertyChangedSignal("Text"):Connect(function()
 			if formatting or label.Text == lastFormattedText then return end
-			rawText = label.Text
+			rawText = FixMojibake(label.Text)
 			lastWidth = -1
 			task.defer(function() Refresh(true) end)
 		end)
@@ -395,7 +466,7 @@ function UI.CreateWindow(title, subtitle)
 		end)
 		task.defer(function() Refresh(true) end)
 		return function(newText)
-			rawText = tostring(newText or "")
+			rawText = FixMojibake(tostring(newText or ""))
 			lastWidth = -1
 			Refresh(true)
 		end
