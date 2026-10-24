@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.5            ║
+	║  Version: 2.6            ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.5"
+local CURRENT_VERSION = "2.6"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -258,6 +258,16 @@ function UI.CreateWindow(title, subtitle)
 			object.ChildAdded:Connect(RemoveTextEffect)
 		end
 	end
+
+
+	-- Text effects can be reintroduced by later-created controls or theme refreshes.
+	ScreenGui.DescendantAdded:Connect(function(object)
+		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+			task.defer(function()
+				if object.Parent then RemoveTextHighlight(object) end
+			end)
+		end
+	end)
 
 	local function QueueThemeRefresh()
 		if themeRefreshQueued then return end
@@ -1809,7 +1819,8 @@ function UI.CreateWindow(title, subtitle)
             SVMarker.Position = UDim2.new(saturation, 0, 1 - value, 0)
             HueHandle.Position = UDim2.new(0.5, 0, hue, 0)
             if shouldNotify ~= false and typeof(callback) == "function" then
-                callback(currentColor)
+                local ok, err = pcall(callback, currentColor)
+                if not ok then warn("[PDDEV ColorPicker] callback error: " .. tostring(err)) end
             end
         end
 
@@ -2081,11 +2092,79 @@ function UI.CreateWindow(title, subtitle)
 
 	-- The menu icon reuses the image asset already used by this library's floating button.
 	local BuiltInTabImages = {
-		menu = "rbxassetid://7733960981",
-		minimize = "rbxassetid://7733960981",
-		default = "rbxassetid://7733960981",
-		pddev = "rbxassetid://7733960981",
+		menu = "rbxassetid://7733960981", minimize = "rbxassetid://7733960981",
+		default = "rbxassetid://7733960981", pddev = "rbxassetid://7733960981",
 	}
+
+	-- Built-in Lucide-style Roblox decal IDs (use CreateTab("Name", "icon-name")).
+	-- Names are normalized to lowercase by ResolveTabIcon.
+	local BuiltInTabAssetIcons = {
+		accessibility=10709751939, activity=10709752035, airvent=10709752131, airplay=10709752254,
+		alarmcheck=10709752405, alarmclock=10709752630, alarmclockoff=10709752508,
+		alertcircle=10709752996, alertoctagon=10709753064, alerttriangle=10709753149,
+		aligncenter=10709753570, anchor=10709761530, angry=10709761629, aperture=10709761813,
+		apple=10709761889, archive=10709762233, armchair=10709762327, arrowdown=10709767827,
+		arrowleft=10709768114, arrowright=10709768347, arrowup=10709768939, asterisk=10709769095,
+		atsign=10709769286, award=10709769406, axe=10709769508, baby=10709769732,
+		backpack=10709769841, banana=10709770005, banknote=10709770178, barchart=10709773755,
+		barcode=10747360675, bath=10709773963, battery=10709774640, beaker=10709774756,
+		bed=10709775036, bell=10709775704, bike=10709775894, binary=10709776050,
+		bluetooth=10709776655, bold=10747813908, bomb=10709781460, bone=10709781605,
+		book=10709781824, bookopen=10709781717, bookmark=10709782154, bot=10709782230,
+		box=10709782497, briefcase=10709782662, brush=10709782758, bug=10709782845,
+		building=10709783051, bus=10709783137, cake=10709783217, calculator=10709783311,
+		calendar=10709789505, camera=10709789686, car=10709789810, check=10709790644,
+		checkcircle=10709790387, chefhat=10709790757, chevrondown=10709790948, chevronleft=10709791281,
+		chevronright=10709791437, chevronup=10709791523, chrome=10709797725, circle=10709798174,
+		clipboard=10709799288, clock=10709805144, cloud=10709806740, clover=10709806995,
+		code=10709810463, code2=10709807111, coffee=10709810814, cog=10709810948,
+		coins=10709811110, compass=10709811445, contrast=10709811939, cookie=10709812067,
+		copy=10709812159, cpu=10709813383, crop=10709818245, cross=10709818399,
+		crosshair=10709818534, crown=10709818626, database=10709818996, delete=10709819059,
+		diamond=10709819149, download=10723344270, droplet=10723344432, edit=10734883598,
+		eye=10723346959, eyeoff=10723346871, factory=10723347051, fastforward=10723354521,
+		feather=10723354671, figma=10723354801, file=10723374641, filecode=10723356507,
+		fileimage=10723357790, filetext=10723367380, filter=10723375128, fingerprint=10723375250,
+		flag=10723375890, flame=10723376114, flashlight=10723376471, folder=10723387563,
+		forward=10723388016, frown=10723394681, gamepad=10723395457, gauge=10723395708,
+		gem=10723396000, ghost=10723396107, gift=10723396402, gitbranch=10723396676,
+		globe=10723404337, graduationcap=10723404691, grid=10723404936, hammer=10723405360,
+		hand=10723405649, harddrive=10723405749, hash=10723405975, headphones=10723406165,
+		heart=10723406885, helpcircle=10723406988, hexagon=10723407092, history=10723407335,
+		home=10723407389, image=10723415040, inbox=10723415335, infinity=10723415766,
+		info=10723415903, inspect=10723416057, italic=10723416195, joystick=10723416527,
+		key=10723416652, keyboard=10723416765, laptop=10723423881, layers=10723424505,
+		layout=10723425376, leaf=10723425539, library=10723425615, lightbulb=10723425852,
+		linechart=10723426393, link=10723426722, list=10723433811, loader=10723434070,
+		locate=10723434557, lock=10723434711, login=10723434830, logout=10723434906,
+		magnet=10723435069, mail=10734885430, map=10734886202, mappin=10734886004,
+		maximize=10734886735, medal=10734887072, megaphone=10734887454, menu=10734887784,
+		messagecircle=10734888000, messagesquare=10734888228, mic=10734888864, microscope=10734889106,
+		minus=10734896206, monitor=10734896881, moon=10734897102, mountain=10734897956,
+		mouse=10734898592, move=10734900011, music=10734905958, navigation=10734906744,
+		network=10734906975, newspaper=10734907168, package=10734909540, paintbrush=10734910187,
+		palette=10734910430, paperclip=10734910927, pause=10734919336, pencil=10734919691,
+		phone=10734921524, piechart=10734921727, pin=10734922324, pipette=10734922497,
+		plane=10734922971, play=10734923549, plus=10734924532, power=10734930466,
+		printer=10734930632, puzzle=10734930886, radio=10734931596, recycle=10734932295,
+		redo=10734932822, refreshccw=10734933056, repeat=10734933966, rocket=10734934585,
+		ruler=10734941018, save=10734941499, scan=10734942565, scissors=10734942778,
+		search=10734943674, send=10734943902, server=10734949856, settings=10734950309,
+		share=10734950813, shield=10734951847, shoppingcart=10734952479, shuffle=10734953451,
+		sliders=10734963400, smartphone=10734963940, smile=10734964441, snowflake=10734964600,
+		sofa=10734964852, speaker=10734965419, square=10734965702, star=10734966248,
+		stopcircle=10734972621, sun=10734974297, sword=10734975486, table=10734976230,
+		tag=10734976528, target=10734977012, terminal=10734982144, thermometer=10734983134,
+		thumbsdown=10734983359, thumbsup=10734983629, timer=10734984606, toggleleft=10734984834,
+		trash=10747362393, trendingup=10747363465, trophy=10747363809, truck=10747364031,
+		tv=10747364593, type=10747364761, umbrella=10747364971, underline=10747365191,
+		undo=10747365484, unlock=10747366027, upload=10747366434, user=10747373176,
+		users=10747373426, verified=10747374131, video=10747374938, volume=10747376008,
+		wallet=10747376205, wand=10747376565, watch=10747376722, waves=10747376931,
+		webcam=10747381992, wifi=10747382504, wind=10747382750, wrench=10747383470,
+		x=10747384394, xcircle=10747383819, zoomin=10747384552, zoomout=10747384679,
+	}
+
 
 	local BuiltInTabIcons = {
 		home = "⌂",
@@ -2121,6 +2200,7 @@ function UI.CreateWindow(title, subtitle)
 		if typeof(icon) ~= "string" or icon == "" then return nil, nil end
 		local lower = string.lower(icon)
 		if BuiltInTabImages[lower] then return "image", BuiltInTabImages[lower] end
+		if BuiltInTabAssetIcons[lower] then return "image", "rbxassetid://" .. tostring(BuiltInTabAssetIcons[lower]) end
 		if tonumber(icon) then return "image", "rbxassetid://" .. tostring(math.floor(tonumber(icon))) end
 		if lower:match("^rbxassetid://") or lower:match("^rbxasset://") or lower:match("^rbxthumb://") or lower:match("^https?://") then
 			return "image", icon
@@ -2209,7 +2289,7 @@ function UI.CreateWindow(title, subtitle)
 		TabLabel.TextColor3 = Theme.TextDark
 		TabLabel.TextSize = tabFontSize
 		TabLabel.Font = Enum.Font.Gotham
-		TabLabel.TextWrapped = false
+		TabLabel.TextWrapped = true
 		TabLabel.TextTruncate = Enum.TextTruncate.None
 		TabLabel.TextXAlignment = iconType and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center
 		TabLabel.TextYAlignment = Enum.TextYAlignment.Center
