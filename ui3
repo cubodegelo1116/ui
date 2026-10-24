@@ -7,7 +7,7 @@
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.7"
+local CURRENT_VERSION = "2.8-UI2-COMPAT"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -2723,7 +2723,7 @@ function UI.CreateWindow(title, subtitle)
 	-- PUBLIC API
 	-- ════════════════════════════════════════════════════════════
 
-	return {
+	local WindowAPI = {
 		-- Version info
 		VERSION = CURRENT_VERSION,
 
@@ -2770,6 +2770,145 @@ function UI.CreateWindow(title, subtitle)
 			ScreenGui:Destroy()
 		end,
 	}
+
+	-- ════════════════════════════════════════════════════════════
+	-- UI2 / IceHub compatibility layer
+	-- Maps the old CreateMain -> NewTab -> NewSection API to this library.
+	-- Both colon calls (obj:Method(...)) and dot calls (obj.Method(...)) work.
+	-- ════════════════════════════════════════════════════════════
+	local function UnpackCompatArgs(owner, a, b, c, d, e)
+		if a == owner then
+			return b, c, d, e
+		end
+		return a, b, c, d
+	end
+
+	local compatThemeName = "Default"
+
+	function WindowAPI.NewTab(a, b, c)
+		local tabTitle, tabName
+		if a == WindowAPI then
+			tabTitle, tabName = b, c
+		else
+			tabTitle, tabName = a, b
+		end
+		tabTitle = ValidateString(tabTitle, true) or ValidateString(tabName, true) or "Tab"
+		local tab = CreateTab(tabTitle, nil)
+		if tab.Page and typeof(tabName) == "string" and tabName ~= "" then
+			tab.Page.Name = tabName
+		end
+
+		function tab.NewSection()
+			local section = {}
+
+			function section.NewNotify(a1, a2, a3)
+				local message, duration = UnpackCompatArgs(section, a1, a2, a3)
+				return ShowNotification("Notification", tostring(message or ""), tonumber(duration) or 5, "info")
+			end
+
+			function section.NewSmall(a1, a2, a3)
+				local label, callback = UnpackCompatArgs(section, a1, a2, a3)
+				return tab.AddButton(label or "Button", callback)
+			end
+
+			function section.NewButton(a1, a2, a3, a4)
+				local label, helpMessage, callback = UnpackCompatArgs(section, a1, a2, a3, a4)
+				if typeof(callback) ~= "function" and typeof(helpMessage) == "function" then
+					callback = helpMessage
+				end
+				return tab.AddButton(label or "Button", callback)
+			end
+
+			function section.NewToggle(a1, a2, a3, a4)
+				local label, helpMessage, callback = UnpackCompatArgs(section, a1, a2, a3, a4)
+				if typeof(callback) ~= "function" and typeof(helpMessage) == "function" then
+					callback = helpMessage
+				end
+				return tab.AddToggle(label or "Toggle", false, callback)
+			end
+
+			function section.NewLabel(a1, a2)
+				local labelText = (a1 == section) and a2 or a1
+				local labelInstance = tab.AddTextLabel(labelText or "")
+				local labelAPI = { Instance = labelInstance }
+				function labelAPI.UpdateLabel(x, y)
+					local newText = (x == labelAPI) and y or x
+					if labelInstance and labelInstance.Parent then
+						labelInstance.Text = tostring(newText or "")
+					end
+				end
+				return labelAPI
+			end
+
+			function section.NewTextBox(a1, a2, a3, a4, a5)
+				local label, placeholder, boxName, callback = UnpackCompatArgs(section, a1, a2, a3, a4, a5)
+				if typeof(placeholder) == "function" then
+					callback, placeholder = placeholder, label
+					label = ""
+				end
+				if label and tostring(label) ~= "" then tab.AddTextLabel(tostring(label)) end
+				local box = tab.AddTextBox(placeholder or tostring(boxName or "Enter text..."), callback)
+				return box
+			end
+
+			function section.NewSlider(a1, a2, a3, a4, a5)
+				local label, minValue, maxValue, callback = UnpackCompatArgs(section, a1, a2, a3, a4, a5)
+				minValue = tonumber(minValue) or 0
+				maxValue = tonumber(maxValue) or 100
+				return tab.AddSlider(label or "Slider", minValue, maxValue, minValue, callback)
+			end
+
+			function section.NewDropdown(a1, a2, a3, a4, a5)
+				local label, helpMessage, items, callback = UnpackCompatArgs(section, a1, a2, a3, a4, a5)
+				-- Also accept the compact form: NewDropdown(label, items, callback).
+				if typeof(helpMessage) == "table" then
+					if typeof(items) == "function" and callback == nil then callback = items end
+					items = helpMessage
+				end
+				local dropdown = tab.AddDropdown(label or "Dropdown", typeof(items) == "table" and items or {}, callback)
+				-- UI2 exposed Refresh(); our native component calls this SetOptions().
+				function dropdown.Refresh(x, y)
+					local newItems = (x == dropdown) and y or x
+					return dropdown.SetOptions(newItems or {})
+				end
+				return dropdown
+			end
+
+			return section
+		end
+
+		return tab
+	end
+
+	function WindowAPI.ChangeTheme(a, b)
+		local themeName = (a == WindowAPI) and b or a
+		if typeof(themeName) ~= "string" then return false end
+		local aliases = { default = "Default", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
+		local normalized = aliases[string.lower(themeName)] or themeName
+		local result = SetTheme(normalized)
+		if result then compatThemeName = normalized end
+		return result
+	end
+
+	function WindowAPI.GetCurrentTheme()
+		return string.lower(compatThemeName)
+	end
+
+	-- Existing UI2 scripts sometimes ask the returned window to create tabs
+	-- by dot-call and sometimes by colon-call; NewTab above supports both.
+	return WindowAPI
+end
+
+function UI.CreateMain(a, b, c, d)
+	local hubName, gameName, subtitle
+	if a == UI then
+		hubName, gameName, subtitle = b, c, d
+	else
+		hubName, gameName, subtitle = a, b, c
+	end
+	local window = UI.CreateWindow(hubName or "IceHub", subtitle or gameName or "")
+	window.GameName = gameName or ""
+	return window
 end
 
 return UI
