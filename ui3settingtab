@@ -1,34 +1,72 @@
 local SettingsTab = {}
 
--- Accepts both SettingsTab:Create(Window) and SettingsTab.Create(Window).
+local THEMES = {
+    "Default",
+    "Ocean",
+    "Purple",
+    "Red",
+    "Minimal",
+}
+
 function SettingsTab.Create(a, b)
+    -- Aceita SettingsTab:Create(Window) e SettingsTab.Create(Window)
     local Window = (a == SettingsTab) and b or a
 
-    assert(type(Window) == "table", 
-        "[PDDEV SettingsTab] Window is nil. Create the window first and call SettingsTab:Create(Window).")
-    assert(type(Window.CreateTab) == "function",
-        "[PDDEV SettingsTab] Window.CreateTab is missing. Make sure you're passing the window returned by Library.CreateWindow(...).")
-    assert(type(Window.SetTheme) == "function",
-        "[PDDEV SettingsTab] Window.SetTheme is missing. Check that you loaded the PDDEV UI Library.")
+    assert(type(Window) == "table",
+        "[PDDEV SettingsTab] Janela ausente. Passe o objeto retornado por UI.CreateMain(...) ou UI.CreateWindow(...).")
 
-    local Settings = Window.CreateTab("Settings", "settings")
-    assert(Settings and type(Settings.AddDropdown) == "function",
-        "[PDDEV SettingsTab] Failed to create Settings tab or AddDropdown is missing.")
-
-    Settings.AddDropdown("Theme", {
-        "Default",
-        "Ocean",
-        "Purple",
-        "Red",
-        "Minimal",
-    }, function(value)
-        local ok, result = pcall(Window.SetTheme, value)
-        if not ok then
-            warn("[PDDEV SettingsTab] Failed to apply theme '" .. tostring(value) .. "': " .. tostring(result))
-        elseif result == false then
-            warn("[PDDEV SettingsTab] Unknown theme: " .. tostring(value))
+    local function ApplyTheme(themeName)
+        if type(Window.SetTheme) == "function" then
+            return Window.SetTheme(themeName) -- API nova
+        elseif type(Window.ChangeTheme) == "function" then
+            return Window.ChangeTheme(themeName) -- compatibilidade UI2/CreateMain
         end
-    end)
+        warn("[PDDEV SettingsTab] A janela não oferece SetTheme nem ChangeTheme.")
+        return false
+    end
+
+    local Settings
+
+    -- API nova: CreateWindow -> CreateTab -> AddDropdown
+    if type(Window.CreateTab) == "function" then
+        Settings = Window.CreateTab("Settings", "settings")
+        assert(Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings.")
+
+        assert(type(Settings.AddDropdown) == "function",
+            "[PDDEV SettingsTab] A aba não possui AddDropdown.")
+
+        Settings.AddDropdown("Theme", THEMES, function(value)
+            ApplyTheme(value)
+        end)
+
+    -- API de compatibilidade/UI2: CreateMain -> NewTab -> NewSection -> NewDropdown
+    elseif type(Window.NewTab) == "function" then
+        Settings = Window.NewTab("Settings", "Settings")
+        assert(Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings via NewTab.")
+
+        if type(Settings.AddDropdown) == "function" then
+            -- Algumas versões da camada compat também expõem os métodos novos na aba.
+            Settings.AddDropdown("Theme", THEMES, function(value)
+                ApplyTheme(value)
+            end)
+        elseif type(Settings.NewSection) == "function" then
+            local Section = Settings.NewSection()
+            assert(Section and type(Section.NewDropdown) == "function",
+                "[PDDEV SettingsTab] A seção não possui NewDropdown.")
+
+            Section.NewDropdown("Theme", "Choose the UI theme", THEMES, function(value)
+                ApplyTheme(value)
+            end)
+        elseif type(Settings.NewDropdown) == "function" then
+            Settings.NewDropdown("Theme", "Choose the UI theme", THEMES, function(value)
+                ApplyTheme(value)
+            end)
+        else
+            error("[PDDEV SettingsTab] Não encontrei AddDropdown nem NewSection/NewDropdown na aba.", 2)
+        end
+    else
+        error("[PDDEV SettingsTab] O objeto recebido não possui CreateTab nem NewTab. Passe a janela retornada por UI.CreateMain(...).", 2)
+    end
 
     return Settings
 end
