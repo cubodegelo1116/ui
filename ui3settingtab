@@ -1,19 +1,19 @@
 local SettingsTab = {}
 
 function SettingsTab:Create(Window)
-	local Settings = Window.CreateTab("Settings")
+    local Settings = Window.CreateTab("Settings", "settings")
 
-	Settings.AddDropdown("Theme", {
-		"Default",
-		"Ocean",
-		"Purple",
-		"Red",
-		"Neon"
-	}, function(value)
-		Window.SetTheme(value)
-	end)
+    Settings.AddDropdown("Theme", {
+        "Default",
+        "Ocean",
+        "Purple",
+        "Red",
+        "Minimal"
+    }, function(value)
+        Window.SetTheme(value)
+    end)
 
-	return Settings
+    return Settings
 end
 
 return SettingsTab
