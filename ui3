@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.4.0          ║
+	║  Version: 4.5.0           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.4.0-THEMES"
+local CURRENT_VERSION = "4.5.0"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -214,7 +214,7 @@ function UI.CreateWindow(title, subtitle, version)
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
 	local AcrylicEnabled = false
-	local AcrylicTransparency = { Background = 0.16, TitleBar = 0.12, TabBackground = 0.10, TabSelected = 0.08, Button = 0.08, ToggleOn = 0.04, ToggleOff = 0.04 }
+	local AcrylicTransparency = { Background = 0.22, TitleBar = 0.18, TabBackground = 0.24, TabSelected = 0.16, Button = 0.20, ToggleOn = 0.08, ToggleOff = 0.10 }
 
 	-- ════════════════════════════════════════════════════════════
 	-- THEME MANAGEMENT SYSTEM
@@ -3131,7 +3131,24 @@ function UI.CreateWindow(title, subtitle, version)
 		DropdownHover = Color3.fromRGB(36, 49, 41),
 	})
 
-	RegisterTheme("Green", Themes.Emerald)
+	RegisterTheme("Green", {
+		-- Bright lime palette, distinct from Emerald's cooler jade green.
+		Background = Color3.fromRGB(17, 22, 12),
+		TitleBar = Color3.fromRGB(25, 32, 16),
+		TabBackground = Color3.fromRGB(13, 18, 9),
+		TabSelected = Color3.fromRGB(48, 66, 22),
+		Button = Color3.fromRGB(31, 42, 18),
+		ButtonHover = Color3.fromRGB(43, 58, 23),
+		Text = Color3.fromRGB(244, 250, 226),
+		TextDark = Color3.fromRGB(166, 181, 132),
+		Accent = Color3.fromRGB(174, 235, 55),
+		ToggleOn = Color3.fromRGB(174, 235, 55),
+		ToggleOff = Color3.fromRGB(61, 71, 43),
+		Border = Color3.fromRGB(66, 83, 39),
+		Cooldown = Color3.fromRGB(165, 65, 55),
+		TabBorder = Color3.fromRGB(66, 83, 39),
+		DropdownHover = Color3.fromRGB(43, 58, 23),
+	})
 
 	RegisterTheme("Rose", {
 		Background = Color3.fromRGB(25, 18, 22), TitleBar = Color3.fromRGB(35, 23, 29),
@@ -3154,13 +3171,14 @@ function UI.CreateWindow(title, subtitle, version)
 	})
 
 	RegisterTheme("Crimson", {
-		Background = Color3.fromRGB(23, 17, 18), TitleBar = Color3.fromRGB(34, 22, 24),
-		TabBackground = Color3.fromRGB(17, 13, 14), TabSelected = Color3.fromRGB(67, 30, 35),
-		Button = Color3.fromRGB(41, 25, 28), ButtonHover = Color3.fromRGB(58, 31, 36),
-		Text = Color3.fromRGB(250, 239, 240), TextDark = Color3.fromRGB(177, 145, 149),
-		Accent = Color3.fromRGB(255, 75, 90), ToggleOn = Color3.fromRGB(255, 75, 90),
-		ToggleOff = Color3.fromRGB(72, 48, 51), Border = Color3.fromRGB(89, 48, 54),
-		TabBorder = Color3.fromRGB(89, 48, 54), DropdownHover = Color3.fromRGB(58, 31, 36),
+		-- Deep wine / magenta; intentionally distinct from the bright Red theme.
+		Background = Color3.fromRGB(24, 13, 29), TitleBar = Color3.fromRGB(37, 18, 43),
+		TabBackground = Color3.fromRGB(19, 10, 24), TabSelected = Color3.fromRGB(75, 31, 78),
+		Button = Color3.fromRGB(45, 22, 49), ButtonHover = Color3.fromRGB(64, 29, 68),
+		Text = Color3.fromRGB(255, 240, 255), TextDark = Color3.fromRGB(190, 151, 194),
+		Accent = Color3.fromRGB(220, 75, 190), ToggleOn = Color3.fromRGB(220, 75, 190),
+		ToggleOff = Color3.fromRGB(69, 45, 73), Border = Color3.fromRGB(101, 54, 105),
+		TabBorder = Color3.fromRGB(101, 54, 105), DropdownHover = Color3.fromRGB(64, 29, 68),
 	})
 
 	RegisterTheme("Monochrome", {
@@ -3713,7 +3731,7 @@ function UI.CreateWindow(title, subtitle, version)
 	function WindowAPI.ChangeTheme(a, b)
 		local themeName = (a == WindowAPI) and b or a
 		if typeof(themeName) ~= "string" then return false end
-		local aliases = { default = "Default", graphite = "Graphite", green = "Emerald", emerald = "Emerald", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
+		local aliases = { default = "Default", graphite = "Graphite", green = "Green", emerald = "Emerald", ocean = "Ocean", purple = "Purple", red = "Red", crimson = "Crimson", rose = "Rose", amber = "Amber", monochrome = "Monochrome", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
 		local normalized = aliases[string.lower(themeName)] or themeName
 		local result = SetTheme(normalized)
 		if result then compatThemeName = normalized end
