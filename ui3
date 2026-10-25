@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.1.0           ║
+	║  Version: 4.1.0          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.1.0-GRAPHITE-PREMIUM"
+local CURRENT_VERSION = "4.2.0-EMERALD"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3083,6 +3083,25 @@ function UI.CreateWindow(title, subtitle, version)
 		DropdownHover = Color3.fromRGB(40, 44, 51),
 	})
 
+	-- Emerald: deep graphite with a clean, vivid green identity.
+	RegisterTheme("Emerald", {
+		Background = Color3.fromRGB(17, 21, 19),
+		TitleBar = Color3.fromRGB(22, 29, 25),
+		TabBackground = Color3.fromRGB(14, 18, 16),
+		TabSelected = Color3.fromRGB(25, 54, 39),
+		Button = Color3.fromRGB(27, 36, 31),
+		ButtonHover = Color3.fromRGB(36, 49, 41),
+		Text = Color3.fromRGB(237, 246, 240),
+		TextDark = Color3.fromRGB(148, 169, 155),
+		Accent = Color3.fromRGB(55, 220, 125),
+		ToggleOn = Color3.fromRGB(55, 220, 125),
+		ToggleOff = Color3.fromRGB(55, 68, 60),
+		Border = Color3.fromRGB(43, 66, 51),
+		Cooldown = Color3.fromRGB(160, 55, 60),
+		TabBorder = Color3.fromRGB(43, 66, 51),
+		DropdownHover = Color3.fromRGB(36, 49, 41),
+	})
+
 	-- Apply the default palette before returning the window. This prevents
 	-- bright default strokes/text styles from remaining until the first theme change.
 	ApplyTheme()
@@ -3612,7 +3631,7 @@ function UI.CreateWindow(title, subtitle, version)
 	function WindowAPI.ChangeTheme(a, b)
 		local themeName = (a == WindowAPI) and b or a
 		if typeof(themeName) ~= "string" then return false end
-		local aliases = { default = "Default", graphite = "Graphite", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
+		local aliases = { default = "Default", graphite = "Graphite", green = "Emerald", emerald = "Emerald", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
 		local normalized = aliases[string.lower(themeName)] or themeName
 		local result = SetTheme(normalized)
 		if result then compatThemeName = normalized end
