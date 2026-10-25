@@ -1,6 +1,6 @@
 --[[
     PDDEV / RCCDEV
-    SettingsTab V4.0.0
+    SettingsTab V4.2.0
     Theme settings compatible with PDDEV UI Library V4 and legacy window APIs.
 ]]
 
@@ -8,6 +8,7 @@ local SettingsTab = {}
 
 local THEMES = {
     "Graphite",
+    "Emerald",
     "Default",
     "Ocean",
     "Purple",
