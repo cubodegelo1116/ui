@@ -41,7 +41,7 @@ function SettingsTab.Create(a, b)
 
     -- API de compatibilidade/UI2: CreateMain -> NewTab -> NewSection -> NewDropdown
     elseif type(Window.NewTab) == "function" then
-        Settings = Window.NewTab("Settings", "Settings")
+        Settings = Window.NewTab("Settings", "")
         assert(Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings via NewTab.")
 
         if type(Settings.AddDropdown) == "function" then
