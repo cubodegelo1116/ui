@@ -1,6 +1,6 @@
 --[[
     PDDEV / RCCDEV
-    SettingsTab V4.5.0
+    SettingsTab V4.6.0
     Theme settings compatible with PDDEV UI Library V4 and legacy window APIs.
 ]]
 
@@ -14,6 +14,10 @@ local THEMES = {
     "Purple",
     "Red",
     "Crimson",
+    "c00l",
+    "Troll",
+    "Brainrot",
+    "Barbie",
     "Rose",
     "Amber",
     "Monochrome",
@@ -116,4 +120,3 @@ function SettingsTab.Create(a, b)
 end
 
 return SettingsTab
-
