@@ -1,6 +1,6 @@
 --[[
     PDDEV / RCCDEV
-    SettingsTab V4.4.0
+    SettingsTab V4.5.0
     Theme settings compatible with PDDEV UI Library V4 and legacy window APIs.
 ]]
 
@@ -9,14 +9,16 @@ local SettingsTab = {}
 local THEMES = {
     "Graphite",
     "Emerald",
+    "Green",
     "Ocean",
     "Purple",
     "Red",
-    "Minimal",
+    "Crimson",
     "Rose",
     "Amber",
-    "Crimson",
     "Monochrome",
+    "Minimal",
+    "Default",
 }
 
 function SettingsTab.Create(a, b)
@@ -114,3 +116,4 @@ function SettingsTab.Create(a, b)
 end
 
 return SettingsTab
+
