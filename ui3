@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.5.0           ║
+	║  Version: 4.6.0          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.5.0"
+local CURRENT_VERSION = "4.6.0"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3171,14 +3171,55 @@ function UI.CreateWindow(title, subtitle, version)
 	})
 
 	RegisterTheme("Crimson", {
-		-- Deep wine / magenta; intentionally distinct from the bright Red theme.
-		Background = Color3.fromRGB(24, 13, 29), TitleBar = Color3.fromRGB(37, 18, 43),
-		TabBackground = Color3.fromRGB(19, 10, 24), TabSelected = Color3.fromRGB(75, 31, 78),
-		Button = Color3.fromRGB(45, 22, 49), ButtonHover = Color3.fromRGB(64, 29, 68),
-		Text = Color3.fromRGB(255, 240, 255), TextDark = Color3.fromRGB(190, 151, 194),
-		Accent = Color3.fromRGB(220, 75, 190), ToggleOn = Color3.fromRGB(220, 75, 190),
-		ToggleOff = Color3.fromRGB(69, 45, 73), Border = Color3.fromRGB(101, 54, 105),
-		TabBorder = Color3.fromRGB(101, 54, 105), DropdownHover = Color3.fromRGB(64, 29, 68),
+		-- Crimson is now a deep blood-red palette, not a purple/magenta variant.
+		Background = Color3.fromRGB(24, 10, 12), TitleBar = Color3.fromRGB(38, 13, 16),
+		TabBackground = Color3.fromRGB(17, 7, 9), TabSelected = Color3.fromRGB(88, 18, 27),
+		Button = Color3.fromRGB(45, 15, 20), ButtonHover = Color3.fromRGB(68, 19, 27),
+		Text = Color3.fromRGB(255, 242, 243), TextDark = Color3.fromRGB(190, 137, 143),
+		Accent = Color3.fromRGB(190, 24, 48), ToggleOn = Color3.fromRGB(210, 28, 53),
+		ToggleOff = Color3.fromRGB(67, 37, 41), Border = Color3.fromRGB(120, 27, 42),
+		TabBorder = Color3.fromRGB(120, 27, 42), DropdownHover = Color3.fromRGB(68, 19, 27),
+	})
+
+	-- Meme / joke themes: deliberately bold, high-contrast palettes.
+	RegisterTheme("c00l", {
+		Background = Color3.fromRGB(5, 5, 7), TitleBar = Color3.fromRGB(10, 10, 12),
+		TabBackground = Color3.fromRGB(7, 7, 9), TabSelected = Color3.fromRGB(38, 8, 12),
+		Button = Color3.fromRGB(14, 14, 16), ButtonHover = Color3.fromRGB(30, 9, 12),
+		Text = Color3.fromRGB(255, 255, 255), TextDark = Color3.fromRGB(190, 190, 195),
+		Accent = Color3.fromRGB(255, 20, 35), ToggleOn = Color3.fromRGB(255, 20, 35),
+		ToggleOff = Color3.fromRGB(65, 65, 70), Border = Color3.fromRGB(255, 24, 38),
+		TabBorder = Color3.fromRGB(255, 24, 38), DropdownHover = Color3.fromRGB(42, 10, 14),
+	})
+
+	RegisterTheme("Troll", {
+		Background = Color3.fromRGB(24, 22, 8), TitleBar = Color3.fromRGB(39, 35, 10),
+		TabBackground = Color3.fromRGB(17, 16, 6), TabSelected = Color3.fromRGB(69, 57, 9),
+		Button = Color3.fromRGB(39, 34, 10), ButtonHover = Color3.fromRGB(60, 51, 12),
+		Text = Color3.fromRGB(255, 255, 230), TextDark = Color3.fromRGB(194, 185, 125),
+		Accent = Color3.fromRGB(255, 225, 35), ToggleOn = Color3.fromRGB(255, 225, 35),
+		ToggleOff = Color3.fromRGB(70, 66, 40), Border = Color3.fromRGB(150, 127, 18),
+		TabBorder = Color3.fromRGB(150, 127, 18), DropdownHover = Color3.fromRGB(60, 51, 12),
+	})
+
+	RegisterTheme("Brainrot", {
+		Background = Color3.fromRGB(16, 8, 25), TitleBar = Color3.fromRGB(29, 11, 39),
+		TabBackground = Color3.fromRGB(11, 6, 18), TabSelected = Color3.fromRGB(47, 14, 63),
+		Button = Color3.fromRGB(28, 12, 38), ButtonHover = Color3.fromRGB(45, 14, 59),
+		Text = Color3.fromRGB(255, 247, 255), TextDark = Color3.fromRGB(185, 155, 198),
+		Accent = Color3.fromRGB(0, 255, 190), ToggleOn = Color3.fromRGB(0, 255, 190),
+		ToggleOff = Color3.fromRGB(63, 45, 73), Border = Color3.fromRGB(0, 155, 130),
+		TabBorder = Color3.fromRGB(0, 155, 130), DropdownHover = Color3.fromRGB(45, 14, 59),
+	})
+
+	RegisterTheme("Barbie", {
+		Background = Color3.fromRGB(30, 8, 22), TitleBar = Color3.fromRGB(49, 12, 35),
+		TabBackground = Color3.fromRGB(22, 6, 16), TabSelected = Color3.fromRGB(91, 17, 57),
+		Button = Color3.fromRGB(48, 12, 34), ButtonHover = Color3.fromRGB(72, 15, 49),
+		Text = Color3.fromRGB(255, 245, 252), TextDark = Color3.fromRGB(211, 150, 184),
+		Accent = Color3.fromRGB(255, 45, 160), ToggleOn = Color3.fromRGB(255, 45, 160),
+		ToggleOff = Color3.fromRGB(82, 46, 66), Border = Color3.fromRGB(165, 25, 100),
+		TabBorder = Color3.fromRGB(165, 25, 100), DropdownHover = Color3.fromRGB(72, 15, 49),
 	})
 
 	RegisterTheme("Monochrome", {
@@ -3731,7 +3772,7 @@ function UI.CreateWindow(title, subtitle, version)
 	function WindowAPI.ChangeTheme(a, b)
 		local themeName = (a == WindowAPI) and b or a
 		if typeof(themeName) ~= "string" then return false end
-		local aliases = { default = "Default", graphite = "Graphite", green = "Green", emerald = "Emerald", ocean = "Ocean", purple = "Purple", red = "Red", crimson = "Crimson", rose = "Rose", amber = "Amber", monochrome = "Monochrome", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
+		local aliases = { default = "Default", graphite = "Graphite", green = "Green", emerald = "Emerald", ocean = "Ocean", purple = "Purple", red = "Red", crimson = "Crimson", rose = "Rose", amber = "Amber", monochrome = "Monochrome", minimal = "Minimal", c00l = "c00l", cool = "c00l", troll = "Troll", brainrot = "Brainrot", barbie = "Barbie", halloween = "Purple", christmas = "Ocean" }
 		local normalized = aliases[string.lower(themeName)] or themeName
 		local result = SetTheme(normalized)
 		if result then compatThemeName = normalized end
