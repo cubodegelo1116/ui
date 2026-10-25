@@ -7,7 +7,7 @@
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.15-RESIZE-DOTS-TAB-ICONS-FIXED"
+local CURRENT_VERSION = "2.17-TEXTBOX-UTF8-PRACA-FIX"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -37,8 +37,13 @@ end
 -- the wrong encoding. This is deliberately a conservative list of known pairs;
 -- it does not try to reinterpret arbitrary user-entered text or binary data.
 local TEXT_ENCODING_FIXES = {
+    -- Exact malformed sequence reported by the user: "Pra￯﾿ﾃ￯ﾾ§a" -> "praça".
+    {"￯﾿ﾃ￯ﾾ§", "ç"},
     -- Exact malformed sequence reported by the user: "apￃﾳs" -> "após".
     {"ￃﾳ", "ó"},
+    -- Common visible replacement / mojibake markers. U+FFFD itself cannot
+    -- reveal the original missing character, but these known byte-artifacts can.
+    {"ï¿½", "�"}, {"â€�", "�"},
     -- Common double-encoded UTF-8 (fix before the single-encoded forms).
     {"ÃƒÂ¡", "á"}, {"ÃƒÂ ", "à"}, {"ÃƒÂ¢", "â"}, {"ÃƒÂ£", "ã"},
     {"ÃƒÂ©", "é"}, {"ÃƒÂª", "ê"}, {"ÃƒÂ­", "í"}, {"ÃƒÂ³", "ó"},
@@ -1652,6 +1657,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.Size = UDim2.new(1, 0, 1, 0)
 		TextBox.BackgroundColor3 = Theme.Button
 		TextBox.BorderSizePixel = 0
+		TextBox.Text = "" -- Roblox TextBox may default to the literal "TextBox".
 		TextBox.TextColor3 = Theme.Text
 		TextBox.TextSize = 13
 		TextBox.Font = Enum.Font.Gotham
