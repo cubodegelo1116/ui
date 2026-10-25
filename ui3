@@ -1,19 +1,19 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.15           ║
+	║  Version: 4.0.0           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.17-TEXTBOX-UTF8-PRACA-FIX"
+local CURRENT_VERSION = "4.0.0-GRAPHITE-ELECTRIC"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
 -- ════════════════════════════════════════════════════════════
 
-local ANIMATION_SPEED = 0.15
+local ANIMATION_SPEED = 0.12 -- Short, event-driven tweens only; no permanent animation loops.
 local MIN_WINDOW_WIDTH = 380
 local MAX_WINDOW_WIDTH = 900
 local MIN_WINDOW_HEIGHT = 250
@@ -191,23 +191,23 @@ function UI.CreateWindow(title, subtitle, version)
 	-- ════════════════════════════════════════════════════════════
 
 	local Theme = {
-		Background = Color3.fromRGB(23, 23, 26),
-		TitleBar = Color3.fromRGB(30, 30, 34),
-		TabBackground = Color3.fromRGB(26, 26, 30),
-		TabSelected = Color3.fromRGB(43, 45, 51),
-		Button = Color3.fromRGB(37, 37, 42),
-		ButtonHover = Color3.fromRGB(47, 48, 54),
+		Background = Color3.fromRGB(20, 21, 24),
+		TitleBar = Color3.fromRGB(25, 27, 31),
+		TabBackground = Color3.fromRGB(17, 18, 21),
+		TabSelected = Color3.fromRGB(29, 43, 59),
+		Button = Color3.fromRGB(31, 33, 38),
+		ButtonHover = Color3.fromRGB(40, 44, 51),
 		Text = Color3.fromRGB(232, 232, 236),
-		TextDark = Color3.fromRGB(157, 158, 166),
-		Accent = Color3.fromRGB(100, 132, 194),
-		ToggleOn = Color3.fromRGB(100, 132, 194),
+		TextDark = Color3.fromRGB(151, 159, 171),
+		Accent = Color3.fromRGB(22, 139, 255),
+		ToggleOn = Color3.fromRGB(22, 139, 255),
 		ToggleOff = Color3.fromRGB(66, 67, 75),
-		Border = Color3.fromRGB(48, 49, 55),
+		Border = Color3.fromRGB(47, 52, 60),
 		Cooldown = Color3.fromRGB(115, 53, 58),
 		Error = Color3.fromRGB(220, 75, 75),
 		Success = Color3.fromRGB(75, 190, 120),
 		Warning = Color3.fromRGB(230, 180, 75),
-		TabBorder = Color3.fromRGB(48, 49, 55),
+		TabBorder = Color3.fromRGB(47, 52, 60),
 		DropdownHover = Color3.fromRGB(51, 52, 59),
 	}
 
@@ -562,7 +562,7 @@ function UI.CreateWindow(title, subtitle, version)
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
-	MainCorner.CornerRadius = UDim.new(0, 2)
+	MainCorner.CornerRadius = UDim.new(0, 6)
 	MainCorner.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
@@ -584,7 +584,7 @@ function UI.CreateWindow(title, subtitle, version)
 	TitleBar:SetAttribute("ThemeRole", "TitleBar")
 
 	local TitleCorner = Instance.new("UICorner")
-	TitleCorner.CornerRadius = UDim.new(0, 2)
+	TitleCorner.CornerRadius = UDim.new(0, 6)
 	TitleCorner.Parent = TitleBar
 
 	local TitleBottom = Instance.new("Frame")
@@ -859,7 +859,7 @@ function UI.CreateWindow(title, subtitle, version)
 	Content:SetAttribute("ThemeRole", "Background")
 
 	local ContentCorner = Instance.new("UICorner")
-	ContentCorner.CornerRadius = UDim.new(0, 2)
+	ContentCorner.CornerRadius = UDim.new(0, 6)
 	ContentCorner.Parent = Content
 
 	-- ════════════════════════════════════════════════════════════
@@ -2546,18 +2546,58 @@ function UI.CreateWindow(title, subtitle, version)
 		Tab.Icon = iconWidget
 		Tab.Name = name
 
-		Tab.AddButton = function(text, callback) return AddButton(Page, text, callback) end
-		Tab.AddToggle = function(text, default, callback) return AddToggle(Page, text, default, callback) end
-		Tab.AddSlider = function(text, min, max, default, callback) return AddSlider(Page, text, min, max, default, callback) end
-		Tab.AddTextLabel = function(text) return AddTextLabel(Page, text) end
-		Tab.AddParagraph = function(title, text) return AddParagraph(Page, title, text) end
-		Tab.AddDropdown = function(text, options, callback) return AddDropdown(Page, text, options, callback) end
-		Tab.AddCooldownButton = function(text, cooldown, callback) return AddCooldownButton(Page, text, cooldown, callback) end
-		Tab.AddTextBox = function(placeholder, callback) return AddTextBox(Page, placeholder, callback) end
-		Tab.AddColorPicker = function(text, defaultColor, callback) return AddColorPicker(Page, text, defaultColor, callback) end
-		Tab.Notification = function(title, message, duration, kind) return ShowNotification(title, message, duration, kind) end
+		-- V4 API adapter: every tab method accepts both tab:Method(...) and tab.Method(...).
+		local function UnpackTabArgs(a, b, c, d, e)
+			if a == Tab then return b, c, d, e end
+			return a, b, c, d
+		end
+		Tab.AddButton = function(a, b, c)
+			local text, callback = UnpackTabArgs(a, b, c)
+			return AddButton(Page, text, callback)
+		end
+		Tab.AddToggle = function(a, b, c, d)
+			local text, default, callback = UnpackTabArgs(a, b, c, d)
+			return AddToggle(Page, text, default, callback)
+		end
+		Tab.AddSlider = function(a, b, c, d, e, f)
+			local text, min, max, default, callback
+			if a == Tab then text, min, max, default, callback = b, c, d, e, f
+			else text, min, max, default, callback = a, b, c, d, e end
+			return AddSlider(Page, text, min, max, default, callback)
+		end
+		Tab.AddTextLabel = function(a, b)
+			local text = (a == Tab) and b or a
+			return AddTextLabel(Page, text)
+		end
+		Tab.AddParagraph = function(a, b, c)
+			local title, text = UnpackTabArgs(a, b, c)
+			return AddParagraph(Page, title, text)
+		end
+		Tab.AddDropdown = function(a, b, c, d)
+			local text, options, callback = UnpackTabArgs(a, b, c, d)
+			return AddDropdown(Page, text, options, callback)
+		end
+		Tab.AddCooldownButton = function(a, b, c, d)
+			local text, cooldown, callback = UnpackTabArgs(a, b, c, d)
+			return AddCooldownButton(Page, text, cooldown, callback)
+		end
+		Tab.AddTextBox = function(a, b, c)
+			local placeholder, callback = UnpackTabArgs(a, b, c)
+			return AddTextBox(Page, placeholder, callback)
+		end
+		Tab.AddColorPicker = function(a, b, c, d)
+			local text, defaultColor, callback = UnpackTabArgs(a, b, c, d)
+			return AddColorPicker(Page, text, defaultColor, callback)
+		end
+		Tab.Notification = function(a, b, c, d, e)
+			local title, message, duration, kind
+			if a == Tab then title, message, duration, kind = b, c, d, e
+			else title, message, duration, kind = a, b, c, d end
+			return ShowNotification(title, message, duration, kind)
+		end
 
-		function Tab.SetIcon(newIcon)
+		function Tab.SetIcon(a, b)
+			local newIcon = (a == Tab) and b or a
 			if iconWidget then iconWidget:Destroy(); iconWidget = nil end
 			iconType, iconValue = ResolveTabIcon(newIcon)
 			Tab.Icon = nil
@@ -2956,13 +2996,32 @@ function UI.CreateWindow(title, subtitle, version)
 		ButtonHover = Color3.fromRGB(47, 48, 54),
 		Text = Color3.fromRGB(232, 232, 236),
 		TextDark = Color3.fromRGB(157, 158, 166),
-		Accent = Color3.fromRGB(100, 132, 194),
-		ToggleOn = Color3.fromRGB(100, 132, 194),
+		Accent = Color3.fromRGB(22, 139, 255),
+		ToggleOn = Color3.fromRGB(22, 139, 255),
 		ToggleOff = Color3.fromRGB(66, 67, 75),
 		Border = Color3.fromRGB(48, 49, 55),
 		Cooldown = Color3.fromRGB(115, 53, 58),
 		TabBorder = Color3.fromRGB(48, 49, 55),
 		DropdownHover = Color3.fromRGB(47, 48, 54),
+	})
+
+	-- V4 signature theme: graphite/black with electric-blue active states.
+	RegisterTheme("Graphite", {
+		Background = Color3.fromRGB(20, 21, 24),
+		TitleBar = Color3.fromRGB(25, 27, 31),
+		TabBackground = Color3.fromRGB(17, 18, 21),
+		TabSelected = Color3.fromRGB(29, 43, 59),
+		Button = Color3.fromRGB(31, 33, 38),
+		ButtonHover = Color3.fromRGB(40, 44, 51),
+		Text = Color3.fromRGB(237, 240, 245),
+		TextDark = Color3.fromRGB(151, 159, 171),
+		Accent = Color3.fromRGB(22, 139, 255),
+		ToggleOn = Color3.fromRGB(22, 139, 255),
+		ToggleOff = Color3.fromRGB(59, 63, 71),
+		Border = Color3.fromRGB(47, 52, 60),
+		Cooldown = Color3.fromRGB(115, 53, 58),
+		TabBorder = Color3.fromRGB(47, 52, 60),
+		DropdownHover = Color3.fromRGB(40, 44, 51),
 	})
 
 	-- Apply the default palette before returning the window. This prevents
@@ -3020,6 +3079,53 @@ function UI.CreateWindow(title, subtitle, version)
 			ScreenGui:Destroy()
 		end,
 	}
+
+	-- V4 public API adapter: support both dot and colon calls on the window.
+	local function UnpackWindowArgs(a, b, c, d)
+		if a == WindowAPI then return b, c, d end
+		return a, b, c
+	end
+	WindowAPI.CreateTab = function(a, b, c)
+		local name, icon = UnpackWindowArgs(a, b, c)
+		return CreateTab(name, icon)
+	end
+	WindowAPI.RegisterTheme = function(a, b, c)
+		local name, colors
+		if a == WindowAPI then name, colors = b, c else name, colors = a, b end
+		return RegisterTheme(name, colors)
+	end
+	WindowAPI.SetTheme = function(a, b)
+		local themeName = (a == WindowAPI) and b or a
+		return SetTheme(themeName)
+	end
+	WindowAPI.GetTheme = function(a, b)
+		local themeName = (a == WindowAPI) and b or a
+		return GetTheme(themeName)
+	end
+	WindowAPI.GetAllThemes = function()
+		return GetAllThemes()
+	end
+	WindowAPI.ApplyTheme = function()
+		return ApplyTheme()
+	end
+	WindowAPI.Notification = function(a, b, c, d, e)
+		local title, message, duration, kind
+		if a == WindowAPI then title, message, duration, kind = b, c, d, e
+		else title, message, duration, kind = a, b, c, d end
+		return ShowNotification(title, message, duration, kind)
+	end
+	WindowAPI.Notify = WindowAPI.Notification
+	WindowAPI.AddNotification = WindowAPI.Notification
+	WindowAPI.AddMinimizeButton = function(a, b)
+		local options = (a == WindowAPI) and b or a
+		return AddMinimizeButton(options)
+	end
+	WindowAPI.Minimize = function()
+		return ToggleMinimize()
+	end
+	WindowAPI.Destroy = function()
+		if ScreenGui and ScreenGui.Parent then ScreenGui:Destroy() end
+	end
 
 	-- ════════════════════════════════════════════════════════════
 	-- UI2 / IceHub compatibility layer
@@ -3447,7 +3553,7 @@ function UI.CreateWindow(title, subtitle, version)
 	function WindowAPI.ChangeTheme(a, b)
 		local themeName = (a == WindowAPI) and b or a
 		if typeof(themeName) ~= "string" then return false end
-		local aliases = { default = "Default", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
+		local aliases = { default = "Default", graphite = "Graphite", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
 		local normalized = aliases[string.lower(themeName)] or themeName
 		local result = SetTheme(normalized)
 		if result then compatThemeName = normalized end
