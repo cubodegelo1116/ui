@@ -7,7 +7,7 @@
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.2.0-EMERALD"
+local CURRENT_VERSION = "4.3.0-EMERALD"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -187,7 +187,7 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 
 	-- ════════════════════════════════════════════════════════════
-	-- DEFAULT THEME
+	-- DEFAULT THEME | V4.3 POLISHED CONTROLS
 	-- ════════════════════════════════════════════════════════════
 
 	local Theme = {
@@ -633,7 +633,7 @@ function UI.CreateWindow(title, subtitle, version)
 		return label
 	end
 
-	local TitleLabel = CreateHeaderLabel("Title", title, Theme.Text, 15, Enum.Font.GothamMedium)
+	local TitleLabel = CreateHeaderLabel("Title", title, Theme.Text, 15, Enum.Font.GothamBold)
 	local SubtitleLabel = CreateHeaderLabel("Subtitle", subtitle, Theme.TextDark, 12, Enum.Font.Gotham)
 	local VersionLabel = CreateHeaderLabel("Version", version, Theme.TextDark, 11, Enum.Font.Gotham)
 
@@ -872,7 +872,7 @@ function UI.CreateWindow(title, subtitle, version)
 	SidebarDivider:SetAttribute("ThemeRole", "Border")
 
 	local TabCorner = Instance.new("UICorner")
-	TabCorner.CornerRadius = UDim.new(0, 2)
+	TabCorner.CornerRadius = UDim.new(0, 5)
 	TabCorner.Parent = TabFrame
 
 	local Content = Instance.new("Frame")
@@ -945,20 +945,20 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
-		Btn.Size = UDim2.new(1, -24, 0, 32)
+		Btn.Size = UDim2.new(1, -24, 0, 34)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
 		Btn.TextColor3 = Theme.Text
 		Btn.TextSize = 13
-		Btn.Font = Enum.Font.Gotham
+		Btn.Font = Enum.Font.GothamMedium
 		Btn.AutoButtonColor = false
 		Btn.Parent = page
 		Btn:SetAttribute("ThemeRole", "Button")
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 2)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
@@ -1113,7 +1113,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Bar:SetAttribute("ThemeRole", "ToggleOff")
 
 		local BarCorner = Instance.new("UICorner")
-		BarCorner.CornerRadius = UDim.new(0, 2)
+		BarCorner.CornerRadius = UDim.new(0, 5)
 		BarCorner.Parent = Bar
 
 		-- Calculate initial percent (safe from division by zero)
@@ -1133,7 +1133,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Fill:SetAttribute("ThemeRole", "Accent")
 
 		local FillCorner = Instance.new("UICorner")
-		FillCorner.CornerRadius = UDim.new(0, 2)
+		FillCorner.CornerRadius = UDim.new(0, 5)
 		FillCorner.Parent = Fill
 
 		local Handle = Instance.new("Frame")
@@ -1145,7 +1145,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Handle.Parent = Bar
 
 		local HandleCorner = Instance.new("UICorner")
-		HandleCorner.CornerRadius = UDim.new(0, 2)
+		HandleCorner.CornerRadius = UDim.new(0, 5)
 		HandleCorner.Parent = Handle
 
 		local draggingSlider = false
@@ -1273,18 +1273,19 @@ function UI.CreateWindow(title, subtitle, version)
 		Box:SetAttribute("ThemeRole", "Button")
 
 		local BoxCorner = Instance.new("UICorner")
-		BoxCorner.CornerRadius = UDim.new(0, 2)
+		BoxCorner.CornerRadius = UDim.new(0, 5)
 		BoxCorner.Parent = Box
 
 		local BoxStroke = Instance.new("UIStroke")
 		BoxStroke.Color = Theme.Border
 		BoxStroke.Thickness = 1
+		BoxStroke.Transparency = 0.12
 		BoxStroke.Parent = Box
 		BoxStroke:SetAttribute("ThemeRole", "Border")
 
 		local Padding = Instance.new("UIPadding")
-		Padding.PaddingTop = UDim.new(0, 10)
-		Padding.PaddingBottom = UDim.new(0, 10)
+		Padding.PaddingTop = UDim.new(0, 11)
+		Padding.PaddingBottom = UDim.new(0, 11)
 		Padding.PaddingLeft = UDim.new(0, 12)
 		Padding.PaddingRight = UDim.new(0, 12)
 		Padding.Parent = Box
@@ -1360,7 +1361,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 2)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
@@ -1400,7 +1401,7 @@ function UI.CreateWindow(title, subtitle, version)
 		List:SetAttribute("ThemeRole", "TitleBar")
 
 		local ListCorner = Instance.new("UICorner")
-		ListCorner.CornerRadius = UDim.new(0, 2)
+		ListCorner.CornerRadius = UDim.new(0, 5)
 		ListCorner.Parent = List
 
 		local ListStroke = Instance.new("UIStroke")
@@ -1598,7 +1599,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
-		Btn.Size = UDim2.new(1, -24, 0, 32)
+		Btn.Size = UDim2.new(1, -24, 0, 34)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
@@ -1611,7 +1612,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 2)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
@@ -1695,7 +1696,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 2)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = TextBox
 
 		local Stroke = Instance.new("UIStroke")
@@ -1779,7 +1780,7 @@ function UI.CreateWindow(title, subtitle, version)
         PickerButton:SetAttribute("ThemeRole", "Button")
 
         local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 2)
+        ButtonCorner.CornerRadius = UDim.new(0, 5)
         ButtonCorner.Parent = PickerButton
 
         local ButtonStroke = Instance.new("UIStroke")
@@ -1798,7 +1799,7 @@ function UI.CreateWindow(title, subtitle, version)
         Swatch.ZIndex = PickerButton.ZIndex + 1
 
         local SwatchCorner = Instance.new("UICorner")
-        SwatchCorner.CornerRadius = UDim.new(0, 2)
+        SwatchCorner.CornerRadius = UDim.new(0, 5)
         SwatchCorner.Parent = Swatch
 
         local HexLabel = Instance.new("TextLabel")
@@ -1844,7 +1845,7 @@ function UI.CreateWindow(title, subtitle, version)
         Popup:SetAttribute("ThemeRole", "TitleBar")
 
         local PopupCorner = Instance.new("UICorner")
-        PopupCorner.CornerRadius = UDim.new(0, 2)
+        PopupCorner.CornerRadius = UDim.new(0, 5)
         PopupCorner.Parent = Popup
 
         local PopupStroke = Instance.new("UIStroke")
@@ -2244,7 +2245,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Toast.Parent = notificationContainer
 
 		local ToastCorner = Instance.new("UICorner")
-		ToastCorner.CornerRadius = UDim.new(0, 2)
+		ToastCorner.CornerRadius = UDim.new(0, 5)
 		ToastCorner.Parent = Toast
 
 		local ToastStroke = Instance.new("UIStroke")
@@ -3262,7 +3263,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Button.Parent = Row
 		Button:SetAttribute("ThemeRole", "Button")
 		local ButtonCorner = Instance.new("UICorner")
-		ButtonCorner.CornerRadius = UDim.new(0, 2)
+		ButtonCorner.CornerRadius = UDim.new(0, 5)
 		ButtonCorner.Parent = Button
 		local ButtonStroke = Instance.new("UIStroke")
 		ButtonStroke.Color = Theme.Border
@@ -3282,7 +3283,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Panel.Parent = Row
 		Panel:SetAttribute("ThemeRole", "TitleBar")
 		local PanelCorner = Instance.new("UICorner")
-		PanelCorner.CornerRadius = UDim.new(0, 2)
+		PanelCorner.CornerRadius = UDim.new(0, 5)
 		PanelCorner.Parent = Panel
 		local PanelStroke = Instance.new("UIStroke")
 		PanelStroke.Color = Theme.Border
@@ -3312,7 +3313,7 @@ function UI.CreateWindow(title, subtitle, version)
 		SearchPadding.PaddingLeft = UDim.new(0, 8)
 		SearchPadding.Parent = SearchBox
 		local SearchCorner = Instance.new("UICorner")
-		SearchCorner.CornerRadius = UDim.new(0, 2)
+		SearchCorner.CornerRadius = UDim.new(0, 5)
 		SearchCorner.Parent = SearchBox
 		local SearchStroke = Instance.new("UIStroke")
 		SearchStroke.Color = Theme.Border
@@ -3382,7 +3383,7 @@ function UI.CreateWindow(title, subtitle, version)
 				Option.Parent = List
 				Option:SetAttribute("ThemeRole", "Button")
 				local OptionCorner = Instance.new("UICorner")
-				OptionCorner.CornerRadius = UDim.new(0, 2)
+				OptionCorner.CornerRadius = UDim.new(0, 5)
 				OptionCorner.Parent = Option
 				optionButtons[value] = Option
 				Option.MouseButton1Click:Connect(function()
