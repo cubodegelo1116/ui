@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.0.0           ║
+	║  Version: 4.1.0           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.0.0-GRAPHITE-ELECTRIC"
+local CURRENT_VERSION = "4.1.0-GRAPHITE-PREMIUM"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -562,14 +562,29 @@ function UI.CreateWindow(title, subtitle, version)
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
-	MainCorner.CornerRadius = UDim.new(0, 6)
+	MainCorner.CornerRadius = UDim.new(0, 8)
 	MainCorner.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Theme.Border
-	MainStroke.Thickness = 1.2
+	MainStroke.Thickness = 1
+	MainStroke.Transparency = 0.12
 	MainStroke.Parent = Main
 	MainStroke:SetAttribute("ThemeRole", "Border")
+
+	-- Thin electric-blue signature line: visual identity without permanent effects.
+	local TopAccent = Instance.new("Frame")
+	TopAccent.Name = "PDDEVAccentLine"
+	TopAccent.Size = UDim2.new(1, -16, 0, 2)
+	TopAccent.Position = UDim2.new(0, 8, 0, 0)
+	TopAccent.BackgroundColor3 = Theme.Accent
+	TopAccent.BorderSizePixel = 0
+	TopAccent.ZIndex = 5
+	TopAccent.Parent = Main
+	TopAccent:SetAttribute("ThemeRole", "Accent")
+	local TopAccentCorner = Instance.new("UICorner")
+	TopAccentCorner.CornerRadius = UDim.new(1, 0)
+	TopAccentCorner.Parent = TopAccent
 
 	-- ════════════════════════════════════════════════════════════
 	-- TITLE BAR
@@ -584,7 +599,7 @@ function UI.CreateWindow(title, subtitle, version)
 	TitleBar:SetAttribute("ThemeRole", "TitleBar")
 
 	local TitleCorner = Instance.new("UICorner")
-	TitleCorner.CornerRadius = UDim.new(0, 6)
+	TitleCorner.CornerRadius = UDim.new(0, 8)
 	TitleCorner.Parent = TitleBar
 
 	local TitleBottom = Instance.new("Frame")
@@ -844,6 +859,17 @@ function UI.CreateWindow(title, subtitle, version)
 	TabFrame.ClipsDescendants = true
 	TabFrame.Parent = Main
 	TabFrame:SetAttribute("ThemeRole", "TabBackground")
+
+	local SidebarDivider = Instance.new("Frame")
+	SidebarDivider.Name = "SidebarDivider"
+	SidebarDivider.Size = UDim2.new(0, 1, 1, -48)
+	SidebarDivider.Position = UDim2.new(0, 109, 0, 42)
+	SidebarDivider.BackgroundColor3 = Theme.Border
+	SidebarDivider.BackgroundTransparency = 0.18
+	SidebarDivider.BorderSizePixel = 0
+	SidebarDivider.ZIndex = 3
+	SidebarDivider.Parent = Main
+	SidebarDivider:SetAttribute("ThemeRole", "Border")
 
 	local TabCorner = Instance.new("UICorner")
 	TabCorner.CornerRadius = UDim.new(0, 2)
@@ -2454,15 +2480,29 @@ function UI.CreateWindow(title, subtitle, version)
 		RemoveTextHighlight(TabBtn)
 
 		local TabBtnCorner = Instance.new("UICorner")
-		TabBtnCorner.CornerRadius = UDim.new(0, 2)
+		TabBtnCorner.CornerRadius = UDim.new(0, 5)
 		TabBtnCorner.Parent = TabBtn
 
 		local TabStroke = Instance.new("UIStroke")
 		TabStroke.Name = "TabBorder"
 		TabStroke.Color = Theme.TabBorder
 		TabStroke.Thickness = 1
+		TabStroke.Transparency = 0.48
 		TabStroke.Parent = TabBtn
 		TabStroke:SetAttribute("ThemeRole", "TabBorder")
+
+		local ActiveMarker = Instance.new("Frame")
+		ActiveMarker.Name = "ActiveMarker"
+		ActiveMarker.Size = UDim2.new(0, 3, 1, -10)
+		ActiveMarker.Position = UDim2.new(0, 3, 0, 5)
+		ActiveMarker.BackgroundColor3 = Theme.Accent
+		ActiveMarker.BorderSizePixel = 0
+		ActiveMarker.Visible = false
+		ActiveMarker.ZIndex = 3
+		ActiveMarker.Parent = TabBtn
+		local ActiveMarkerCorner = Instance.new("UICorner")
+		ActiveMarkerCorner.CornerRadius = UDim.new(1, 0)
+		ActiveMarkerCorner.Parent = ActiveMarker
 
 		local iconWidget
 		if iconType == "image" then
@@ -2644,11 +2684,26 @@ function UI.CreateWindow(title, subtitle, version)
 			TabFrame.CanvasSize = UDim2.new(0, 0, 0, nextY + 4)
 		end
 
+		TabBtn.MouseEnter:Connect(function()
+			if CurrentTab ~= Tab then
+				TweenService:Create(TabBtn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
+				TabStroke.Transparency = 0.25
+			end
+		end)
+		TabBtn.MouseLeave:Connect(function()
+			if CurrentTab ~= Tab then
+				TweenService:Create(TabBtn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.TabBackground}):Play()
+				TabStroke.Transparency = 0.48
+			end
+		end)
+
 		TabBtn.MouseButton1Click:Connect(function()
 			if CurrentTab then
 				CurrentTab.Page.Visible = false
 				CurrentTab.Button.BackgroundColor3 = Theme.TabBackground
 				CurrentTab.Button:SetAttribute("ThemeRole", "TabBackground")
+				local oldMarker = CurrentTab.Button:FindFirstChild("ActiveMarker")
+				if oldMarker then oldMarker.Visible = false end
 				CurrentTab.Label.TextColor3 = Theme.TextDark
 				if CurrentTab.Icon and CurrentTab.Icon:IsA("TextLabel") then CurrentTab.Icon.TextColor3 = Theme.TextDark end
 				local oldStroke = CurrentTab.Button:FindFirstChild("TabBorder")
@@ -2658,6 +2713,8 @@ function UI.CreateWindow(title, subtitle, version)
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
+			ActiveMarker.Visible = true
+			TabStroke.Transparency = 0.08
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
 			TabStroke.Color = Theme.Accent
@@ -2676,6 +2733,8 @@ function UI.CreateWindow(title, subtitle, version)
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
+			ActiveMarker.Visible = true
+			TabStroke.Transparency = 0.08
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
 			TabStroke.Color = Theme.Accent
