@@ -7,7 +7,7 @@
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.15-RESIZE-HANDLE-NO-TEXTBOX-PLACEHOLDER"
+local CURRENT_VERSION = "2.15-RESIZE-DOTS-TAB-ICONS-FIXED"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -20,6 +20,7 @@ local MIN_WINDOW_HEIGHT = 250
 local MAX_WINDOW_HEIGHT = 700
 local DROPDOWN_ITEM_HEIGHT = 28
 local DROPDOWN_MAX_HEIGHT = 180
+
 
 -- ════════════════════════════════════════════════════════════
 -- UTILITY FUNCTIONS
@@ -382,6 +383,7 @@ function UI.CreateWindow(title, subtitle, version)
 		end
 	end
 
+
 	-- Text effects can be reintroduced by later-created controls or theme refreshes.
 	ScreenGui.DescendantAdded:Connect(function(object)
 		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
@@ -538,9 +540,10 @@ function UI.CreateWindow(title, subtitle, version)
 		table.clear(trackedConnections)
 	end)
 
--- ════════════════════════════════════════════════════════════
--- MAIN WINDOW FRAME
--- ════════════════════════════════════════════════════════════
+	-- ════════════════════════════════════════════════════════════
+	-- MAIN WINDOW FRAME
+	-- ════════════════════════════════════════════════════════════
+
 	local Main = Instance.new("Frame")
 	Main.Name = "MainWindow"
 	Main.Size = UDim2.new(0, 500, 0, 360)
@@ -725,33 +728,58 @@ function UI.CreateWindow(title, subtitle, version)
 
 	local Resize = Instance.new("TextButton")
 	Resize.Name = "ResizeHandle"
-	-- Larger, high-contrast grip makes the resize corner easy to discover.
-	Resize.Size = UDim2.new(0, 24, 0, 24)
+	-- 24px invisible hit target with a discreet diagonal three-dot grip.
+	Resize.Size = UDim2.fromOffset(24, 24)
 	Resize.Position = UDim2.new(1, -24, 1, -24)
-	Resize.BackgroundColor3 = Theme.Accent
-	Resize.BackgroundTransparency = 0
+	Resize.BackgroundColor3 = Theme.ButtonHover
+	Resize.BackgroundTransparency = 1
 	Resize.BorderSizePixel = 0
-	Resize.Text = "↘"
-	Resize.TextColor3 = Theme.Text
-	Resize.TextSize = 18
-	Resize.Font = Enum.Font.GothamBold
-	Resize.ZIndex = 100
-	Resize.TextXAlignment = Enum.TextXAlignment.Center
-	Resize.TextYAlignment = Enum.TextYAlignment.Center
-	Resize.TextStrokeTransparency = 1
+	Resize.Text = ""
 	Resize.AutoButtonColor = false
+	Resize.Active = true
+	Resize.ZIndex = 100
 	Resize.Parent = Main
-	Resize:SetAttribute("ThemeRole", "Accent")
+	Resize:SetAttribute("ThemeRole", "Border")
 
-	local ResizeCorner = Instance.new("UICorner")
-	ResizeCorner.CornerRadius = UDim.new(0, 2)
-	ResizeCorner.Parent = Resize
+	local ResizeDots = {}
+	for i = 1, 3 do
+		local Dot = Instance.new("Frame")
+		Dot.Name = "ResizeDot" .. i
+		Dot.Size = UDim2.fromOffset(3, 3)
+		Dot.Position = UDim2.fromOffset(5 + i * 4, 5 + i * 4)
+		Dot.BackgroundColor3 = Theme.TextDark
+		Dot.BackgroundTransparency = 0
+		Dot.BorderSizePixel = 0
+		Dot.ZIndex = 101
+		Dot.Parent = Resize
+
+		local DotCorner = Instance.new("UICorner")
+		DotCorner.CornerRadius = UDim.new(1, 0)
+		DotCorner.Parent = Dot
+		table.insert(ResizeDots, Dot)
+	end
 
 	Resize.MouseEnter:Connect(function()
-		Resize.BackgroundColor3 = Theme.ToggleOn or Theme.Accent
+		TweenService:Create(Resize, TweenInfo.new(0.15), {
+			BackgroundTransparency = 0.45,
+			BackgroundColor3 = Theme.ButtonHover,
+		}):Play()
+		for _, Dot in ipairs(ResizeDots) do
+			TweenService:Create(Dot, TweenInfo.new(0.15), {
+				BackgroundColor3 = Theme.Accent,
+			}):Play()
+		end
 	end)
+
 	Resize.MouseLeave:Connect(function()
-		Resize.BackgroundColor3 = Theme.Accent
+		TweenService:Create(Resize, TweenInfo.new(0.15), {
+			BackgroundTransparency = 1,
+		}):Play()
+		for _, Dot in ipairs(ResizeDots) do
+			TweenService:Create(Dot, TweenInfo.new(0.15), {
+				BackgroundColor3 = Theme.TextDark,
+			}):Play()
+		end
 	end)
 
 	local resizing = false
@@ -875,6 +903,7 @@ function UI.CreateWindow(title, subtitle, version)
 	local AddTextBox
 	local AddColorPicker
 	local ShowNotification
+
 	-- ─────────────────────────────────────────────────────────
 	-- BUTTON COMPONENT
 	-- ─────────────────────────────────────────────────────────
@@ -998,6 +1027,7 @@ function UI.CreateWindow(title, subtitle, version)
 			SetState(not state)
 		end)
 
+		-- Return API
 		local ToggleAPI = {}
 		function ToggleAPI.SetState(newState)
 			SetState(newState)
@@ -1020,6 +1050,7 @@ function UI.CreateWindow(title, subtitle, version)
 		max = tonumber(max) or 100
 		default = tonumber(default) or min
 
+		-- Validate ranges
 		if min > max then min, max = max, min end
 		default = Clamp(math.floor(default + 0.5), min, max)
 
@@ -1054,6 +1085,7 @@ function UI.CreateWindow(title, subtitle, version)
 		BarCorner.CornerRadius = UDim.new(0, 2)
 		BarCorner.Parent = Bar
 
+		-- Calculate initial percent (safe from division by zero)
 		local function GetPercent(value)
 			if max == min then return 0 end
 			return Clamp((value - min) / (max - min), 0, 1)
@@ -1143,6 +1175,7 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end)
 
+		-- Return API
 		local SliderAPI = {}
 		function SliderAPI.SetValue(value)
 			value = Clamp(math.floor((tonumber(value) or min) + 0.5), min, max)
@@ -1199,6 +1232,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Box = Instance.new("Frame")
 		Box.Name = title
+		-- Page already has 12px horizontal padding, so -24 fills the remaining content width.
 		Box.Size = UDim2.new(1, -24, 0, 0)
 		Box.AutomaticSize = Enum.AutomaticSize.Y
 		Box.BackgroundColor3 = Theme.Button
@@ -1264,6 +1298,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 		return Box
 	end
+
 	-- ─────────────────────────────────────────────────────────
 	-- DROPDOWN COMPONENT (IMPROVED)
 	-- ─────────────────────────────────────────────────────────
@@ -1303,6 +1338,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
+		-- State
 		local currentOptions = {}
 		for _, opt in ipairs(options) do
 			if typeof(opt) == "string" then
@@ -1313,6 +1349,7 @@ function UI.CreateWindow(title, subtitle, version)
 		local currentValue = currentOptions[1]
 		local open = false
 
+		-- Dropdown list
 		local List = Instance.new("ScrollingFrame")
 		List.Name = "DropdownList"
 		List.BackgroundColor3 = Theme.TitleBar
@@ -1321,12 +1358,14 @@ function UI.CreateWindow(title, subtitle, version)
 		List.ZIndex = 50
 		List.Position = UDim2.new(0, 0, 0, 36)
 		List.Parent = Frame
+
 		List.ScrollBarThickness = 4
 		List.ScrollBarImageColor3 = Theme.Border
 		List.ScrollingDirection = Enum.ScrollingDirection.Y
 		List.CanvasSize = UDim2.new(0, 0, 0, 0)
 		List.AutomaticCanvasSize = Enum.AutomaticSize.Y
 		List.ClipsDescendants = true
+
 		List:SetAttribute("ThemeRole", "TitleBar")
 
 		local ListCorner = Instance.new("UICorner")
@@ -1349,6 +1388,7 @@ function UI.CreateWindow(title, subtitle, version)
 		ListPadding.PaddingBottom = UDim.new(0, 2)
 		ListPadding.Parent = List
 
+		-- Update button text
 		local function UpdateButtonText()
 			if currentValue then
 				Btn.Text = "  " .. text .. ": " .. tostring(currentValue)
@@ -1357,6 +1397,7 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end
 
+		-- Rebuild options list
 		local function GetDropdownListHeight()
 			return math.min(#currentOptions * DROPDOWN_ITEM_HEIGHT + 4, DROPDOWN_MAX_HEIGHT)
 		end
@@ -1387,16 +1428,11 @@ function UI.CreateWindow(title, subtitle, version)
 				OptBtn.TextStrokeTransparency = 1
 
 				OptBtn.MouseEnter:Connect(function()
-					TweenService:Create(OptBtn, TweenInfo.new(0.1), {
-						BackgroundColor3 = Theme.DropdownHover,
-						BackgroundTransparency = 0
-					}):Play()
+					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.DropdownHover, BackgroundTransparency = 0}):Play()
 				end)
 
 				OptBtn.MouseLeave:Connect(function()
-					TweenService:Create(OptBtn, TweenInfo.new(0.1), {
-						BackgroundTransparency = 1
-					}):Play()
+					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play()
 				end)
 
 				OptBtn.MouseButton1Click:Connect(function()
@@ -1428,9 +1464,11 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end
 
+		-- Initialize
 		UpdateButtonText()
 		RebuildOptions()
 
+		-- Toggle dropdown
 		Btn.MouseButton1Click:Connect(function()
 			open = not open
 
@@ -1443,6 +1481,7 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end)
 
+		-- Close dropdown when clicking outside
 		ConnectGlobal(UIS.InputBegan, function(input)
 			if input.UserInputType ~= Enum.UserInputType.MouseButton1 or not open then
 				return
@@ -1466,6 +1505,7 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end)
 
+		-- API
 		local DropdownAPI = {}
 
 		function DropdownAPI.SetOptions(newOptions)
@@ -1568,21 +1608,18 @@ function UI.CreateWindow(title, subtitle, version)
 				for i = cooldown, 1, -1 do
 					if thisToken ~= cooldownToken then return end
 					Btn.Text = tostring(i)
-					TweenService:Create(Btn, TweenInfo.new(0.1), {
-						BackgroundColor3 = Theme.Cooldown
-					}):Play()
+					TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.Cooldown}):Play()
 					SafeWait(1)
 				end
 
 				if thisToken ~= cooldownToken then return end
 				Btn.Text = text
-				TweenService:Create(Btn, TweenInfo.new(0.2), {
-					BackgroundColor3 = Theme.Button
-				}):Play()
+				TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Theme.Button}):Play()
 				onCooldown = false
 			end)
 		end)
 
+		-- API
 		local CooldownAPI = {}
 		function CooldownAPI.IsOnCooldown()
 			return onCooldown
@@ -1603,10 +1640,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 	function AddTextBox(page, placeholder, callback)
 		if not page then error("Page required for AddTextBox", 2) end
-		-- Text-entry fields intentionally start visually empty. In the UI2
-		-- compatibility layer, a component name such as "TextBox" was sometimes
-		-- passed through as PlaceholderText, making the field look pre-filled.
-		placeholder = ""
+		placeholder = "" -- fields start blank; no automatic "TextBox" placeholder
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = "TextBox"
@@ -1621,9 +1655,8 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.TextColor3 = Theme.Text
 		TextBox.TextSize = 13
 		TextBox.Font = Enum.Font.Gotham
-		TextBox.Text = ""
 		TextBox.PlaceholderColor3 = Theme.TextDark
-		TextBox.PlaceholderText = ""
+		TextBox.PlaceholderText = placeholder
 		TextBox.ClearTextOnFocus = false
 		TextBox.Parent = Frame
 		TextBox:SetAttribute("ThemeRole", "Button")
@@ -1645,6 +1678,7 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end)
 
+		-- API
 		local TextBoxAPI = {}
 		function TextBoxAPI.GetText()
 			return TextBox.Text
@@ -1658,6 +1692,8 @@ function UI.CreateWindow(title, subtitle, version)
 
 		return TextBoxAPI
 	end
+
+
 	-- ─────────────────────────────────────────────────────────
 	-- COLOR PICKER COMPONENT (HSV: saturation/value square + hue strip)
 	-- ─────────────────────────────────────────────────────────
@@ -1835,7 +1871,6 @@ function UI.CreateWindow(title, subtitle, version)
         WhiteOverlay.Active = true
         WhiteOverlay.ZIndex = 62
         WhiteOverlay.Parent = SVField
-
         local WhiteGradient = Instance.new("UIGradient")
         WhiteGradient.Rotation = 0
         WhiteGradient.Transparency = NumberSequence.new({
@@ -1852,7 +1887,6 @@ function UI.CreateWindow(title, subtitle, version)
         BlackOverlay.Active = true
         BlackOverlay.ZIndex = 63
         BlackOverlay.Parent = SVField
-
         local BlackGradient = Instance.new("UIGradient")
         BlackGradient.Rotation = 90
         BlackGradient.Transparency = NumberSequence.new({
@@ -1871,11 +1905,9 @@ function UI.CreateWindow(title, subtitle, version)
         SVMarker.Active = true
         SVMarker.ZIndex = 64
         SVMarker.Parent = SVField
-
         local SVMarkerCorner = Instance.new("UICorner")
         SVMarkerCorner.CornerRadius = UDim.new(1, 0)
         SVMarkerCorner.Parent = SVMarker
-
         local SVMarkerStroke = Instance.new("UIStroke")
         SVMarkerStroke.Color = Color3.new(1, 1, 1)
         SVMarkerStroke.Thickness = 2
@@ -1890,7 +1922,6 @@ function UI.CreateWindow(title, subtitle, version)
         HueBar.Active = true
         HueBar.ZIndex = 61
         HueBar.Parent = Popup
-
         local HueGradient = Instance.new("UIGradient")
         HueGradient.Rotation = 90
         HueGradient.Color = ColorSequence.new({
@@ -1914,7 +1945,6 @@ function UI.CreateWindow(title, subtitle, version)
         HueHandle.Active = true
         HueHandle.ZIndex = 63
         HueHandle.Parent = HueBar
-
         local HueHandleStroke = Instance.new("UIStroke")
         HueHandleStroke.Color = Color3.new(0, 0, 0)
         HueHandleStroke.Thickness = 1
@@ -1928,7 +1958,6 @@ function UI.CreateWindow(title, subtitle, version)
         Preview.BorderSizePixel = 0
         Preview.ZIndex = 61
         Preview.Parent = Popup
-
         local PreviewStroke = Instance.new("UIStroke")
         PreviewStroke.Color = Theme.Border
         PreviewStroke.Thickness = 1
@@ -2017,18 +2046,15 @@ function UI.CreateWindow(title, subtitle, version)
             activeDrag = "sv"
             SetSVFromScreen(input.Position.X, input.Position.Y)
         end
-
         for _, object in ipairs({SVField, WhiteOverlay, BlackOverlay, SVMarker}) do
             object.InputBegan:Connect(BeginSV)
         end
-
         HueBar.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 activeDrag = "hue"
                 SetHueFromScreen(input.Position.Y)
             end
         end)
-
         HueHandle.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 activeDrag = "hue"
@@ -2097,13 +2123,11 @@ function UI.CreateWindow(title, subtitle, version)
                 SetHueFromScreen(input.Position.Y)
             end
         end)
-
         ConnectGlobal(UIS.InputEnded, function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 then
                 activeDrag = nil
             end
         end)
-
         -- Outside clicks are handled by ModalShield.MouseButton1Click so the shield
         -- remains visible for the full click and prevents click-through.
         PickerButton:GetPropertyChangedSignal("AbsolutePosition"):Connect(UpdatePopupPosition)
@@ -2195,6 +2219,7 @@ function UI.CreateWindow(title, subtitle, version)
 		ToastStroke.Color = accentColor
 		ToastStroke.Thickness = 1
 		ToastStroke.Parent = Toast
+
 		local Accent = Instance.new("Frame")
 		Accent.Name = "Accent"
 		Accent.Size = UDim2.new(0, 3, 1, 0)
@@ -2269,14 +2294,14 @@ function UI.CreateWindow(title, subtitle, version)
 	local Tabs = {}
 	local CurrentTab = nil
 
+	-- The menu icon reuses the image asset already used by this library's floating button.
 	local BuiltInTabImages = {
-		menu = "rbxassetid://7733960981",
-		minimize = "rbxassetid://7733960981",
-		default = "rbxassetid://7733960981",
-		pddev = "rbxassetid://7733960981",
+		menu = "rbxassetid://7733960981", minimize = "rbxassetid://7733960981",
+		default = "rbxassetid://7733960981", pddev = "rbxassetid://7733960981",
 	}
 
-	-- Built-in Lucide-style Roblox decal IDs.
+	-- Built-in Lucide-style Roblox decal IDs (use CreateTab("Name", "icon-name")).
+	-- Names are normalized to lowercase by ResolveTabIcon.
 	local BuiltInTabAssetIcons = {
 		accessibility=10709751939, activity=10709752035, airvent=10709752131, airplay=10709752254,
 		alarmcheck=10709752405, alarmclock=10709752630, alarmclockoff=10709752508,
@@ -2344,6 +2369,7 @@ function UI.CreateWindow(title, subtitle, version)
 		x=10747384394, xcircle=10747383819, zoomin=10747384552, zoomout=10747384679,
 	}
 
+
 	local BuiltInTabIcons = {
 		home = "⌂",
 		settings = "⚙",
@@ -2386,10 +2412,12 @@ function UI.CreateWindow(title, subtitle, version)
 		if BuiltInTabIcons[lower] then return "glyph", BuiltInTabIcons[lower] end
 		return nil, nil
 	end
+
 	local function CreateTab(name, icon)
 		name = ValidateString(name, true) or "Tab"
 		local iconType, iconValue = ResolveTabIcon(icon)
 
+		-- Keep names readable while fitting the full text inside a compact tab.
 		local panelWidth = TabFrame.AbsoluteSize.X > 0 and TabFrame.AbsoluteSize.X or TabFrame.Size.X.Offset
 		local tabFontSize = 10
 		local textInset = iconType and 34 or 12
@@ -2527,7 +2555,6 @@ function UI.CreateWindow(title, subtitle, version)
 			if iconWidget then iconWidget:Destroy(); iconWidget = nil end
 			iconType, iconValue = ResolveTabIcon(newIcon)
 			Tab.Icon = nil
-
 			if iconType == "image" then
 				iconWidget = Instance.new("ImageLabel")
 				iconWidget.Name = "TabIcon"
@@ -2554,7 +2581,6 @@ function UI.CreateWindow(title, subtitle, version)
 				iconWidget:SetAttribute("ThemeRole", "TabIcon")
 				RemoveTextHighlight(iconWidget)
 			end
-
 			Tab.Icon = iconWidget
 			local newInset = iconType and 34 or 12
 			TabLabel.Position = UDim2.new(0, iconType and 28 or 4, 0, 3)
@@ -2564,7 +2590,6 @@ function UI.CreateWindow(title, subtitle, version)
 			TabLabel.Text = wrapped
 			local bounds = TextService:GetTextSize(wrapped, tabFontSize, Enum.Font.Gotham, Vector2.new(width, 10000))
 			TabBtn.Size = UDim2.new(1, -12, 0, math.max(iconType and 32 or 28, math.ceil(bounds.Y) + 8))
-
 			local nextY = 8
 			for _, tabItem in ipairs(Tabs) do
 				tabItem.Button.Position = UDim2.new(0, 6, 0, nextY)
@@ -2579,9 +2604,7 @@ function UI.CreateWindow(title, subtitle, version)
 				CurrentTab.Button.BackgroundColor3 = Theme.TabBackground
 				CurrentTab.Button:SetAttribute("ThemeRole", "TabBackground")
 				CurrentTab.Label.TextColor3 = Theme.TextDark
-				if CurrentTab.Icon and CurrentTab.Icon:IsA("TextLabel") then
-					CurrentTab.Icon.TextColor3 = Theme.TextDark
-				end
+				if CurrentTab.Icon and CurrentTab.Icon:IsA("TextLabel") then CurrentTab.Icon.TextColor3 = Theme.TextDark end
 				local oldStroke = CurrentTab.Button:FindFirstChild("TabBorder")
 				if oldStroke then oldStroke.Color = Theme.TabBorder end
 			end
@@ -2621,9 +2644,13 @@ function UI.CreateWindow(title, subtitle, version)
 	-- ════════════════════════════════════════════════════════════
 
 	local function AddMinimizeButton(config, colonConfig)
+		-- Accept both dot syntax: Window.AddMinimizeButton({...})
+		-- and colon syntax: Window:AddMinimizeButton({...}).
+		-- With colon syntax, Lua passes the WindowAPI table as the first argument.
 		if colonConfig ~= nil then
 			config = colonConfig
 		elseif type(config) == "table" and config.AddMinimizeButton ~= nil and config.CreateTab ~= nil then
+			-- If called with a colon but no options, use defaults.
 			config = {}
 		end
 		config = type(config) == "table" and config or {}
@@ -2636,7 +2663,6 @@ function UI.CreateWindow(title, subtitle, version)
 		local text = config.Text
 		local hasText = text ~= nil and tostring(text) ~= ""
 		local imageId = config.Image
-
 		-- Text has precedence over Image: explicitly selecting text must never
 		-- leave the default icon visible, even when Image is also supplied.
 		if hasText then
@@ -2735,6 +2761,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 		return Ball
 	end
+
 	-- ════════════════════════════════════════════════════════════
 	-- THEME APPLICATION
 	-- ════════════════════════════════════════════════════════════
@@ -2745,10 +2772,10 @@ function UI.CreateWindow(title, subtitle, version)
 				object.TextStrokeTransparency = 1
 				RemoveTextHighlight(object)
 			elseif object:IsA("UIStroke") then
+				-- Keep borders crisp and subtle; never use thick/glowing-looking strokes.
 				object.Thickness = math.min(object.Thickness, 1)
 				object.Transparency = math.max(object.Transparency, 0.12)
 			end
-
 			local role = object:GetAttribute("ThemeRole")
 
 			if role then
@@ -2824,13 +2851,11 @@ function UI.CreateWindow(title, subtitle, version)
 					elseif object:IsA("GuiObject") then
 						object.BackgroundColor3 = Theme.TabBorder
 					end
-
 				elseif role == "TabText" then
 					if object:IsA("TextLabel") then
 						object.TextColor3 = (CurrentTab and CurrentTab.Label == object) and Theme.Text or Theme.TextDark
 						object.TextStrokeTransparency = 1
 					end
-
 				elseif role == "TabIcon" then
 					if object:IsA("TextLabel") then
 						object.TextColor3 = (CurrentTab and CurrentTab.Icon == object) and Theme.Text or Theme.TextDark
@@ -2839,14 +2864,12 @@ function UI.CreateWindow(title, subtitle, version)
 				end
 			end
 		end
-
-		-- Update tab text colors even when tabs are not selected.
+		
+		-- Atualiza a cor do texto das tabs mesmo quando não estão selecionadas
 		for _, tab in ipairs(Tabs) do
 			if tab.Button then
 				tab.Button.TextStrokeTransparency = 1
-				if tab.Label then
-					tab.Label.TextColor3 = (tab == CurrentTab) and Theme.Text or Theme.TextDark
-				end
+				if tab.Label then tab.Label.TextColor3 = (tab == CurrentTab) and Theme.Text or Theme.TextDark end
 				if tab.Icon and tab.Icon:IsA("TextLabel") then
 					tab.Icon.TextColor3 = (tab == CurrentTab) and Theme.Text or Theme.TextDark
 				end
@@ -2936,6 +2959,8 @@ function UI.CreateWindow(title, subtitle, version)
 		DropdownHover = Color3.fromRGB(47, 48, 54),
 	})
 
+	-- Apply the default palette before returning the window. This prevents
+	-- bright default strokes/text styles from remaining until the first theme change.
 	ApplyTheme()
 
 	-- ════════════════════════════════════════════════════════════
@@ -2943,12 +2968,15 @@ function UI.CreateWindow(title, subtitle, version)
 	-- ════════════════════════════════════════════════════════════
 
 	local WindowAPI = {
+		-- Version info
 		VERSION = CURRENT_VERSION,
 
+		-- Tab management
 		CreateTab = CreateTab,
 		BuiltInTabIcons = CopyTable(BuiltInTabIcons),
 		BuiltInTabImages = CopyTable(BuiltInTabImages),
 
+		-- Components (accessed via tabs)
 		AddButton = AddButton,
 		AddToggle = AddToggle,
 		AddSlider = AddSlider,
@@ -2959,32 +2987,39 @@ function UI.CreateWindow(title, subtitle, version)
 		AddTextBox = AddTextBox,
 		AddColorPicker = AddColorPicker,
 
+		-- Notifications (bottom-right)
 		Notification = ShowNotification,
 		Notify = ShowNotification,
 		AddNotification = ShowNotification,
 
+		-- Floating button
 		AddMinimizeButton = AddMinimizeButton,
 
+		-- Theme system
 		RegisterTheme = RegisterTheme,
 		SetTheme = SetTheme,
 		GetTheme = GetTheme,
 		GetAllThemes = GetAllThemes,
 		ApplyTheme = ApplyTheme,
 
+		-- Direct access
 		Theme = Theme,
 		Themes = Themes,
 		Main = Main,
 		ScreenGui = ScreenGui,
 
+		-- Utilities
 		Minimize = ToggleMinimize,
 		Destroy = function()
 			ScreenGui:Destroy()
 		end,
 	}
-	-- ════════════════════════════════════════════════════════════
-	-- UI2 / ICEHUB COMPATIBILITY LAYER
-	-- ════════════════════════════════════════════════════════════
 
+	-- ════════════════════════════════════════════════════════════
+	-- UI2 / IceHub compatibility layer
+	-- Maps the old CreateMain -> NewTab -> NewSection API to this library.
+	-- Both colon calls (obj:Method(...)) and dot calls (obj.Method(...)) work.
+	-- ════════════════════════════════════════════════════════════
 	local function UnpackCompatArgs(owner, a, b, c, d, e, f)
 		if a == owner then
 			return b, c, d, e, f
@@ -2992,7 +3027,8 @@ function UI.CreateWindow(title, subtitle, version)
 		return a, b, c, d, e
 	end
 
-	-- Searchable dropdown compatible with UI2 NewSearchDropdown.
+	-- Searchable dropdown matching the old UI2 NewSearchDropdown API.
+	-- The search field filters options while typing; Refresh() replaces the list.
 	local function CreateCompatSearchDropdown(page, title, searchPlaceholder, items, callback)
 		if not page then error("Page required for NewSearchDropdown", 2) end
 		title = ValidateString(title, true) or "Dropdown"
@@ -3003,19 +3039,15 @@ function UI.CreateWindow(title, subtitle, version)
 		local selectedValue = nil
 		local optionButtons = {}
 		local isOpen = false
-
 		local function NormalizeOptions(values)
 			local normalized = {}
 			if typeof(values) == "table" then
 				for _, value in ipairs(values) do
-					if value ~= nil then
-						table.insert(normalized, FixMojibake(tostring(value)))
-					end
+					if value ~= nil then table.insert(normalized, FixMojibake(tostring(value))) end
 				end
 			end
 			return normalized
 		end
-
 		currentOptions = NormalizeOptions(items)
 		selectedValue = currentOptions[1]
 
@@ -3036,13 +3068,12 @@ function UI.CreateWindow(title, subtitle, version)
 		Button.Font = Enum.Font.Gotham
 		Button.TextXAlignment = Enum.TextXAlignment.Left
 		Button.AutoButtonColor = false
+		Button.TextStrokeTransparency = 1
 		Button.Parent = Row
 		Button:SetAttribute("ThemeRole", "Button")
-
 		local ButtonCorner = Instance.new("UICorner")
 		ButtonCorner.CornerRadius = UDim.new(0, 2)
 		ButtonCorner.Parent = Button
-
 		local ButtonStroke = Instance.new("UIStroke")
 		ButtonStroke.Color = Theme.Border
 		ButtonStroke.Thickness = 1
@@ -3060,11 +3091,9 @@ function UI.CreateWindow(title, subtitle, version)
 		Panel.Size = UDim2.new(1, 0, 0, 184)
 		Panel.Parent = Row
 		Panel:SetAttribute("ThemeRole", "TitleBar")
-
 		local PanelCorner = Instance.new("UICorner")
 		PanelCorner.CornerRadius = UDim.new(0, 2)
 		PanelCorner.Parent = Panel
-
 		local PanelStroke = Instance.new("UIStroke")
 		PanelStroke.Color = Theme.Border
 		PanelStroke.Thickness = 1
@@ -3089,15 +3118,12 @@ function UI.CreateWindow(title, subtitle, version)
 		SearchBox.Parent = Panel
 		SearchBox:SetAttribute("ThemeRole", "Button")
 		SearchBox.TextStrokeTransparency = 1
-
 		local SearchPadding = Instance.new("UIPadding")
 		SearchPadding.PaddingLeft = UDim.new(0, 8)
 		SearchPadding.Parent = SearchBox
-
 		local SearchCorner = Instance.new("UICorner")
 		SearchCorner.CornerRadius = UDim.new(0, 2)
 		SearchCorner.Parent = SearchBox
-
 		local SearchStroke = Instance.new("UIStroke")
 		SearchStroke.Color = Theme.Border
 		SearchStroke.Thickness = 1
@@ -3117,12 +3143,10 @@ function UI.CreateWindow(title, subtitle, version)
 		List.AutomaticCanvasSize = Enum.AutomaticSize.Y
 		List.ZIndex = 81
 		List.Parent = Panel
-
 		local ListLayout = Instance.new("UIListLayout")
 		ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		ListLayout.Padding = UDim.new(0, 2)
 		ListLayout.Parent = List
-
 		local ListPadding = Instance.new("UIPadding")
 		ListPadding.PaddingTop = UDim.new(0, 2)
 		ListPadding.PaddingBottom = UDim.new(0, 2)
@@ -3147,12 +3171,9 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local function RebuildOptions()
 			for _, child in ipairs(List:GetChildren()) do
-				if child:IsA("TextButton") then
-					child:Destroy()
-				end
+				if child:IsA("TextButton") then child:Destroy() end
 			end
 			table.clear(optionButtons)
-
 			for index, value in ipairs(currentOptions) do
 				local Option = Instance.new("TextButton")
 				Option.Name = "Option"
@@ -3170,29 +3191,22 @@ function UI.CreateWindow(title, subtitle, version)
 				Option.TextStrokeTransparency = 1
 				Option.Parent = List
 				Option:SetAttribute("ThemeRole", "Button")
-
 				local OptionCorner = Instance.new("UICorner")
 				OptionCorner.CornerRadius = UDim.new(0, 2)
 				OptionCorner.Parent = Option
-
 				optionButtons[value] = Option
-
 				Option.MouseButton1Click:Connect(function()
 					selectedValue = value
 					UpdateButtonText()
 					Panel.Visible = false
 					isOpen = false
 					Row.Size = UDim2.new(1, -24, 0, 32)
-
 					if callback then
 						local ok, err = pcall(callback, value)
-						if not ok then
-							warn("[PDDEV] NewSearchDropdown callback error: " .. tostring(err))
-						end
+						if not ok then warn("[PDDEV] NewSearchDropdown callback error: " .. tostring(err)) end
 					end
 				end)
 			end
-
 			UpdateFilter()
 		end
 
@@ -3213,18 +3227,14 @@ function UI.CreateWindow(title, subtitle, version)
 				Panel.Visible = false
 			end
 		end)
-
 		SearchBox:GetPropertyChangedSignal("Text"):Connect(UpdateFilter)
-
 		ConnectGlobal(UIS.InputBegan, function(input)
 			if not isOpen or input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-
 			local point = input.Position
 			local bp, bs = Button.AbsolutePosition, Button.AbsoluteSize
 			local pp, ps = Panel.AbsolutePosition, Panel.AbsoluteSize
 			local overButton = point.X >= bp.X and point.X <= bp.X + bs.X and point.Y >= bp.Y and point.Y <= bp.Y + bs.Y
 			local overPanel = point.X >= pp.X and point.X <= pp.X + ps.X and point.Y >= pp.Y and point.Y <= pp.Y + ps.Y
-
 			if not overButton and not overPanel then
 				isOpen = false
 				Panel.Visible = false
@@ -3232,30 +3242,20 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end)
 
-		local DropdownAPI = {
-			Instance = Row,
-			Button = Button,
-			SearchBox = SearchBox,
-			Panel = Panel
-		}
-
+		local DropdownAPI = { Instance = Row, Button = Button, SearchBox = SearchBox, Panel = Panel }
 		function DropdownAPI.SetOptions(newOptions)
 			if typeof(newOptions) ~= "table" then return false end
 			currentOptions = NormalizeOptions(newOptions)
-			if not table.find(currentOptions, selectedValue) then
-				selectedValue = currentOptions[1]
-			end
+			if not table.find(currentOptions, selectedValue) then selectedValue = currentOptions[1] end
 			UpdateButtonText()
 			RebuildOptions()
 			UpdatePanelPosition()
 			return true
 		end
-
 		function DropdownAPI.Refresh(a, b)
 			local newOptions = (a == DropdownAPI) and b or a
 			return DropdownAPI.SetOptions(newOptions or {})
 		end
-
 		function DropdownAPI.SetValue(value)
 			value = tostring(value)
 			if not table.find(currentOptions, value) then return false end
@@ -3267,15 +3267,8 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 			return true
 		end
-
-		function DropdownAPI.GetValue()
-			return selectedValue
-		end
-
-		function DropdownAPI.GetOptions()
-			return CopyTable(currentOptions)
-		end
-
+		function DropdownAPI.GetValue() return selectedValue end
+		function DropdownAPI.GetOptions() return CopyTable(currentOptions) end
 		UpdateButtonText()
 		RebuildOptions()
 		return DropdownAPI
@@ -3288,75 +3281,65 @@ function UI.CreateWindow(title, subtitle, version)
 		else
 			dropdownLabel, helpText, placeholder, items, callback = a1, a2, a3, a4, a5
 		end
-
+		-- Also tolerate a shorter form: NewSearchDropdown(label, placeholder, items, callback).
 		if typeof(placeholder) == "table" then
 			callback = typeof(items) == "function" and items or callback
 			items = placeholder
 			placeholder = helpText
 		end
-
 		local page = owner and owner.Page
 		if not page and owner then page = owner._compatPage end
 		return CreateCompatSearchDropdown(page, dropdownLabel, placeholder, items, callback)
 	end
+
 	local compatThemeName = "Default"
 
 	function WindowAPI.NewTab(a, b, c)
-		local tabTitle, tabName
+		-- UI2-compatible call signature: NewTab(title, icon).
+		-- Supports both Main:NewTab("Protection", "shield") and
+		-- Main.NewTab("Protection", "shield").
+		local tabTitle, tabIcon
 		if a == WindowAPI then
-			tabTitle, tabName = b, c
+			tabTitle, tabIcon = b, c
 		else
-			tabTitle, tabName = a, b
+			tabTitle, tabIcon = a, b
 		end
-
-		tabTitle = ValidateString(tabTitle, true) or ValidateString(tabName, true) or "Tab"
-		local tab = CreateTab(tabTitle, nil)
-
-		if tab.Page and typeof(tabName) == "string" and tabName ~= "" then
-			tab.Page.Name = tabName
-		end
+		tabTitle = ValidateString(tabTitle, true) or "Tab"
+		local tab = CreateTab(tabTitle, tabIcon)
 
 		function tab.NewSearchDropdown(a1, a2, a3, a4, a5, a6)
 			return CompatNewSearchDropdown(tab, a1, a2, a3, a4, a5, a6)
 		end
 
-		-- UI2-compatible focus textbox.
+		-- UI2-compatible focus textbox. Installed on both the tab and its sections,
+		-- because older GUI scripts use both call styles.
 		local function CompatNewFocusTextBox(owner, a1, a2, a3, a4, a5)
 			local label, placeholder, boxName, callback = UnpackCompatArgs(owner, a1, a2, a3, a4, a5)
-
 			if typeof(callback) ~= "function" and typeof(boxName) == "function" then
 				callback = boxName
 				boxName = nil
 			end
-
 			if typeof(placeholder) == "function" then
 				callback, placeholder = placeholder, label
 				label = ""
 			end
-
 			if label and tostring(label) ~= "" then
 				tab.AddTextLabel(tostring(label))
 			end
-
 			local boxAPI
-
 			local function OnFocusLost(value)
 				if typeof(callback) == "function" then
 					task.spawn(function()
 						local ok, err = pcall(callback, value)
-						if not ok then
-							warn("[PDDEV] NewFocusTextBox callback error: " .. tostring(err))
-						end
+						if not ok then warn("[PDDEV] NewFocusTextBox callback error: " .. tostring(err)) end
 					end)
 				end
-
 				task.delay(0.1, function()
 					if boxAPI and typeof(boxAPI.Clear) == "function" then
 						boxAPI.Clear()
 					end
 				end)
 			end
-
 			boxAPI = tab.AddTextBox("", OnFocusLost)
 			return boxAPI
 		end
@@ -3366,9 +3349,7 @@ function UI.CreateWindow(title, subtitle, version)
 		end
 
 		function tab.NewSection()
-			local section = {
-				_compatPage = tab.Page
-			}
+			local section = { _compatPage = tab.Page }
 
 			function section.NewSearchDropdown(a1, a2, a3, a4, a5, a6)
 				return CompatNewSearchDropdown(section, a1, a2, a3, a4, a5, a6)
@@ -3407,32 +3388,23 @@ function UI.CreateWindow(title, subtitle, version)
 			function section.NewLabel(a1, a2)
 				local labelText = (a1 == section) and a2 or a1
 				local labelInstance = tab.AddTextLabel(labelText or "")
-				local labelAPI = {
-					Instance = labelInstance
-				}
-
+				local labelAPI = { Instance = labelInstance }
 				function labelAPI.UpdateLabel(x, y)
 					local newText = (x == labelAPI) and y or x
 					if labelInstance and labelInstance.Parent then
 						labelInstance.Text = tostring(newText or "")
 					end
 				end
-
 				return labelAPI
 			end
 
 			function section.NewTextBox(a1, a2, a3, a4, a5)
 				local label, placeholder, boxName, callback = UnpackCompatArgs(section, a1, a2, a3, a4, a5)
-
 				if typeof(placeholder) == "function" then
 					callback, placeholder = placeholder, label
 					label = ""
 				end
-
-				if label and tostring(label) ~= "" then
-					tab.AddTextLabel(tostring(label))
-				end
-
+				if label and tostring(label) ~= "" then tab.AddTextLabel(tostring(label)) end
 				local box = tab.AddTextBox("", callback)
 				return box
 			end
@@ -3446,25 +3418,17 @@ function UI.CreateWindow(title, subtitle, version)
 
 			function section.NewDropdown(a1, a2, a3, a4, a5)
 				local label, helpMessage, items, callback = UnpackCompatArgs(section, a1, a2, a3, a4, a5)
-
+				-- Also accept the compact form: NewDropdown(label, items, callback).
 				if typeof(helpMessage) == "table" then
-					if typeof(items) == "function" and callback == nil then
-						callback = items
-					end
+					if typeof(items) == "function" and callback == nil then callback = items end
 					items = helpMessage
 				end
-
-				local dropdown = tab.AddDropdown(
-					label or "Dropdown",
-					typeof(items) == "table" and items or {},
-					callback
-				)
-
+				local dropdown = tab.AddDropdown(label or "Dropdown", typeof(items) == "table" and items or {}, callback)
+				-- UI2 exposed Refresh(); our native component calls this SetOptions().
 				function dropdown.Refresh(x, y)
 					local newItems = (x == dropdown) and y or x
 					return dropdown.SetOptions(newItems or {})
 				end
-
 				return dropdown
 			end
 
@@ -3477,22 +3441,10 @@ function UI.CreateWindow(title, subtitle, version)
 	function WindowAPI.ChangeTheme(a, b)
 		local themeName = (a == WindowAPI) and b or a
 		if typeof(themeName) ~= "string" then return false end
-
-		local aliases = {
-			default = "Default",
-			ocean = "Ocean",
-			purple = "Purple",
-			red = "Red",
-			minimal = "Minimal",
-			halloween = "Purple",
-			christmas = "Ocean"
-		}
-
+		local aliases = { default = "Default", ocean = "Ocean", purple = "Purple", red = "Red", minimal = "Minimal", halloween = "Purple", christmas = "Ocean" }
 		local normalized = aliases[string.lower(themeName)] or themeName
 		local result = SetTheme(normalized)
-		if result then
-			compatThemeName = normalized
-		end
+		if result then compatThemeName = normalized end
 		return result
 	end
 
@@ -3500,24 +3452,20 @@ function UI.CreateWindow(title, subtitle, version)
 		return string.lower(compatThemeName)
 	end
 
+	-- Existing UI2 scripts sometimes ask the returned window to create tabs
+	-- by dot-call and sometimes by colon-call; NewTab above supports both.
 	return WindowAPI
 end
 
 function UI.CreateMain(a, b, c, d)
 	local hubName, subtitle, version
-
 	if a == UI then
 		hubName, subtitle, version = b, c, d
 	else
 		hubName, subtitle, version = a, b, c
 	end
-
-	local window = UI.CreateWindow(
-		hubName or "IceHub",
-		subtitle or "",
-		version or ""
-	)
-
+	local window = UI.CreateWindow(hubName or "IceHub", subtitle or "", version or "")
+	-- Preserve the old property name for scripts that read it directly.
 	window.GameName = subtitle or ""
 	return window
 end
