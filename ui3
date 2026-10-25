@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.7.0          ║
+	║  Version: 4.7.1          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.7.0"
+local CURRENT_VERSION = "4.7.1"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -975,7 +975,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Btn.TextStrokeTransparency = 1
 
 		local Padding = Instance.new("UIPadding")
-		Padding.PaddingLeft = UDim.new(0, 13)
+		Padding.PaddingLeft = UDim.new(0, 20)
 		Padding.PaddingRight = UDim.new(0, 10)
 		Padding.Parent = Btn
 
@@ -996,7 +996,8 @@ function UI.CreateWindow(title, subtitle, version)
 		Accent.BackgroundColor3 = Theme.Accent or Theme.Text
 		Accent.BackgroundTransparency = 1
 		Accent.Size = UDim2.new(0, 3, 1, -12)
-		Accent.Position = UDim2.new(0, 0, 0, 6)
+		Accent.Position = UDim2.new(0, 5, 0, 6)
+		-- Keep the hover marker in its own left gutter, away from the label.
 		Accent.ZIndex = Btn.ZIndex + 1
 		Accent.Parent = Btn
 		local AccentCorner = Instance.new("UICorner")
@@ -1654,7 +1655,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Btn.TextStrokeTransparency = 1
 
 		local Padding = Instance.new("UIPadding")
-		Padding.PaddingLeft = UDim.new(0, 13)
+		Padding.PaddingLeft = UDim.new(0, 20)
 		Padding.PaddingRight = UDim.new(0, 10)
 		Padding.Parent = Btn
 
@@ -1675,7 +1676,8 @@ function UI.CreateWindow(title, subtitle, version)
 		Accent.BackgroundColor3 = Theme.Accent or Theme.Text
 		Accent.BackgroundTransparency = 1
 		Accent.Size = UDim2.new(0, 3, 1, -12)
-		Accent.Position = UDim2.new(0, 0, 0, 6)
+		Accent.Position = UDim2.new(0, 5, 0, 6)
+		-- Keep the hover marker in its own left gutter, away from the label.
 		Accent.ZIndex = Btn.ZIndex + 1
 		Accent.Parent = Btn
 		local AccentCorner = Instance.new("UICorner")
