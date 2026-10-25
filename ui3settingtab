@@ -1,6 +1,6 @@
 --[[
     PDDEV / RCCDEV
-    SettingsTab V4.2.0
+    SettingsTab V4.4.0
     Theme settings compatible with PDDEV UI Library V4 and legacy window APIs.
 ]]
 
@@ -9,11 +9,14 @@ local SettingsTab = {}
 local THEMES = {
     "Graphite",
     "Emerald",
-    "Default",
     "Ocean",
     "Purple",
     "Red",
     "Minimal",
+    "Rose",
+    "Amber",
+    "Crimson",
+    "Monochrome",
 }
 
 function SettingsTab.Create(a, b)
@@ -75,6 +78,36 @@ function SettingsTab.Create(a, b)
         end
     else
         error("[PDDEV SettingsTab] O objeto recebido não possui CreateTab nem NewTab. Passe a janela retornada por UI.CreateMain(...).", 2)
+    end
+
+    -- Acrylic / Acrilic: optional translucent UI surfaces. Off by default.
+    local function SetAcrilic(enabled)
+        local setter = Window.SetAcrilic or Window.SetAcrylic
+        if type(setter) == "function" then
+            local ok, result = pcall(setter, enabled)
+            if not ok then ok, result = pcall(setter, Window, enabled) end
+            if not ok then warn("[PDDEV SettingsTab] Falha ao alternar Acrilic: " .. tostring(result)) end
+            return ok and result ~= false
+        end
+        warn("[PDDEV SettingsTab] Esta versão da biblioteca não oferece SetAcrilic/SetAcrylic.")
+        return false
+    end
+
+    if type(Settings.AddToggle) == "function" then
+        Settings.AddToggle("Acrilic (fundo translúcido)", false, function(enabled)
+            SetAcrilic(enabled)
+        end)
+    elseif type(Settings.NewSection) == "function" then
+        local Section = Settings.NewSection()
+        if Section and type(Section.NewToggle) == "function" then
+            Section.NewToggle("Acrilic", "Ativa fundos translúcidos", false, function(enabled)
+                SetAcrilic(enabled)
+            end)
+        end
+    elseif type(Settings.NewToggle) == "function" then
+        Settings.NewToggle("Acrilic", "Ativa fundos translúcidos", false, function(enabled)
+            SetAcrilic(enabled)
+        end)
     end
 
     return Settings
