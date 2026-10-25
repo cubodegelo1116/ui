@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.7.4          ║
+	║  Version: 4.7.5          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.7.4"
+local CURRENT_VERSION = "4.7.5-NO-HOVER-LINE"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -990,30 +990,14 @@ function UI.CreateWindow(title, subtitle, version)
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
-		local Accent = Instance.new("Frame")
-		Accent.Name = "HoverAccent"
-		Accent.BorderSizePixel = 0
-		Accent.BackgroundColor3 = Theme.Accent or Theme.Text
-		Accent.BackgroundTransparency = 1
-		Accent.Size = UDim2.new(0, 3, 1, -12)
-		Accent.Position = UDim2.new(0, 0, 0, 6)
-		-- Keep the accent behind the button label instead of drawing over its text.
-		Accent.ZIndex = Btn.ZIndex
-		Accent.Parent = Btn
-		local AccentCorner = Instance.new("UICorner")
-		AccentCorner.CornerRadius = UDim.new(1, 0)
-		AccentCorner.Parent = Accent
-
 		Btn.MouseEnter:Connect(function()
 			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
 			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Accent or Theme.Border, Transparency = 0}):Play()
-			TweenService:Create(Accent, TweenInfo.new(0.12), {BackgroundTransparency = 0}):Play()
 		end)
 
 		Btn.MouseLeave:Connect(function()
 			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.Button}):Play()
 			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.12}):Play()
-			TweenService:Create(Accent, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
 		end)
 
 		if callback and typeof(callback) == "function" then
@@ -1671,31 +1655,15 @@ function UI.CreateWindow(title, subtitle, version)
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
-		local Accent = Instance.new("Frame")
-		Accent.Name = "HoverAccent"
-		Accent.BorderSizePixel = 0
-		Accent.BackgroundColor3 = Theme.Accent or Theme.Text
-		Accent.BackgroundTransparency = 1
-		Accent.Size = UDim2.new(0, 3, 1, -12)
-		Accent.Position = UDim2.new(0, 0, 0, 6)
-		-- Keep the accent behind the button label instead of drawing over its text.
-		Accent.ZIndex = Btn.ZIndex
-		Accent.Parent = Btn
-		local AccentCorner = Instance.new("UICorner")
-		AccentCorner.CornerRadius = UDim.new(1, 0)
-		AccentCorner.Parent = Accent
-
 		Btn.MouseEnter:Connect(function()
 			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
 			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Accent or Theme.Border, Transparency = 0}):Play()
-			TweenService:Create(Accent, TweenInfo.new(0.12), {BackgroundTransparency = 0}):Play()
 		end)
 		Btn.MouseLeave:Connect(function()
 			if not onCooldown then
 				TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.Button}):Play()
 			end
 			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.12}):Play()
-			TweenService:Create(Accent, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
 		end)
 
 		local onCooldown = false
