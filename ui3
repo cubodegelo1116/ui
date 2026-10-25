@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.3.0          ║
+	║  Version: 4.4.0          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.3.0-EMERALD"
+local CURRENT_VERSION = "4.4.0-THEMES"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -213,6 +213,8 @@ function UI.CreateWindow(title, subtitle, version)
 
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
+	local AcrylicEnabled = false
+	local AcrylicTransparency = { Background = 0.16, TitleBar = 0.12, TabBackground = 0.10, TabSelected = 0.08, Button = 0.08, ToggleOn = 0.04, ToggleOff = 0.04 }
 
 	-- ════════════════════════════════════════════════════════════
 	-- THEME MANAGEMENT SYSTEM
@@ -281,6 +283,16 @@ function UI.CreateWindow(title, subtitle, version)
 
 		ApplyTheme()
 		return true
+	end
+
+	local function SetAcrilic(enabled)
+		AcrylicEnabled = enabled == true
+		if ApplyTheme then ApplyTheme() end
+		return AcrylicEnabled
+	end
+
+	local function GetAcrilic()
+		return AcrylicEnabled
 	end
 
 	local function GetTheme(themeName)
@@ -2501,6 +2513,7 @@ function UI.CreateWindow(title, subtitle, version)
 		ActiveMarker.Visible = false
 		ActiveMarker.ZIndex = 3
 		ActiveMarker.Parent = TabBtn
+		ActiveMarker:SetAttribute("ThemeRole", "Accent")
 		local ActiveMarkerCorner = Instance.new("UICorner")
 		ActiveMarkerCorner.CornerRadius = UDim.new(1, 0)
 		ActiveMarkerCorner.Parent = ActiveMarker
@@ -2715,6 +2728,7 @@ function UI.CreateWindow(title, subtitle, version)
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
 			ActiveMarker.Visible = true
+			ActiveMarker.BackgroundColor3 = Theme.Accent
 			TabStroke.Transparency = 0.08
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
@@ -2735,6 +2749,7 @@ function UI.CreateWindow(title, subtitle, version)
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
 			ActiveMarker.Visible = true
+			ActiveMarker.BackgroundColor3 = Theme.Accent
 			TabStroke.Transparency = 0.08
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
@@ -2883,6 +2898,19 @@ function UI.CreateWindow(title, subtitle, version)
 				object.Transparency = math.max(object.Transparency, 0.12)
 			end
 			local role = object:GetAttribute("ThemeRole")
+
+			if object:IsA("GuiObject") and AcrylicTransparency[role] ~= nil and not (role == "Background" and object:IsA("ScrollingFrame")) then
+				if object:GetAttribute("PDDEV_AcrylicManaged") ~= true then
+					object:SetAttribute("PDDEV_PreAcrylicTransparency", object.BackgroundTransparency)
+					object:SetAttribute("PDDEV_AcrylicManaged", true)
+				end
+				if AcrylicEnabled then
+					object.BackgroundTransparency = AcrylicTransparency[role]
+				else
+					local originalTransparency = object:GetAttribute("PDDEV_PreAcrylicTransparency")
+					if typeof(originalTransparency) == "number" then object.BackgroundTransparency = originalTransparency end
+				end
+			end
 
 			if role then
 				if role == "Background" then
@@ -3103,6 +3131,48 @@ function UI.CreateWindow(title, subtitle, version)
 		DropdownHover = Color3.fromRGB(36, 49, 41),
 	})
 
+	RegisterTheme("Green", Themes.Emerald)
+
+	RegisterTheme("Rose", {
+		Background = Color3.fromRGB(25, 18, 22), TitleBar = Color3.fromRGB(35, 23, 29),
+		TabBackground = Color3.fromRGB(20, 14, 18), TabSelected = Color3.fromRGB(69, 35, 51),
+		Button = Color3.fromRGB(43, 27, 36), ButtonHover = Color3.fromRGB(59, 35, 48),
+		Text = Color3.fromRGB(255, 239, 246), TextDark = Color3.fromRGB(184, 151, 166),
+		Accent = Color3.fromRGB(255, 92, 160), ToggleOn = Color3.fromRGB(255, 92, 160),
+		ToggleOff = Color3.fromRGB(75, 48, 61), Border = Color3.fromRGB(91, 52, 71),
+		TabBorder = Color3.fromRGB(91, 52, 71), DropdownHover = Color3.fromRGB(59, 35, 48),
+	})
+
+	RegisterTheme("Amber", {
+		Background = Color3.fromRGB(24, 21, 16), TitleBar = Color3.fromRGB(34, 29, 20),
+		TabBackground = Color3.fromRGB(18, 16, 12), TabSelected = Color3.fromRGB(67, 52, 27),
+		Button = Color3.fromRGB(40, 33, 22), ButtonHover = Color3.fromRGB(57, 45, 27),
+		Text = Color3.fromRGB(250, 245, 232), TextDark = Color3.fromRGB(177, 164, 137),
+		Accent = Color3.fromRGB(255, 190, 65), ToggleOn = Color3.fromRGB(255, 190, 65),
+		ToggleOff = Color3.fromRGB(71, 61, 43), Border = Color3.fromRGB(83, 68, 39),
+		TabBorder = Color3.fromRGB(83, 68, 39), DropdownHover = Color3.fromRGB(57, 45, 27),
+	})
+
+	RegisterTheme("Crimson", {
+		Background = Color3.fromRGB(23, 17, 18), TitleBar = Color3.fromRGB(34, 22, 24),
+		TabBackground = Color3.fromRGB(17, 13, 14), TabSelected = Color3.fromRGB(67, 30, 35),
+		Button = Color3.fromRGB(41, 25, 28), ButtonHover = Color3.fromRGB(58, 31, 36),
+		Text = Color3.fromRGB(250, 239, 240), TextDark = Color3.fromRGB(177, 145, 149),
+		Accent = Color3.fromRGB(255, 75, 90), ToggleOn = Color3.fromRGB(255, 75, 90),
+		ToggleOff = Color3.fromRGB(72, 48, 51), Border = Color3.fromRGB(89, 48, 54),
+		TabBorder = Color3.fromRGB(89, 48, 54), DropdownHover = Color3.fromRGB(58, 31, 36),
+	})
+
+	RegisterTheme("Monochrome", {
+		Background = Color3.fromRGB(18, 18, 20), TitleBar = Color3.fromRGB(27, 27, 30),
+		TabBackground = Color3.fromRGB(14, 14, 16), TabSelected = Color3.fromRGB(43, 43, 48),
+		Button = Color3.fromRGB(31, 31, 35), ButtonHover = Color3.fromRGB(45, 45, 51),
+		Text = Color3.fromRGB(245, 245, 247), TextDark = Color3.fromRGB(157, 157, 166),
+		Accent = Color3.fromRGB(225, 230, 238), ToggleOn = Color3.fromRGB(225, 230, 238),
+		ToggleOff = Color3.fromRGB(65, 65, 71), Border = Color3.fromRGB(53, 53, 60),
+		TabBorder = Color3.fromRGB(53, 53, 60), DropdownHover = Color3.fromRGB(45, 45, 51),
+	})
+
 	-- Apply the default palette before returning the window. This prevents
 	-- bright default strokes/text styles from remaining until the first theme change.
 	ApplyTheme()
@@ -3145,6 +3215,10 @@ function UI.CreateWindow(title, subtitle, version)
 		GetTheme = GetTheme,
 		GetAllThemes = GetAllThemes,
 		ApplyTheme = ApplyTheme,
+		SetAcrilic = SetAcrilic,
+		GetAcrilic = GetAcrilic,
+		SetAcrylic = SetAcrilic,
+		GetAcrylic = GetAcrilic,
 
 		-- Direct access
 		Theme = Theme,
@@ -3184,6 +3258,13 @@ function UI.CreateWindow(title, subtitle, version)
 	WindowAPI.GetAllThemes = function()
 		return GetAllThemes()
 	end
+	WindowAPI.SetAcrilic = function(a, b)
+		local enabled = (a == WindowAPI) and b or a
+		return SetAcrilic(enabled)
+	end
+	WindowAPI.GetAcrilic = function() return GetAcrilic() end
+	WindowAPI.SetAcrylic = WindowAPI.SetAcrilic
+	WindowAPI.GetAcrylic = WindowAPI.GetAcrilic
 	WindowAPI.ApplyTheme = function()
 		return ApplyTheme()
 	end
