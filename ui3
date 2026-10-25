@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 2.11           ║
+	║  Version: 2.14           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "2.11-UI2-COMPAT-UTF8"
+local CURRENT_VERSION = "2.14-SIMPLIFIED-UTF8-INLINE-DROPDOWN"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -68,6 +68,55 @@ end
 local function FixMojibake(value)
     if typeof(value) ~= "string" then return value end
     local repaired = value
+
+    -- Some editors turn UTF-8 bytes such as C3 B3 into half-width Hangul
+    -- codepoints (for example "ￃﾳ" instead of "ó"). Decode those byte pairs
+    -- programmatically so this works for every common Portuguese accent, not
+    -- only the one exact example that was reported.
+    local ok, codepoints = pcall(function()
+        local result = {}
+        for _, codepoint in utf8.codes(repaired) do
+            table.insert(result, codepoint)
+        end
+        return result
+    end)
+    if ok and codepoints then
+        local decoded = {}
+        local index = 1
+        while index <= #codepoints do
+            local current = codepoints[index]
+            local nextCodepoint = codepoints[index + 1]
+            local leadByte
+            if current == 0xFFC3 then
+                leadByte = 0xC3
+            elseif current == 0xFFC2 then
+                leadByte = 0xC2
+            end
+
+            if leadByte and nextCodepoint and nextCodepoint >= 0xFF80 and nextCodepoint <= 0xFFBF then
+                local secondByte = nextCodepoint - 0xFF00
+                local decodedCodepoint
+                if leadByte == 0xC3 then
+                    decodedCodepoint = 0xC0 + (secondByte - 0x80)
+                else
+                    decodedCodepoint = secondByte
+                end
+                if decodedCodepoint >= 0x80 and decodedCodepoint <= 0xFF then
+                    table.insert(decoded, utf8.char(decodedCodepoint))
+                    index += 2
+                else
+                    table.insert(decoded, utf8.char(current))
+                    index += 1
+                end
+            else
+                table.insert(decoded, utf8.char(current))
+                index += 1
+            end
+        end
+        repaired = table.concat(decoded)
+    end
+
+    -- Also repair common Latin-1 mojibake forms ("Ã¡", "aÃ§Ã£o", etc.).
     for _, pair in ipairs(TEXT_ENCODING_FIXES) do
         repaired = ReplacePlain(repaired, pair[1], pair[2])
     end
@@ -107,10 +156,11 @@ end
 -- MAIN WINDOW CREATION
 -- ════════════════════════════════════════════════════════════
 
-function UI.CreateWindow(title, subtitle)
+function UI.CreateWindow(title, subtitle, version)
 	-- Validate inputs
 	title = ValidateString(title, true) or ""
-	subtitle = ValidateString(subtitle, true)
+	subtitle = ValidateString(subtitle, true) or ""
+	version = ValidateString(version, true) or ""
 
 	local UIS = game:GetService("UserInputService")
 	local TweenService = game:GetService("TweenService")
@@ -292,7 +342,10 @@ function UI.CreateWindow(title, subtitle)
 				task.defer(function()
 					if child.Parent == object then
 						local role = child:GetAttribute("ThemeRole")
-						if role ~= "Border" and role ~= "TabBorder" and child:GetAttribute("PDDEV_KeepTextControlStroke") ~= true then
+						if role == "Border" or role == "TabBorder" or child:GetAttribute("PDDEV_KeepTextControlStroke") == true then
+							-- Keep the component border but never let the UIStroke contour glyphs.
+							pcall(function() child.ApplyStrokeMode = Enum.ApplyStrokeMode.Border end)
+						else
 							child:Destroy()
 						end
 					end
@@ -504,7 +557,7 @@ function UI.CreateWindow(title, subtitle)
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
-	MainCorner.CornerRadius = UDim.new(0, 4)
+	MainCorner.CornerRadius = UDim.new(0, 2)
 	MainCorner.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
@@ -526,7 +579,7 @@ function UI.CreateWindow(title, subtitle)
 	TitleBar:SetAttribute("ThemeRole", "TitleBar")
 
 	local TitleCorner = Instance.new("UICorner")
-	TitleCorner.CornerRadius = UDim.new(0, 4)
+	TitleCorner.CornerRadius = UDim.new(0, 2)
 	TitleCorner.Parent = TitleBar
 
 	local TitleBottom = Instance.new("Frame")
@@ -538,37 +591,70 @@ function UI.CreateWindow(title, subtitle)
 	TitleBottom.Parent = TitleBar
 	TitleBottom:SetAttribute("ThemeRole", "TitleBar")
 
-	-- Title text
-	local TitleLabel = Instance.new("TextLabel")
-	TitleLabel.Name = "Title"
-	TitleLabel.Size = UDim2.new(0, 200, 1, 0)
-	TitleLabel.Position = UDim2.new(0, 14, 0, 0)
-	TitleLabel.BackgroundTransparency = 1
-	TitleLabel.Text = title
-	TitleLabel.TextColor3 = Theme.Text
-	TitleLabel.TextSize = 15
-	TitleLabel.Font = Enum.Font.GothamMedium
-	TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-	TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
-	TitleLabel.Parent = TitleBar
-	TitleLabel:SetAttribute("ThemeRole", "Text")
-	TitleLabel.TextStrokeTransparency = 1
+	-- Title, subtitle and version share a single horizontal row.
+	local function CreateHeaderLabel(name, text, color, textSize, font)
+		local label = Instance.new("TextLabel")
+		label.Name = name
+		label.Size = UDim2.new(0, 0, 1, 0)
+		label.Position = UDim2.new(0, 0, 0, 0)
+		label.BackgroundTransparency = 1
+		label.Text = FixMojibake(text or "")
+		label.TextColor3 = color
+		label.TextSize = textSize
+		label.Font = font
+		label.TextXAlignment = Enum.TextXAlignment.Left
+		label.TextYAlignment = Enum.TextYAlignment.Center
+		label.TextTruncate = Enum.TextTruncate.AtEnd
+		label.TextWrapped = false
+		label.Parent = TitleBar
+		label:SetAttribute("ThemeRole", color == Theme.Text and "Text" or "TextDark")
+		label.TextStrokeTransparency = 1
+		RemoveTextHighlight(label)
+		return label
+	end
 
-	-- Subtitle text
-	local SubtitleLabel = Instance.new("TextLabel")
-	SubtitleLabel.Name = "Subtitle"
-	SubtitleLabel.Size = UDim2.new(0, 200, 1, 0)
-	SubtitleLabel.Position = UDim2.new(0, 220, 0, 0)
-	SubtitleLabel.BackgroundTransparency = 1
-	SubtitleLabel.Text = subtitle and (subtitle) or ""
-	SubtitleLabel.TextColor3 = Theme.TextDark
-	SubtitleLabel.TextSize = 12
-	SubtitleLabel.Font = Enum.Font.Gotham
-	SubtitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-	SubtitleLabel.TextYAlignment = Enum.TextYAlignment.Center
-	SubtitleLabel.Parent = TitleBar
-	SubtitleLabel:SetAttribute("ThemeRole", "TextDark")
-	SubtitleLabel.TextStrokeTransparency = 1
+	local TitleLabel = CreateHeaderLabel("Title", title, Theme.Text, 15, Enum.Font.GothamMedium)
+	local SubtitleLabel = CreateHeaderLabel("Subtitle", subtitle, Theme.TextDark, 12, Enum.Font.Gotham)
+	local VersionLabel = CreateHeaderLabel("Version", version, Theme.TextDark, 11, Enum.Font.Gotham)
+
+	local function LayoutHeaderText()
+		if not TitleBar.Parent then return end
+		local rightReserve = 76 -- leave room for minimize and close controls
+		local available = math.max(0, TitleBar.AbsoluteSize.X - 14 - rightReserve)
+		local gap = 8
+		local function Measure(text, size, font)
+			if not text or text == "" then return 0 end
+			return math.ceil(TextService:GetTextSize(text, size, font, Vector2.new(2000, 40)).X) + 2
+		end
+		local titleWanted = Measure(title, 15, Enum.Font.GothamMedium)
+		local subtitleWanted = Measure(subtitle, 12, Enum.Font.Gotham)
+		local versionWanted = Measure(version, 11, Enum.Font.Gotham)
+		local titleWidth = math.min(titleWanted, available * 0.42)
+		local subtitleWidth = math.min(subtitleWanted, available * 0.30)
+		local nonEmpty = (title ~= "" and 1 or 0) + (subtitle ~= "" and 1 or 0) + (version ~= "" and 1 or 0)
+		local gaps = math.max(0, nonEmpty - 1) * gap
+		local versionWidth = math.min(versionWanted, math.max(0, available - titleWidth - subtitleWidth - gaps))
+		-- If the title/subtitle are empty, give the remaining room to the next visible label.
+		if title == "" then titleWidth = 0 end
+		if subtitle == "" then subtitleWidth = 0 end
+		if version == "" then versionWidth = 0 end
+		local x = 14
+		TitleLabel.Visible = title ~= ""
+		TitleLabel.Position = UDim2.new(0, x, 0, 0)
+		TitleLabel.Size = UDim2.new(0, titleWidth, 1, 0)
+		if title ~= "" then x += titleWidth + ((subtitle ~= "" or version ~= "") and gap or 0) end
+		SubtitleLabel.Visible = subtitle ~= ""
+		SubtitleLabel.Position = UDim2.new(0, x, 0, 0)
+		SubtitleLabel.Size = UDim2.new(0, subtitleWidth, 1, 0)
+		if subtitle ~= "" then x += subtitleWidth + (version ~= "" and gap or 0) end
+		VersionLabel.Visible = version ~= ""
+		VersionLabel.Position = UDim2.new(0, x, 0, 0)
+		VersionLabel.Size = UDim2.new(0, versionWidth, 1, 0)
+	end
+	LayoutHeaderText()
+	TitleBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		task.defer(LayoutHeaderText)
+	end)
 
 	-- ════════════════════════════════════════════════════════════
 	-- WINDOW CONTROLS (Minimize & Close)
@@ -645,7 +731,7 @@ function UI.CreateWindow(title, subtitle)
 	Resize.Size = UDim2.new(0, 12, 0, 12)
 	Resize.Position = UDim2.new(1, -12, 1, -12)
 	Resize.BackgroundColor3 = Theme.Border
-	Resize.BackgroundTransparency = 0.6
+	Resize.BackgroundTransparency = 0
 	Resize.BorderSizePixel = 0
 	Resize.Text = ""
 	Resize.AutoButtonColor = false
@@ -653,7 +739,7 @@ function UI.CreateWindow(title, subtitle)
 	Resize:SetAttribute("ThemeRole", "Border")
 
 	local ResizeCorner = Instance.new("UICorner")
-	ResizeCorner.CornerRadius = UDim.new(0, 3)
+	ResizeCorner.CornerRadius = UDim.new(0, 2)
 	ResizeCorner.Parent = Resize
 
 	local resizing = false
@@ -715,7 +801,7 @@ function UI.CreateWindow(title, subtitle)
 	TabFrame:SetAttribute("ThemeRole", "TabBackground")
 
 	local TabCorner = Instance.new("UICorner")
-	TabCorner.CornerRadius = UDim.new(0, 4)
+	TabCorner.CornerRadius = UDim.new(0, 2)
 	TabCorner.Parent = TabFrame
 
 	local Content = Instance.new("Frame")
@@ -728,7 +814,7 @@ function UI.CreateWindow(title, subtitle)
 	Content:SetAttribute("ThemeRole", "Background")
 
 	local ContentCorner = Instance.new("UICorner")
-	ContentCorner.CornerRadius = UDim.new(0, 4)
+	ContentCorner.CornerRadius = UDim.new(0, 2)
 	ContentCorner.Parent = Content
 
 	-- ════════════════════════════════════════════════════════════
@@ -801,7 +887,7 @@ function UI.CreateWindow(title, subtitle)
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 3)
+		Corner.CornerRadius = UDim.new(0, 2)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
@@ -988,7 +1074,7 @@ function UI.CreateWindow(title, subtitle)
 		Handle.Parent = Bar
 
 		local HandleCorner = Instance.new("UICorner")
-		HandleCorner.CornerRadius = UDim.new(0, 4)
+		HandleCorner.CornerRadius = UDim.new(0, 2)
 		HandleCorner.Parent = Handle
 
 		local draggingSlider = false
@@ -1116,7 +1202,7 @@ function UI.CreateWindow(title, subtitle)
 		Box:SetAttribute("ThemeRole", "Button")
 
 		local BoxCorner = Instance.new("UICorner")
-		BoxCorner.CornerRadius = UDim.new(0, 3)
+		BoxCorner.CornerRadius = UDim.new(0, 2)
 		BoxCorner.Parent = Box
 
 		local BoxStroke = Instance.new("UIStroke")
@@ -1133,7 +1219,7 @@ function UI.CreateWindow(title, subtitle)
 		Padding.Parent = Box
 
 		local Layout = Instance.new("UIListLayout")
-		Layout.Padding = UDim.new(0, 4)
+		Layout.Padding = UDim.new(0, 2)
 		Layout.SortOrder = Enum.SortOrder.LayoutOrder
 		Layout.Parent = Box
 
@@ -1190,7 +1276,7 @@ function UI.CreateWindow(title, subtitle)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = "DropdownButton"
-		Btn.Size = UDim2.new(1, 0, 1, 0)
+		Btn.Size = UDim2.new(1, 0, 0, 32)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.TextColor3 = Theme.Text
@@ -1203,7 +1289,7 @@ function UI.CreateWindow(title, subtitle)
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 3)
+		Corner.CornerRadius = UDim.new(0, 2)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
@@ -1216,7 +1302,7 @@ function UI.CreateWindow(title, subtitle)
 		local currentOptions = {}
 		for _, opt in ipairs(options) do
 			if typeof(opt) == "string" then
-				table.insert(currentOptions, opt)
+				table.insert(currentOptions, FixMojibake(opt))
 			end
 		end
 
@@ -1230,7 +1316,8 @@ function UI.CreateWindow(title, subtitle)
 		List.BorderSizePixel = 0
 		List.Visible = false
 		List.ZIndex = 50
-		List.Parent = ScreenGui
+		List.Position = UDim2.new(0, 0, 0, 36)
+		List.Parent = Frame
 
 		List.ScrollBarThickness = 4
 		List.ScrollBarImageColor3 = Theme.Border
@@ -1242,7 +1329,7 @@ function UI.CreateWindow(title, subtitle)
 		List:SetAttribute("ThemeRole", "TitleBar")
 
 		local ListCorner = Instance.new("UICorner")
-		ListCorner.CornerRadius = UDim.new(0, 3)
+		ListCorner.CornerRadius = UDim.new(0, 2)
 		ListCorner.Parent = List
 
 		local ListStroke = Instance.new("UIStroke")
@@ -1271,6 +1358,10 @@ function UI.CreateWindow(title, subtitle)
 		end
 
 		-- Rebuild options list
+		local function GetDropdownListHeight()
+			return math.min(#currentOptions * DROPDOWN_ITEM_HEIGHT + 4, DROPDOWN_MAX_HEIGHT)
+		end
+
 		local function RebuildOptions()
 			for _, child in ipairs(List:GetChildren()) do
 				if child:IsA("TextButton") then
@@ -1309,6 +1400,7 @@ function UI.CreateWindow(title, subtitle)
 					UpdateButtonText()
 					open = false
 					List.Visible = false
+					Frame.Size = UDim2.new(1, -24, 0, 32)
 
 					if callback and typeof(callback) == "function" then
 						callback(opt)
@@ -1316,23 +1408,21 @@ function UI.CreateWindow(title, subtitle)
 				end)
 			end
 
-			local listHeight = math.min(
-				#currentOptions * DROPDOWN_ITEM_HEIGHT + 4,
-				DROPDOWN_MAX_HEIGHT
-			)
-			List.Size = UDim2.new(0, Btn.AbsoluteSize.X, 0, listHeight)
+			List.Size = UDim2.new(1, 0, 0, GetDropdownListHeight())
+			if open then
+				Frame.Size = UDim2.new(1, -24, 0, 36 + GetDropdownListHeight())
+			end
 		end
 
 		local function UpdateListPosition()
-			if not open then return end
-			local absPos = Btn.AbsolutePosition
-			local absSize = Btn.AbsoluteSize
-			List.Position = UDim2.fromOffset(absPos.X, absPos.Y + absSize.Y + 4)
-			List.Size = UDim2.new(0, absSize.X, 0, math.min(#currentOptions * DROPDOWN_ITEM_HEIGHT + 4, DROPDOWN_MAX_HEIGHT))
+			List.Position = UDim2.new(0, 0, 0, 36)
+			List.Size = UDim2.new(1, 0, 0, GetDropdownListHeight())
+			if open then
+				Frame.Size = UDim2.new(1, -24, 0, 36 + GetDropdownListHeight())
+			else
+				Frame.Size = UDim2.new(1, -24, 0, 32)
+			end
 		end
-
-		Main:GetPropertyChangedSignal("Position"):Connect(UpdateListPosition)
-		Main:GetPropertyChangedSignal("Size"):Connect(UpdateListPosition)
 
 		-- Initialize
 		UpdateButtonText()
@@ -1347,6 +1437,7 @@ function UI.CreateWindow(title, subtitle)
 				List.Visible = #currentOptions > 0
 			else
 				List.Visible = false
+				Frame.Size = UDim2.new(1, -24, 0, 32)
 			end
 		end)
 
@@ -1370,6 +1461,7 @@ function UI.CreateWindow(title, subtitle)
 			if not insideButton and not insideList then
 				open = false
 				List.Visible = false
+				Frame.Size = UDim2.new(1, -24, 0, 32)
 			end
 		end)
 
@@ -1385,7 +1477,7 @@ function UI.CreateWindow(title, subtitle)
 			currentOptions = {}
 			for _, opt in ipairs(newOptions) do
 				if typeof(opt) == "string" then
-					table.insert(currentOptions, opt)
+					table.insert(currentOptions, FixMojibake(opt))
 				end
 			end
 
@@ -1395,6 +1487,7 @@ function UI.CreateWindow(title, subtitle)
 
 			UpdateButtonText()
 			RebuildOptions()
+			UpdateListPosition()
 			return true
 		end
 
@@ -1447,7 +1540,7 @@ function UI.CreateWindow(title, subtitle)
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 3)
+		Corner.CornerRadius = UDim.new(0, 2)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
@@ -1530,7 +1623,7 @@ function UI.CreateWindow(title, subtitle)
 		TextBox.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 3)
+		Corner.CornerRadius = UDim.new(0, 2)
 		Corner.Parent = TextBox
 
 		local Stroke = Instance.new("UIStroke")
@@ -1614,7 +1707,7 @@ function UI.CreateWindow(title, subtitle)
         PickerButton:SetAttribute("ThemeRole", "Button")
 
         local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 3)
+        ButtonCorner.CornerRadius = UDim.new(0, 2)
         ButtonCorner.Parent = PickerButton
 
         local ButtonStroke = Instance.new("UIStroke")
@@ -1679,7 +1772,7 @@ function UI.CreateWindow(title, subtitle)
         Popup:SetAttribute("ThemeRole", "TitleBar")
 
         local PopupCorner = Instance.new("UICorner")
-        PopupCorner.CornerRadius = UDim.new(0, 3)
+        PopupCorner.CornerRadius = UDim.new(0, 2)
         PopupCorner.Parent = Popup
 
         local PopupStroke = Instance.new("UIStroke")
@@ -2079,7 +2172,7 @@ function UI.CreateWindow(title, subtitle)
 		Toast.Parent = notificationContainer
 
 		local ToastCorner = Instance.new("UICorner")
-		ToastCorner.CornerRadius = UDim.new(0, 3)
+		ToastCorner.CornerRadius = UDim.new(0, 2)
 		ToastCorner.Parent = Toast
 
 		local ToastStroke = Instance.new("UIStroke")
@@ -2315,7 +2408,7 @@ function UI.CreateWindow(title, subtitle)
 		RemoveTextHighlight(TabBtn)
 
 		local TabBtnCorner = Instance.new("UICorner")
-		TabBtnCorner.CornerRadius = UDim.new(0, 3)
+		TabBtnCorner.CornerRadius = UDim.new(0, 2)
 		TabBtnCorner.Parent = TabBtn
 
 		local TabStroke = Instance.new("UIStroke")
@@ -2510,15 +2603,33 @@ function UI.CreateWindow(title, subtitle)
 	-- MINIMIZE BUTTON (FLOATING)
 	-- ════════════════════════════════════════════════════════════
 
-	local function AddMinimizeButton(config)
-		config = config or {}
+	local function AddMinimizeButton(config, colonConfig)
+		-- Accept both dot syntax: Window.AddMinimizeButton({...})
+		-- and colon syntax: Window:AddMinimizeButton({...}).
+		-- With colon syntax, Lua passes the WindowAPI table as the first argument.
+		if colonConfig ~= nil then
+			config = colonConfig
+		elseif type(config) == "table" and config.AddMinimizeButton ~= nil and config.CreateTab ~= nil then
+			-- If called with a colon but no options, use defaults.
+			config = {}
+		end
+		config = type(config) == "table" and config or {}
 
-		local imageId = config.Image or "rbxassetid://7733960981"
 		local size = config.Size or 50
 		local imageSize = config.ImageSize or size * 0.55
 		local corner = config.Corner or 1
 		local transparency = config.Transparency or 0.25
 		local position = config.Position or UDim2.new(0, 20, 0.5, -size / 2)
+		local text = config.Text
+		local hasText = text ~= nil and tostring(text) ~= ""
+		local imageId = config.Image
+		-- Text has precedence over Image: explicitly selecting text must never
+		-- leave the default icon visible, even when Image is also supplied.
+		if hasText then
+			imageId = nil
+		else
+			imageId = imageId or "rbxassetid://7733960981"
+		end
 
 		local Ball = Instance.new("ImageButton")
 		Ball.Name = "MinimizeButton"
@@ -2528,6 +2639,7 @@ function UI.CreateWindow(title, subtitle)
 		Ball.BackgroundTransparency = transparency
 		Ball.Image = ""
 		Ball.BorderSizePixel = 0
+		Ball.AutoButtonColor = config.AutoButtonColor ~= false
 		Ball.Parent = ScreenGui
 		Ball:SetAttribute("ThemeRole", "TitleBar")
 
@@ -2541,14 +2653,34 @@ function UI.CreateWindow(title, subtitle)
 		BallStroke.Parent = Ball
 		BallStroke:SetAttribute("ThemeRole", "Border")
 
-		local Icon = Instance.new("ImageLabel")
-		Icon.Size = UDim2.new(0, imageSize, 0, imageSize)
-		Icon.Position = UDim2.new(0.5, -imageSize / 2, 0.5, -imageSize / 2)
-		Icon.BackgroundTransparency = 1
-		Icon.Image = imageId
-		Icon.ImageColor3 = Theme.Text
-		Icon.Parent = Ball
-		Icon:SetAttribute("ThemeRole", "Text")
+		if hasText then
+			local TextIcon = Instance.new("TextLabel")
+			TextIcon.Name = "MinimizeText"
+			TextIcon.Size = UDim2.fromScale(1, 1)
+			TextIcon.Position = UDim2.fromScale(0, 0)
+			TextIcon.BackgroundTransparency = 1
+			TextIcon.Text = tostring(text)
+			TextIcon.TextColor3 = config.TextColor or Theme.Text
+			TextIcon.TextSize = config.TextSize or 22
+			TextIcon.Font = config.Font or Enum.Font.GothamBold
+			TextIcon.TextScaled = config.TextScaled == true
+			TextIcon.TextWrapped = false
+			TextIcon.TextXAlignment = Enum.TextXAlignment.Center
+			TextIcon.TextYAlignment = Enum.TextYAlignment.Center
+			TextIcon.AutoLocalize = false
+			TextIcon.Parent = Ball
+			TextIcon:SetAttribute("ThemeRole", "Text")
+		else
+			local Icon = Instance.new("ImageLabel")
+			Icon.Name = "MinimizeIcon"
+			Icon.Size = UDim2.new(0, imageSize, 0, imageSize)
+			Icon.Position = UDim2.new(0.5, -imageSize / 2, 0.5, -imageSize / 2)
+			Icon.BackgroundTransparency = 1
+			Icon.Image = imageId
+			Icon.ImageColor3 = Theme.Text
+			Icon.Parent = Ball
+			Icon:SetAttribute("ThemeRole", "Text")
+		end
 
 		local ballDragging = false
 		local ballStart
@@ -2597,6 +2729,7 @@ function UI.CreateWindow(title, subtitle)
 	ApplyTheme = function()
 		for _, object in ipairs(ScreenGui:GetDescendants()) do
 			if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+				object.TextStrokeTransparency = 1
 				RemoveTextHighlight(object)
 			elseif object:IsA("UIStroke") then
 				-- Keep borders crisp and subtle; never use thick/glowing-looking strokes.
@@ -2870,7 +3003,7 @@ function UI.CreateWindow(title, subtitle)
 			local normalized = {}
 			if typeof(values) == "table" then
 				for _, value in ipairs(values) do
-					if value ~= nil then table.insert(normalized, tostring(value)) end
+					if value ~= nil then table.insert(normalized, FixMojibake(tostring(value))) end
 				end
 			end
 			return normalized
@@ -2882,11 +3015,12 @@ function UI.CreateWindow(title, subtitle)
 		Row.Name = title .. "SearchDropdown"
 		Row.Size = UDim2.new(1, -24, 0, 32)
 		Row.BackgroundTransparency = 1
+		Row.ClipsDescendants = false
 		Row.Parent = page
 
 		local Button = Instance.new("TextButton")
 		Button.Name = "SearchDropdownButton"
-		Button.Size = UDim2.new(1, 0, 1, 0)
+		Button.Size = UDim2.new(1, 0, 0, 32)
 		Button.BackgroundColor3 = Theme.Button
 		Button.BorderSizePixel = 0
 		Button.TextColor3 = Theme.Text
@@ -2898,7 +3032,7 @@ function UI.CreateWindow(title, subtitle)
 		Button.Parent = Row
 		Button:SetAttribute("ThemeRole", "Button")
 		local ButtonCorner = Instance.new("UICorner")
-		ButtonCorner.CornerRadius = UDim.new(0, 3)
+		ButtonCorner.CornerRadius = UDim.new(0, 2)
 		ButtonCorner.Parent = Button
 		local ButtonStroke = Instance.new("UIStroke")
 		ButtonStroke.Color = Theme.Border
@@ -2913,10 +3047,12 @@ function UI.CreateWindow(title, subtitle)
 		Panel.BorderSizePixel = 0
 		Panel.ClipsDescendants = true
 		Panel.ZIndex = 80
-		Panel.Parent = ScreenGui
+		Panel.Position = UDim2.new(0, 0, 0, 35)
+		Panel.Size = UDim2.new(1, 0, 0, 184)
+		Panel.Parent = Row
 		Panel:SetAttribute("ThemeRole", "TitleBar")
 		local PanelCorner = Instance.new("UICorner")
-		PanelCorner.CornerRadius = UDim.new(0, 4)
+		PanelCorner.CornerRadius = UDim.new(0, 2)
 		PanelCorner.Parent = Panel
 		local PanelStroke = Instance.new("UIStroke")
 		PanelStroke.Color = Theme.Border
@@ -2946,7 +3082,7 @@ function UI.CreateWindow(title, subtitle)
 		SearchPadding.PaddingLeft = UDim.new(0, 8)
 		SearchPadding.Parent = SearchBox
 		local SearchCorner = Instance.new("UICorner")
-		SearchCorner.CornerRadius = UDim.new(0, 3)
+		SearchCorner.CornerRadius = UDim.new(0, 2)
 		SearchCorner.Parent = SearchBox
 		local SearchStroke = Instance.new("UIStroke")
 		SearchStroke.Color = Theme.Border
@@ -2969,7 +3105,7 @@ function UI.CreateWindow(title, subtitle)
 		List.Parent = Panel
 		local ListLayout = Instance.new("UIListLayout")
 		ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		ListLayout.Padding = UDim.new(0, 3)
+		ListLayout.Padding = UDim.new(0, 2)
 		ListLayout.Parent = List
 		local ListPadding = Instance.new("UIPadding")
 		ListPadding.PaddingTop = UDim.new(0, 2)
@@ -2981,7 +3117,7 @@ function UI.CreateWindow(title, subtitle)
 		end
 
 		local function UpdateFilter()
-			local query = string.lower(SearchBox.Text or "")
+			local query = string.lower(FixMojibake(SearchBox.Text or ""))
 			for value, optionButton in pairs(optionButtons) do
 				optionButton.Visible = query == "" or string.find(string.lower(value), query, 1, true) ~= nil
 			end
@@ -3016,7 +3152,7 @@ function UI.CreateWindow(title, subtitle)
 				Option.Parent = List
 				Option:SetAttribute("ThemeRole", "Button")
 				local OptionCorner = Instance.new("UICorner")
-				OptionCorner.CornerRadius = UDim.new(0, 3)
+				OptionCorner.CornerRadius = UDim.new(0, 2)
 				OptionCorner.Parent = Option
 				optionButtons[value] = Option
 				Option.MouseButton1Click:Connect(function()
@@ -3024,6 +3160,7 @@ function UI.CreateWindow(title, subtitle)
 					UpdateButtonText()
 					Panel.Visible = false
 					isOpen = false
+					Row.Size = UDim2.new(1, -24, 0, 32)
 					if callback then
 						local ok, err = pcall(callback, value)
 						if not ok then warn("[PDDEV] NewSearchDropdown callback error: " .. tostring(err)) end
@@ -3035,17 +3172,15 @@ function UI.CreateWindow(title, subtitle)
 
 		local function UpdatePanelPosition()
 			if not (Button and Button.Parent and Panel and Panel.Parent) then return end
-			local pos = Button.AbsolutePosition
-			local size = Button.AbsoluteSize
-			local width = math.max(size.X, 220)
-			Panel.Position = UDim2.fromOffset(pos.X, pos.Y + size.Y + 3)
-			Panel.Size = UDim2.fromOffset(width, 184)
+			Panel.Position = UDim2.new(0, 0, 0, 35)
+			Panel.Size = UDim2.new(1, 0, 0, 184)
+			Row.Size = UDim2.new(1, -24, 0, isOpen and (32 + 3 + 184) or 32)
 		end
 
 		Button.MouseButton1Click:Connect(function()
 			isOpen = not isOpen
+			UpdatePanelPosition()
 			if isOpen then
-				UpdatePanelPosition()
 				Panel.Visible = true
 				UpdateFilter()
 			else
@@ -3063,10 +3198,9 @@ function UI.CreateWindow(title, subtitle)
 			if not overButton and not overPanel then
 				isOpen = false
 				Panel.Visible = false
+				Row.Size = UDim2.new(1, -24, 0, 32)
 			end
 		end)
-		Main:GetPropertyChangedSignal("Position"):Connect(UpdatePanelPosition)
-		Main:GetPropertyChangedSignal("Size"):Connect(UpdatePanelPosition)
 
 		local DropdownAPI = { Instance = Row, Button = Button, SearchBox = SearchBox, Panel = Panel }
 		function DropdownAPI.SetOptions(newOptions)
@@ -3075,6 +3209,7 @@ function UI.CreateWindow(title, subtitle)
 			if not table.find(currentOptions, selectedValue) then selectedValue = currentOptions[1] end
 			UpdateButtonText()
 			RebuildOptions()
+			UpdatePanelPosition()
 			return true
 		end
 		function DropdownAPI.Refresh(a, b)
@@ -3283,14 +3418,15 @@ function UI.CreateWindow(title, subtitle)
 end
 
 function UI.CreateMain(a, b, c, d)
-	local hubName, gameName, subtitle
+	local hubName, subtitle, version
 	if a == UI then
-		hubName, gameName, subtitle = b, c, d
+		hubName, subtitle, version = b, c, d
 	else
-		hubName, gameName, subtitle = a, b, c
+		hubName, subtitle, version = a, b, c
 	end
-	local window = UI.CreateWindow(hubName or "IceHub", subtitle or gameName or "")
-	window.GameName = gameName or ""
+	local window = UI.CreateWindow(hubName or "IceHub", subtitle or "", version or "")
+	-- Preserve the old property name for scripts that read it directly.
+	window.GameName = subtitle or ""
 	return window
 end
 
