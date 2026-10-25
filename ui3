@@ -1419,7 +1419,8 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end
 
-		local currentValue = currentOptions[1]
+		-- Start with no selection; only set a value after the user picks an option.
+		local currentValue = nil
 		local open = false
 
 		-- Dropdown list
