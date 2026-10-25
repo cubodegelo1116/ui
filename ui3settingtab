@@ -1,16 +1,33 @@
 local SettingsTab = {}
 
-function SettingsTab:Create(Window)
+-- Accepts both SettingsTab:Create(Window) and SettingsTab.Create(Window).
+function SettingsTab.Create(a, b)
+    local Window = (a == SettingsTab) and b or a
+
+    assert(type(Window) == "table", 
+        "[PDDEV SettingsTab] Window is nil. Create the window first and call SettingsTab:Create(Window).")
+    assert(type(Window.CreateTab) == "function",
+        "[PDDEV SettingsTab] Window.CreateTab is missing. Make sure you're passing the window returned by Library.CreateWindow(...).")
+    assert(type(Window.SetTheme) == "function",
+        "[PDDEV SettingsTab] Window.SetTheme is missing. Check that you loaded the PDDEV UI Library.")
+
     local Settings = Window.CreateTab("Settings", "settings")
+    assert(Settings and type(Settings.AddDropdown) == "function",
+        "[PDDEV SettingsTab] Failed to create Settings tab or AddDropdown is missing.")
 
     Settings.AddDropdown("Theme", {
         "Default",
         "Ocean",
         "Purple",
         "Red",
-        "Minimal"
+        "Minimal",
     }, function(value)
-        Window.SetTheme(value)
+        local ok, result = pcall(Window.SetTheme, value)
+        if not ok then
+            warn("[PDDEV SettingsTab] Failed to apply theme '" .. tostring(value) .. "': " .. tostring(result))
+        elseif result == false then
+            warn("[PDDEV SettingsTab] Unknown theme: " .. tostring(value))
+        end
     end)
 
     return Settings
