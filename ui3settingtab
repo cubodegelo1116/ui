@@ -1,6 +1,13 @@
+--[[
+    PDDEV / RCCDEV
+    SettingsTab V4.0.0
+    Theme settings compatible with PDDEV UI Library V4 and legacy window APIs.
+]]
+
 local SettingsTab = {}
 
 local THEMES = {
+    "Graphite",
     "Default",
     "Ocean",
     "Purple",
@@ -9,7 +16,7 @@ local THEMES = {
 }
 
 function SettingsTab.Create(a, b)
-    -- Aceita SettingsTab:Create(Window) e SettingsTab.Create(Window)
+    -- Supports SettingsTab:Create(Window) and SettingsTab.Create(Window).
     local Window = (a == SettingsTab) and b or a
 
     assert(type(Window) == "table",
@@ -17,9 +24,13 @@ function SettingsTab.Create(a, b)
 
     local function ApplyTheme(themeName)
         if type(Window.SetTheme) == "function" then
-            return Window.SetTheme(themeName) -- API nova
+            -- V4 SetTheme supports both dot and colon calls; dot keeps compatibility with older versions.
+            local ok, result = pcall(Window.SetTheme, themeName)
+            if ok then return result end
+            warn("[PDDEV SettingsTab] Falha ao aplicar tema: " .. tostring(result))
+            return false
         elseif type(Window.ChangeTheme) == "function" then
-            return Window.ChangeTheme(themeName) -- compatibilidade UI2/CreateMain
+            return Window.ChangeTheme(themeName)
         end
         warn("[PDDEV SettingsTab] A janela não oferece SetTheme nem ChangeTheme.")
         return false
@@ -27,11 +38,10 @@ function SettingsTab.Create(a, b)
 
     local Settings
 
-    -- API nova: CreateWindow -> CreateTab -> AddDropdown
+    -- Native API: CreateWindow -> CreateTab -> AddDropdown.
     if type(Window.CreateTab) == "function" then
         Settings = Window.CreateTab("Settings", "settings")
         assert(Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings.")
-
         assert(type(Settings.AddDropdown) == "function",
             "[PDDEV SettingsTab] A aba não possui AddDropdown.")
 
@@ -39,13 +49,12 @@ function SettingsTab.Create(a, b)
             ApplyTheme(value)
         end)
 
-    -- API de compatibilidade/UI2: CreateMain -> NewTab -> NewSection -> NewDropdown
+    -- Legacy API: CreateMain -> NewTab -> NewSection -> NewDropdown.
     elseif type(Window.NewTab) == "function" then
         Settings = Window.NewTab("Settings", "settings")
         assert(Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings via NewTab.")
 
         if type(Settings.AddDropdown) == "function" then
-            -- Algumas versões da camada compat também expõem os métodos novos na aba.
             Settings.AddDropdown("Theme", THEMES, function(value)
                 ApplyTheme(value)
             end)
@@ -53,7 +62,6 @@ function SettingsTab.Create(a, b)
             local Section = Settings.NewSection()
             assert(Section and type(Section.NewDropdown) == "function",
                 "[PDDEV SettingsTab] A seção não possui NewDropdown.")
-
             Section.NewDropdown("Theme", "Choose the UI theme", THEMES, function(value)
                 ApplyTheme(value)
             end)
