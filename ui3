@@ -3099,6 +3099,8 @@ function UI.CreateWindow(title, subtitle, version)
 		DropdownHover = Color3.fromRGB(30, 55, 70),
 	})
 
+	
+
 	RegisterTheme("Purple", {
 		Background = Color3.fromRGB(25, 20, 32),
 		TitleBar = Color3.fromRGB(34, 26, 45),
@@ -3133,6 +3135,24 @@ function UI.CreateWindow(title, subtitle, version)
 		Cooldown = Color3.fromRGB(150, 40, 40),
 		TabBorder = Color3.fromRGB(105, 50, 55),
 		DropdownHover = Color3.fromRGB(72, 35, 40),
+	})
+
+	RegisterTheme("Aqua", {
+    	Background = Color3.fromRGB(20, 32, 40),
+    	TitleBar = Color3.fromRGB(25, 43, 52),
+    	TabBackground = Color3.fromRGB(17, 30, 38),
+    	TabSelected = Color3.fromRGB(35, 79, 91),
+    	Button = Color3.fromRGB(29, 53, 63),
+    	ButtonHover = Color3.fromRGB(39, 70, 81),
+    	Text = Color3.fromRGB(235, 252, 255),
+    	TextDark = Color3.fromRGB(155, 195, 204),
+    	Accent = Color3.fromRGB(75, 220, 235),
+    	ToggleOn = Color3.fromRGB(65, 220, 205),
+    	ToggleOff = Color3.fromRGB(55, 79, 87),
+    	Border = Color3.fromRGB(56, 119, 132),
+    	Cooldown = Color3.fromRGB(180, 65, 75),
+    	TabBorder = Color3.fromRGB(56, 119, 132),
+    	DropdownHover = Color3.fromRGB(43, 78, 90),
 	})
 
 	RegisterTheme("Minimal", {
