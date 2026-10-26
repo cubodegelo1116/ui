@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.7.8          ║
+	║  Version: 4.7.9          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.7.8"
+local CURRENT_VERSION = "4.7.9"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -214,7 +214,8 @@ function UI.CreateWindow(title, subtitle, version)
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
 	local AcrylicEnabled = false
-	local AcrylicTransparency = { Background = 0.22, TitleBar = 0.18, TabBackground = 0.24, TabSelected = 0.16, Button = 0.20, ToggleOn = 0.08, ToggleOff = 0.10 }
+	local AcrylicTransparency = { Background = 0.42, TitleBar = 0.34, TabBackground = 0.40, TabSelected = 0.28, Button = 0.32, ToggleOn = 0.16, ToggleOff = 0.20 }
+	local AcrylicBlurEffect = nil
 
 	-- ════════════════════════════════════════════════════════════
 	-- THEME MANAGEMENT SYSTEM
@@ -287,6 +288,26 @@ function UI.CreateWindow(title, subtitle, version)
 
 	local function SetAcrilic(enabled)
 		AcrylicEnabled = enabled == true
+
+		-- Real scene blur for the acrylic effect; ScreenGui controls remain sharp.
+		local Lighting = game:GetService("Lighting")
+		if AcrylicEnabled then
+			if not AcrylicBlurEffect or not AcrylicBlurEffect.Parent then
+				AcrylicBlurEffect = Lighting:FindFirstChild("PDDEV_AcrylicBlur")
+				if not AcrylicBlurEffect then
+					AcrylicBlurEffect = Instance.new("BlurEffect")
+					AcrylicBlurEffect.Name = "PDDEV_AcrylicBlur"
+					AcrylicBlurEffect.Size = 10
+					AcrylicBlurEffect.Parent = Lighting
+				end
+			end
+			AcrylicBlurEffect.Enabled = true
+		else
+			local existingBlur = Lighting:FindFirstChild("PDDEV_AcrylicBlur")
+			if existingBlur and existingBlur:IsA("BlurEffect") then existingBlur:Destroy() end
+			AcrylicBlurEffect = nil
+		end
+
 		if ApplyTheme then ApplyTheme() end
 		return AcrylicEnabled
 	end
@@ -3097,6 +3118,24 @@ function UI.CreateWindow(title, subtitle, version)
 		Cooldown = Color3.fromRGB(180, 55, 55),
 		TabBorder = Color3.fromRGB(35, 75, 90),
 		DropdownHover = Color3.fromRGB(30, 55, 70),
+	})
+
+	RegisterTheme("Aqua", {
+		Background = Color3.fromRGB(18, 29, 33),
+		TitleBar = Color3.fromRGB(24, 42, 46),
+		TabBackground = Color3.fromRGB(16, 34, 38),
+		TabSelected = Color3.fromRGB(40, 83, 88),
+		Button = Color3.fromRGB(31, 55, 59),
+		ButtonHover = Color3.fromRGB(43, 75, 79),
+		Text = Color3.fromRGB(226, 250, 248),
+		TextDark = Color3.fromRGB(151, 194, 193),
+		Accent = Color3.fromRGB(89, 224, 211),
+		ToggleOn = Color3.fromRGB(70, 211, 195),
+		ToggleOff = Color3.fromRGB(62, 83, 85),
+		Border = Color3.fromRGB(58, 103, 105),
+		Cooldown = Color3.fromRGB(180, 70, 78),
+		TabBorder = Color3.fromRGB(58, 103, 105),
+		DropdownHover = Color3.fromRGB(43, 75, 79),
 	})
 
 	RegisterTheme("Purple", {
