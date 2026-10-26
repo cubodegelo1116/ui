@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.7.7          ║
+	║  Version: 4.7.8          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.7.7"
+local CURRENT_VERSION = "4.7.8"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3731,7 +3731,7 @@ function UI.CreateWindow(title, subtitle, version)
 					end
 				end)
 			end
-			boxAPI = tab.AddTextBox("", OnFocusLost)
+			boxAPI = tab.AddTextBox(placeholder or "", OnFocusLost)
 			return boxAPI
 		end
 
@@ -3796,7 +3796,7 @@ function UI.CreateWindow(title, subtitle, version)
 					label = ""
 				end
 				if label and tostring(label) ~= "" then tab.AddTextLabel(tostring(label)) end
-				local box = tab.AddTextBox("", callback)
+				local box = tab.AddTextBox(placeholder or "", callback)
 				return box
 			end
 
