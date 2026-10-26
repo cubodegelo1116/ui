@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.7.9          ║
+	║  Version: 4.8.0          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.7.9"
+local CURRENT_VERSION = "4.8.0"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -214,8 +214,7 @@ function UI.CreateWindow(title, subtitle, version)
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
 	local AcrylicEnabled = false
-	local AcrylicTransparency = { Background = 0.42, TitleBar = 0.34, TabBackground = 0.40, TabSelected = 0.28, Button = 0.32, ToggleOn = 0.16, ToggleOff = 0.20 }
-	local AcrylicBlurEffect = nil
+	local AcrylicTransparency = { Background = 0.12, TitleBar = 0.08, TabBackground = 0.10, TabSelected = 0.06, Button = 0.08, ToggleOn = 0.04, ToggleOff = 0.06 }
 
 	-- ════════════════════════════════════════════════════════════
 	-- THEME MANAGEMENT SYSTEM
@@ -287,27 +286,8 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 
 	local function SetAcrilic(enabled)
+		-- Acrylic only affects the library's own panels; never blur Lighting/the whole game.
 		AcrylicEnabled = enabled == true
-
-		-- Real scene blur for the acrylic effect; ScreenGui controls remain sharp.
-		local Lighting = game:GetService("Lighting")
-		if AcrylicEnabled then
-			if not AcrylicBlurEffect or not AcrylicBlurEffect.Parent then
-				AcrylicBlurEffect = Lighting:FindFirstChild("PDDEV_AcrylicBlur")
-				if not AcrylicBlurEffect then
-					AcrylicBlurEffect = Instance.new("BlurEffect")
-					AcrylicBlurEffect.Name = "PDDEV_AcrylicBlur"
-					AcrylicBlurEffect.Size = 10
-					AcrylicBlurEffect.Parent = Lighting
-				end
-			end
-			AcrylicBlurEffect.Enabled = true
-		else
-			local existingBlur = Lighting:FindFirstChild("PDDEV_AcrylicBlur")
-			if existingBlur and existingBlur:IsA("BlurEffect") then existingBlur:Destroy() end
-			AcrylicBlurEffect = nil
-		end
-
 		if ApplyTheme then ApplyTheme() end
 		return AcrylicEnabled
 	end
