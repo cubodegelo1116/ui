@@ -1,6 +1,6 @@
 --[[
     PDDEV / RCCDEV
-    SettingsTab V4.6.0
+    SettingsTab V4.7.6 + Aqua
     Theme settings compatible with PDDEV UI Library V4 and legacy window APIs.
 ]]
 
@@ -11,6 +11,7 @@ local THEMES = {
     "Emerald",
     "Green",
     "Ocean",
+    "Aqua",
     "Purple",
     "Red",
     "Crimson",
