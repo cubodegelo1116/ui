@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.7.6          ║
+	║  Version: 4.7.7          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.7.6"
+local CURRENT_VERSION = "4.7.7"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -960,12 +960,12 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
-		Btn.Size = UDim2.new(1, -24, 0, 38)
+		Btn.Size = UDim2.new(1, -24, 0, 30)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
 		Btn.TextColor3 = Theme.Text
-		Btn.TextSize = 13
+		Btn.TextSize = 12
 		Btn.Font = Enum.Font.GothamMedium
 		Btn.TextXAlignment = Enum.TextXAlignment.Left
 		Btn.AutoButtonColor = false
@@ -980,13 +980,13 @@ function UI.CreateWindow(title, subtitle, version)
 		Padding.Parent = Btn
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 7)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
-		Stroke.Transparency = 0.12
+		Stroke.Transparency = 0.28
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
@@ -997,7 +997,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 		Btn.MouseLeave:Connect(function()
 			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.Button}):Play()
-			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.12}):Play()
+			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.28}):Play()
 		end)
 
 		if callback and typeof(callback) == "function" then
@@ -1311,8 +1311,8 @@ function UI.CreateWindow(title, subtitle, version)
 		local Padding = Instance.new("UIPadding")
 		Padding.PaddingTop = UDim.new(0, 11)
 		Padding.PaddingBottom = UDim.new(0, 11)
-		Padding.PaddingLeft = UDim.new(0, 12)
-		Padding.PaddingRight = UDim.new(0, 12)
+		Padding.PaddingLeft = UDim.new(0, 10)
+		Padding.PaddingRight = UDim.new(0, 10)
 		Padding.Parent = Box
 
 		local Layout = Instance.new("UIListLayout")
@@ -1625,12 +1625,12 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Btn = Instance.new("TextButton")
 		Btn.Name = text
-		Btn.Size = UDim2.new(1, -24, 0, 38)
+		Btn.Size = UDim2.new(1, -24, 0, 30)
 		Btn.BackgroundColor3 = Theme.Button
 		Btn.BorderSizePixel = 0
 		Btn.Text = text
 		Btn.TextColor3 = Theme.Text
-		Btn.TextSize = 13
+		Btn.TextSize = 12
 		Btn.Font = Enum.Font.GothamMedium
 		Btn.TextXAlignment = Enum.TextXAlignment.Left
 		Btn.AutoButtonColor = false
@@ -1645,13 +1645,13 @@ function UI.CreateWindow(title, subtitle, version)
 		Padding.Parent = Btn
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 7)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
-		Stroke.Transparency = 0.12
+		Stroke.Transparency = 0.28
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
@@ -1663,7 +1663,7 @@ function UI.CreateWindow(title, subtitle, version)
 			if not onCooldown then
 				TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.Button}):Play()
 			end
-			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.12}):Play()
+			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.28}):Play()
 		end)
 
 		local onCooldown = false
@@ -1721,7 +1721,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Frame = Instance.new("Frame")
 		Frame.Name = "TextBox"
-		Frame.Size = UDim2.new(1, -24, 0, 38)
+		Frame.Size = UDim2.new(1, -24, 0, 30)
 		Frame.BackgroundTransparency = 1
 		Frame.Parent = page
 
@@ -1732,7 +1732,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.BorderSizePixel = 0
 		TextBox.Text = ""
 		TextBox.TextColor3 = Theme.Text
-		TextBox.TextSize = 13
+		TextBox.TextSize = 12
 		TextBox.Font = Enum.Font.Gotham
 		TextBox.TextXAlignment = Enum.TextXAlignment.Left
 		TextBox.TextYAlignment = Enum.TextYAlignment.Center
@@ -1745,29 +1745,29 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox:SetAttribute("ThemeRole", "Button")
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 7)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = TextBox
 
 		local Padding = Instance.new("UIPadding")
-		Padding.PaddingLeft = UDim.new(0, 12)
-		Padding.PaddingRight = UDim.new(0, 12)
+		Padding.PaddingLeft = UDim.new(0, 10)
+		Padding.PaddingRight = UDim.new(0, 10)
 		Padding.Parent = TextBox
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
 		Stroke.Thickness = 1
-		Stroke.Transparency = 0.12
+		Stroke.Transparency = 0.28
 		Stroke.Parent = TextBox
 		Stroke:SetAttribute("ThemeRole", "Border")
 
 		local function SetFocusStyle(focused)
 			local targetColor = focused and Theme.Accent or Theme.Border
-			local targetThickness = focused and 1.5 or 1
-			local targetBackground = focused and Theme.TitleBar or Theme.Button
+			local targetThickness = 1
+			local targetBackground = focused and Theme.ButtonHover or Theme.Button
 			TweenService:Create(Stroke, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				Color = targetColor,
 				Thickness = targetThickness,
-				Transparency = focused and 0 or 0.12,
+				Transparency = focused and 0 or 0.28,
 			}):Play()
 			TweenService:Create(TextBox, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 				BackgroundColor3 = targetBackground,
@@ -2644,8 +2644,8 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Padding = Instance.new("UIPadding")
 		Padding.PaddingTop = UDim.new(0, 12)
-		Padding.PaddingLeft = UDim.new(0, 12)
-		Padding.PaddingRight = UDim.new(0, 12)
+		Padding.PaddingLeft = UDim.new(0, 10)
+		Padding.PaddingRight = UDim.new(0, 10)
 		Padding.PaddingBottom = UDim.new(0, 12)
 		Padding.Parent = Page
 
@@ -3099,8 +3099,6 @@ function UI.CreateWindow(title, subtitle, version)
 		DropdownHover = Color3.fromRGB(30, 55, 70),
 	})
 
-	
-
 	RegisterTheme("Purple", {
 		Background = Color3.fromRGB(25, 20, 32),
 		TitleBar = Color3.fromRGB(34, 26, 45),
@@ -3135,24 +3133,6 @@ function UI.CreateWindow(title, subtitle, version)
 		Cooldown = Color3.fromRGB(150, 40, 40),
 		TabBorder = Color3.fromRGB(105, 50, 55),
 		DropdownHover = Color3.fromRGB(72, 35, 40),
-	})
-
-	RegisterTheme("Aqua", {
-    	Background = Color3.fromRGB(20, 32, 40),
-    	TitleBar = Color3.fromRGB(25, 43, 52),
-    	TabBackground = Color3.fromRGB(17, 30, 38),
-    	TabSelected = Color3.fromRGB(35, 79, 91),
-    	Button = Color3.fromRGB(29, 53, 63),
-    	ButtonHover = Color3.fromRGB(39, 70, 81),
-    	Text = Color3.fromRGB(235, 252, 255),
-    	TextDark = Color3.fromRGB(155, 195, 204),
-    	Accent = Color3.fromRGB(75, 220, 235),
-    	ToggleOn = Color3.fromRGB(65, 220, 205),
-    	ToggleOff = Color3.fromRGB(55, 79, 87),
-    	Border = Color3.fromRGB(56, 119, 132),
-    	Cooldown = Color3.fromRGB(180, 65, 75),
-    	TabBorder = Color3.fromRGB(56, 119, 132),
-    	DropdownHover = Color3.fromRGB(43, 78, 90),
 	})
 
 	RegisterTheme("Minimal", {
