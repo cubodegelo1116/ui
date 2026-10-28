@@ -414,26 +414,12 @@ end
 ----------------------------------------------------------------
 
 local function _c00luiCompatSection(section, win)
-    -- NewNotify(message, duration)
-    function section:NewNotify(message, duration)
-        local sg = win._frame and win._frame.Parent
-        if not sg then return end
-        local note = Instance.new("TextLabel")
-        note.Name = "c00lui_Notification"
-        note.Size = UDim2.new(0, 260, 0, 42)
-        note.Position = UDim2.new(1, -270, 1, -55)
-        note.BackgroundColor3 = win.bg
-        note.BorderColor3 = win.accent
-        note.BorderSizePixel = 2
-        note.TextColor3 = win.text
-        note.TextWrapped = true
-        note.Text = tostring(message or "")
-        note.TextSize = 12
-        note.Parent = sg
-        task.delay(tonumber(duration) or 5, function()
-            if note and note.Parent then note:Destroy() end
-        end)
-    end
+    -- Recursos desativados por escolha: chamadas são aceitas sem criar UI.
+    function section:NewNotify(...) end
+
+    -- AddParagraph pode aparecer em scripts antigos; ignorar sem interromper execução.
+    function section:AddParagraph(...) end
+    function section:NewParagraph(...) end
 
     -- API original: NewSmall(buttonText, callback)
     function section:NewSmall(buttonText, callback)
@@ -523,38 +509,21 @@ local function _c00luiCompatSection(section, win)
         return box
     end
 
-    -- API original: NewDropdown(label, helpMessage, items, callback)
-    function section:NewDropdown(dropdownLabel, helpMessage, items, callback)
-        if type(helpMessage) == "table" then
-            callback = items
-            items = helpMessage
-        end
-        items = type(items) == "table" and items or {}
-        local index = 1
-        local current = items[index]
-        local btn
-        local function refresh()
-            if btn then
-                btn.Text = tostring(dropdownLabel) .. ": " .. (current ~= nil and tostring(current) or "(vazio)")
-            end
-        end
-        btn = section:AddButton(tostring(dropdownLabel) .. ": " .. (current ~= nil and tostring(current) or "(vazio)"), function()
-            if #items == 0 then return end
-            index = index % #items + 1
-            current = items[index]
-            refresh()
-            if callback then callback(current) end
-        end)
+    -- Dropdowns desativados: mantém apenas uma interface de compatibilidade.
+    -- Não seleciona itens nem chama callbacks implicitamente.
+    local function ignoredDropdown()
         local obj = {}
-        function obj:Refresh(newItems)
-            items = type(newItems) == "table" and newItems or {}
-            index = 1
-            current = items[index]
-            refresh()
-        end
-        function obj:GetValue() return current end
+        function obj:Refresh(...) end
+        function obj:SetValue(...) end
+        function obj:Set(...) end
+        function obj:GetValue() return nil end
+        function obj:Get() return nil end
+        function obj:Destroy() end
         return obj
     end
+
+    function section:NewDropdown(...) return ignoredDropdown() end
+    function section:NewSearchDropdown(...) return ignoredDropdown() end
 
     -- Variantes com cooldown presentes na API original.
     function section:NewButtonCooldown(labelText, helpMessage, cooldownSeconds, action)
@@ -607,9 +576,6 @@ local function _c00luiCompatSection(section, win)
         return section:AddLabel(message or "Carregando...")
     end
     function section:CloseWaitingFrame() end
-    function section:NewSearchDropdown(dropdownLabel, helpMessage, searchPlaceholder, items, callback)
-        return section:NewDropdown(dropdownLabel, helpMessage, items, callback)
-    end
 
     return section
 end
@@ -644,7 +610,7 @@ function c00lui.CreateMain(hubName, gameName, subtitle)
         for _, methodName in ipairs({
             "NewNotify", "NewSmall", "NewButton", "NewButtonCooldown",
             "NewToggle", "NewToggleCooldown", "NewLabel", "NewTextBox",
-            "NewSlider", "NewDropdown", "NewSearchDropdown",
+            "NewSlider", "NewDropdown", "NewSearchDropdown", "AddParagraph", "NewParagraph",
             "WaitingFrame", "CloseWaitingFrame"
         }) do
             page[methodName] = function(_, ...)
@@ -654,10 +620,7 @@ function c00lui.CreateMain(hubName, gameName, subtitle)
         return page
     end
 
-    function win:Notification(message, duration)
-        local adapter = _c00luiCompatSection(self:AddPage():AddSection("Notification"), self)
-        return adapter:NewNotify(message, duration)
-    end
+    function win:Notification(...) end
 
     function win:ChangePresetColor(color)
         if typeof(color) == "Color3" then
