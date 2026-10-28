@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.0          ║
+	║  Version: 4.1.0           ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.0"
+local CURRENT_VERSION = "4.8.1-CONFIG-PERSISTENCE-ACRYLIC"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -214,7 +214,12 @@ function UI.CreateWindow(title, subtitle, version)
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
 	local AcrylicEnabled = false
-	local AcrylicTransparency = { Background = 0.12, TitleBar = 0.08, TabBackground = 0.10, TabSelected = 0.06, Button = 0.08, ToggleOn = 0.04, ToggleOff = 0.06 }
+	local CurrentThemeName = "Default"
+	local SaveConfig -- assigned after the window exists
+	local AutoSaveConfig = true
+	-- Acrylic is simulated with controlled panel transparency (no global blur).
+	-- Higher values make the glass effect more visible; keep text legible.
+	local AcrylicTransparency = { Background = 0.34, TitleBar = 0.28, TabBackground = 0.30, TabSelected = 0.22, Button = 0.25, ToggleOn = 0.12, ToggleOff = 0.20 }
 
 	-- ════════════════════════════════════════════════════════════
 	-- THEME MANAGEMENT SYSTEM
@@ -259,12 +264,14 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 
 			local selectedTheme = Themes[themeName]
+			CurrentThemeName = themeName
 			for key, value in pairs(selectedTheme) do
 				if Theme[key] ~= nil then
 					Theme[key] = value
 				end
 			end
 		elseif typeof(themeName) == "table" then
+			CurrentThemeName = nil
 			for key, value in pairs(themeName) do
 				if Theme[key] ~= nil and typeof(value) ~= "Color3" then
 					warn("UI: SetTheme - color '" .. tostring(key) .. "' must be Color3")
@@ -282,6 +289,7 @@ function UI.CreateWindow(title, subtitle, version)
 		end
 
 		ApplyTheme()
+		if AutoSaveConfig and SaveConfig then SaveConfig() end
 		return true
 	end
 
@@ -289,6 +297,7 @@ function UI.CreateWindow(title, subtitle, version)
 		-- Acrylic only affects the library's own panels; never blur Lighting/the whole game.
 		AcrylicEnabled = enabled == true
 		if ApplyTheme then ApplyTheme() end
+		if AutoSaveConfig and SaveConfig then SaveConfig() end
 		return AcrylicEnabled
 	end
 
@@ -832,6 +841,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 	ConnectGlobal(UIS.InputEnded, function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if resizing and AutoSaveConfig and SaveConfig then SaveConfig() end
 			resizing = false
 		end
 	end)
@@ -3311,6 +3321,65 @@ function UI.CreateWindow(title, subtitle, version)
 		TabBorder = Color3.fromRGB(53, 53, 60), DropdownHover = Color3.fromRGB(45, 45, 51),
 	})
 
+	-- ════════════════════════════════════════════════════════════
+	-- CONFIG PERSISTENCE (executor file APIs, when available)
+	-- Saves built-in theme, acrylic state, and window dimensions.
+	-- In ordinary Roblox scripts, writefile/readfile are unavailable; the UI
+	-- continues working normally and persistence simply reports false.
+	-- ════════════════════════════════════════════════════════════
+	local HttpService = game:GetService("HttpService")
+	local CONFIG_PATH = "PDDEV_UI_Config.json"
+
+	local function ConfigFileApisAvailable()
+		return typeof(writefile) == "function" and typeof(readfile) == "function"
+	end
+
+	SaveConfig = function()
+		if not ConfigFileApisAvailable() then return false, "writefile/readfile unavailable" end
+		local payload = {
+			version = 1,
+			theme = CurrentThemeName or "Default",
+			acrylic = AcrylicEnabled,
+			width = math.floor(Main.Size.X.Offset),
+			height = math.floor(Main.Size.Y.Offset),
+		}
+		local ok, err = pcall(function()
+			writefile(CONFIG_PATH, HttpService:JSONEncode(payload))
+		end)
+		if not ok then
+			warn("PDDEV: couldn't save config: " .. tostring(err))
+			return false, err
+		end
+		return true
+	end
+
+	local function LoadConfig()
+		if not ConfigFileApisAvailable() then return false, "writefile/readfile unavailable" end
+		local ok, result = pcall(function()
+			if typeof(isfile) == "function" and not isfile(CONFIG_PATH) then return nil end
+			return HttpService:JSONDecode(readfile(CONFIG_PATH))
+		end)
+		if not ok or typeof(result) ~= "table" then return false end
+
+		if typeof(result.theme) == "string" and Themes[result.theme] then
+			CurrentThemeName = result.theme
+			for key, value in pairs(Themes[result.theme]) do
+				if Theme[key] ~= nil then Theme[key] = value end
+			end
+		end
+		if typeof(result.acrylic) == "boolean" then AcrylicEnabled = result.acrylic end
+		if typeof(result.width) == "number" and typeof(result.height) == "number" then
+			Main.Size = UDim2.fromOffset(
+				Clamp(math.floor(result.width), MIN_WINDOW_WIDTH, MAX_WINDOW_WIDTH),
+				Clamp(math.floor(result.height), MIN_WINDOW_HEIGHT, MAX_WINDOW_HEIGHT)
+			)
+		end
+		return true
+	end
+
+	-- Load before the first theme pass so the saved state is visible immediately.
+	LoadConfig()
+
 	-- Apply the default palette before returning the window. This prevents
 	-- bright default strokes/text styles from remaining until the first theme change.
 	ApplyTheme()
@@ -3357,6 +3426,10 @@ function UI.CreateWindow(title, subtitle, version)
 		GetAcrilic = GetAcrilic,
 		SetAcrylic = SetAcrilic,
 		GetAcrylic = GetAcrilic,
+		SaveConfig = function() return SaveConfig() end,
+		LoadConfig = function() local loaded = LoadConfig(); ApplyTheme(); return loaded end,
+		SetAutoSaveConfig = function(enabled) AutoSaveConfig = enabled == true; return AutoSaveConfig end,
+		GetAutoSaveConfig = function() return AutoSaveConfig end,
 
 		-- Direct access
 		Theme = Theme,
