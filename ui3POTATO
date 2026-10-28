@@ -624,15 +624,29 @@ function UI.CreateWindow(title, subtitle, version)
 
 	-- Enforce raw geometry for every present/future descendant.
 	local function EnforcePotatoGeometry(object)
+		-- Potato uses native GuiObject borders only: no UICorner or UIStroke.
 		if object:IsA("UICorner") then
-			object.CornerRadius = UDim.new(0, 0)
+			object:Destroy()
+			return
 		elseif object:IsA("UIStroke") then
-			object.Thickness = 3
-			object.Transparency = 0
+			-- Detach instead of destroying: some legacy callbacks still hold references.
+			object.Parent = nil
+			return
+		elseif object:IsA("GuiObject") then
+			if object.BackgroundTransparency < 1 then
+				object.BorderSizePixel = 3
+				object.BorderColor3 = Theme.Border
+			else
+				object.BorderSizePixel = 0
+			end
 		end
 	end
 	for _, object in ipairs(ScreenGui:GetDescendants()) do EnforcePotatoGeometry(object) end
-	ScreenGui.DescendantAdded:Connect(EnforcePotatoGeometry)
+	ScreenGui.DescendantAdded:Connect(function(object)
+		task.defer(function()
+			if object.Parent and ScreenGui.Parent then EnforcePotatoGeometry(object) end
+		end)
+	end)
 
 	Main:SetAttribute("ThemeRole", "Background")
 
@@ -1077,16 +1091,14 @@ function UI.CreateWindow(title, subtitle, version)
 		local Toggle = Instance.new("TextButton")
 		Toggle.Size = UDim2.new(0, 44, 0, 22)
 		Toggle.Position = UDim2.new(1, -44, 0.5, -11)
-		Toggle.BackgroundColor3 = state and Theme.ToggleOn or Theme.ToggleOff
-		Toggle.BorderSizePixel = 0
+		Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		Toggle.BorderSizePixel = 3
+		Toggle.BorderColor3 = Theme.Border
 		Toggle.Text = ""
 		Toggle.AutoButtonColor = false
 		Toggle.Parent = Frame
 		Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
 
-		local ToggleCorner = Instance.new("UICorner")
-		ToggleCorner.CornerRadius = UDim.new(0, 0)
-		ToggleCorner.Parent = Toggle
 
 		local Circle = Instance.new("Frame")
 		Circle.Size = UDim2.new(0, 16, 0, 16)
@@ -1095,16 +1107,14 @@ function UI.CreateWindow(title, subtitle, version)
 		Circle.BorderSizePixel = 0
 		Circle.Parent = Toggle
 
-		local CircleCorner = Instance.new("UICorner")
-		CircleCorner.CornerRadius = UDim.new(0, 0)
-		CircleCorner.Parent = Circle
 
 		local function RefreshToggleVisual()
 			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-			local goalColor = state and Theme.ToggleOn or Theme.ToggleOff
 			Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
 			Circle.Position = goalPos
-			Toggle.BackgroundColor3 = goalColor
+			Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			Toggle.BorderSizePixel = 3
+			Toggle.BorderColor3 = Theme.Border
 		end
 		table.insert(potatoToggleRefreshers, RefreshToggleVisual)
 
@@ -1115,11 +1125,12 @@ function UI.CreateWindow(title, subtitle, version)
 
 			state = newState
 			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-			local goalColor = state and Theme.ToggleOn or Theme.ToggleOff
 			Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
-			-- No animation: update the toggle visuals immediately.
+			-- No animation: update only the square knob position; keep the track visible.
 			Circle.Position = goalPos
-			Toggle.BackgroundColor3 = goalColor
+			Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			Toggle.BorderSizePixel = 3
+			Toggle.BorderColor3 = Theme.Border
 
 			if typeof(callback) == "function" then
 				callback(state)
@@ -1765,7 +1776,8 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.Name = "Input"
 		TextBox.Size = UDim2.new(1, 0, 1, 0)
 		TextBox.BackgroundColor3 = Theme.Button
-		TextBox.BorderSizePixel = 0
+		TextBox.BorderSizePixel = 3
+		TextBox.BorderColor3 = Theme.Border
 		TextBox.Text = ""
 		TextBox.TextColor3 = Theme.Text
 		TextBox.TextSize = 12
@@ -1797,17 +1809,10 @@ function UI.CreateWindow(title, subtitle, version)
 		Stroke:SetAttribute("ThemeRole", "Border")
 
 		local function SetFocusStyle(focused)
-			local targetColor = focused and Theme.Accent or Theme.Border
-			local targetThickness = 1
-			local targetBackground = focused and Theme.ButtonHover or Theme.Button
-			TweenService:Create(Stroke, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				Color = targetColor,
-				Thickness = targetThickness,
-				Transparency = focused and 0 or 0.28,
-			}):Play()
-			TweenService:Create(TextBox, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				BackgroundColor3 = targetBackground,
-			}):Play()
+			-- Keep a native, persistent border while focused and unfocused.
+			TextBox.BorderSizePixel = 3
+			TextBox.BorderColor3 = Theme.Border
+			TextBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 		end
 
 		TextBox.Focused:Connect(function()
@@ -2968,9 +2973,12 @@ function UI.CreateWindow(title, subtitle, version)
 			guiVisible = not guiVisible
 			Main.Visible = guiVisible
 			if guiVisible then
-				for _, refreshToggle in ipairs(potatoToggleRefreshers) do
-					pcall(refreshToggle)
-				end
+				task.defer(function()
+					if not ScreenGui.Parent or not Main.Visible then return end
+					for _, refreshToggle in ipairs(potatoToggleRefreshers) do
+						pcall(refreshToggle)
+					end
+				end)
 			end
 		end)
 
@@ -3113,38 +3121,34 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end
 
-		-- POTATO VISUAL OVERRIDE:
-		-- Keep all v4.8.1 behavior/API, but make every visual element square,
-		-- black-filled, white-text, and use the selected theme color ONLY on borders.
+		-- POTATO OVERRIDE: black surfaces, white text, square native borders.
+		-- Theme colors are applied to borders only; no rounded decorators/strokes.
 		local potatoBorder = Theme.Border or Theme.Accent or Color3.fromRGB(0, 255, 0)
 		for _, object in ipairs(ScreenGui:GetDescendants()) do
 			if object:IsA("UICorner") then
-				object.CornerRadius = UDim.new(0, 0)
+				object:Destroy()
 			elseif object:IsA("UIStroke") then
-				object.Thickness = 3
-				object.Color = potatoBorder
-				if object.Name == "TabBorder" then
-					object.Transparency = (CurrentTab and object.Parent == CurrentTab.Button) and 0 or 0.25
-				else
-					object.Transparency = 0
-				end
+				object.Parent = nil
 			elseif object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 				object.TextColor3 = Color3.fromRGB(255, 255, 255)
 				object.TextStrokeTransparency = 1
-				if object:IsA("TextBox") then
-					object.PlaceholderColor3 = Color3.fromRGB(255, 255, 255)
-				end
-			elseif object:IsA("GuiObject") then
-				object.BorderSizePixel = 0
+				if object:IsA("TextBox") then object.PlaceholderColor3 = Color3.fromRGB(255, 255, 255) end
+			end
+			if object:IsA("GuiObject") then
 				local role = object:GetAttribute("ThemeRole")
-				if role == "Border" or role == "TabBorder" or role == "Accent" then
-					object.BackgroundColor3 = potatoBorder
-				elseif role == "Background" or role == "TitleBar" or role == "TabBackground"
-					or role == "TabSelected" or role == "Button"
-					or role == "ToggleOn" or role == "ToggleOff" or role == "Cooldown"
-					or role == "DropdownHover" then
+				if object.BackgroundTransparency < 1 then
+					object.BorderSizePixel = 3
+					object.BorderColor3 = potatoBorder
+				else
+					object.BorderSizePixel = 0
+				end
+				-- Surfaces stay black. Toggle state is communicated by the square knob position.
+				if role == "Background" or role == "TitleBar" or role == "TabBackground"
+					or role == "TabSelected" or role == "Button" or role == "ToggleOn"
+					or role == "ToggleOff" or role == "Cooldown" or role == "DropdownHover" then
 					object.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 				end
+				if role == "TabSelected" then object.BorderColor3 = potatoBorder end
 			end
 		end
 	end
