@@ -170,7 +170,20 @@ function UI.CreateWindow(title, subtitle, version)
 	version = ValidateString(version, true) or ""
 
 	local UIS = game:GetService("UserInputService")
-	local TweenService = game:GetService("TweenService")
+	-- POTATO: tweens are applied immediately; preserve the call shape/API, remove animation.
+	local TweenService = {
+		Create = function(_, instance, _tweenInfo, goals)
+			return {
+				Play = function()
+					for property, value in pairs(goals) do
+						pcall(function() instance[property] = value end)
+					end
+				end,
+				Cancel = function() end,
+				Destroy = function() end,
+			}
+		end,
+	}
 	local TextService = game:GetService("TextService")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
@@ -608,6 +621,17 @@ function UI.CreateWindow(title, subtitle, version)
 	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
 
+	-- Enforce raw geometry for every present/future descendant.
+	local function EnforcePotatoGeometry(object)
+		if object:IsA("UICorner") then
+			object.CornerRadius = UDim.new(0, 0)
+		elseif object:IsA("UIStroke") then
+			object.Thickness = 3
+		end
+	end
+	for _, object in ipairs(ScreenGui:GetDescendants()) do EnforcePotatoGeometry(object) end
+	ScreenGui.DescendantAdded:Connect(EnforcePotatoGeometry)
+
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
@@ -617,7 +641,7 @@ function UI.CreateWindow(title, subtitle, version)
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Theme.Border
 	MainStroke.Thickness = 3
-	MainStroke.Transparency = 0.12
+	MainStroke.Transparency = 0
 	MainStroke.Parent = Main
 	MainStroke:SetAttribute("ThemeRole", "Border")
 
@@ -630,6 +654,7 @@ function UI.CreateWindow(title, subtitle, version)
 	TopAccent.BorderSizePixel = 0
 	TopAccent.ZIndex = 5
 	TopAccent.Parent = Main
+	TopAccent.Visible = false -- Potato: no decorative accent line
 	TopAccent:SetAttribute("ThemeRole", "Accent")
 	local TopAccentCorner = Instance.new("UICorner")
 	TopAccentCorner.CornerRadius = UDim.new(0, 0)
@@ -2595,7 +2620,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TabStroke.Name = "TabBorder"
 		TabStroke.Color = Theme.TabBorder
 		TabStroke.Thickness = 3
-		TabStroke.Transparency = 0.48
+		TabStroke.Transparency = 0
 		TabStroke.Parent = TabBtn
 		TabStroke:SetAttribute("ThemeRole", "TabBorder")
 
@@ -2822,7 +2847,7 @@ function UI.CreateWindow(title, subtitle, version)
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
-			ActiveMarker.Visible = true
+			ActiveMarker.Visible = false
 			ActiveMarker.BackgroundColor3 = Theme.Border
 			TabStroke.Transparency = 0
 			TabStroke.Thickness = 3
@@ -2844,7 +2869,7 @@ function UI.CreateWindow(title, subtitle, version)
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
-			ActiveMarker.Visible = true
+			ActiveMarker.Visible = false
 			ActiveMarker.BackgroundColor3 = Theme.Border
 			TabStroke.Transparency = 0
 			TabStroke.Thickness = 3
@@ -3107,7 +3132,7 @@ function UI.CreateWindow(title, subtitle, version)
 				local tabStroke = tab.Button:FindFirstChild("TabBorder")
 				if tabStroke then
 					tabStroke.Thickness = 3
-					tabStroke.Transparency = (tab == CurrentTab) and 0 or 0.55
+					tabStroke.Transparency = (tab == CurrentTab) and 0 or 0.25
 					tabStroke.Color = Theme.Border
 				end
 			end
@@ -3124,7 +3149,7 @@ function UI.CreateWindow(title, subtitle, version)
 				object.Thickness = 3
 				object.Color = potatoBorder
 				if object.Name == "TabBorder" then
-					object.Transparency = (CurrentTab and object.Parent == CurrentTab.Button) and 0 or 0.55
+					object.Transparency = (CurrentTab and object.Parent == CurrentTab.Button) and 0 or 0.25
 				else
 					object.Transparency = 0
 				end
