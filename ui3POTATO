@@ -622,18 +622,23 @@ function UI.CreateWindow(title, subtitle, version)
 	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
 
-	-- Enforce raw geometry for every present/future descendant.
+	-- Potato geometry: borders are opt-in, never applied to every GuiObject.
+	-- Existing UIStroke borders are converted to the parent's native pixel border.
 	local function EnforcePotatoGeometry(object)
-		-- Potato uses native GuiObject borders only: no UICorner or UIStroke.
 		if object:IsA("UICorner") then
 			object:Destroy()
 			return
 		elseif object:IsA("UIStroke") then
-			-- Detach instead of destroying: some legacy callbacks still hold references.
-			object.Parent = nil
+			local parent = object.Parent
+			if parent and parent:IsA("GuiObject") then
+				parent:SetAttribute("PDDEV_NativeBorder", true)
+				parent.BorderSizePixel = 3
+				parent.BorderColor3 = Theme.Border
+			end
+			object:Destroy()
 			return
 		elseif object:IsA("GuiObject") then
-			if object.BackgroundTransparency < 1 then
+			if object:GetAttribute("PDDEV_NativeBorder") == true then
 				object.BorderSizePixel = 3
 				object.BorderColor3 = Theme.Border
 			else
@@ -1092,6 +1097,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Toggle.Size = UDim2.new(0, 44, 0, 22)
 		Toggle.Position = UDim2.new(1, -44, 0.5, -11)
 		Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+		Toggle:SetAttribute("PDDEV_NativeBorder", true)
 		Toggle.BorderSizePixel = 3
 		Toggle.BorderColor3 = Theme.Border
 		Toggle.Text = ""
@@ -1776,6 +1782,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.Name = "Input"
 		TextBox.Size = UDim2.new(1, 0, 1, 0)
 		TextBox.BackgroundColor3 = Theme.Button
+		TextBox:SetAttribute("PDDEV_NativeBorder", true)
 		TextBox.BorderSizePixel = 3
 		TextBox.BorderColor3 = Theme.Border
 		TextBox.Text = ""
@@ -3121,14 +3128,17 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 		end
 
-		-- POTATO OVERRIDE: black surfaces, white text, square native borders.
-		-- Theme colors are applied to borders only; no rounded decorators/strokes.
+		-- POTATO OVERRIDE: black surfaces, white text, and opt-in native borders only.
+		-- Never put borders on labels, icons, transparent layout frames, or text containers.
 		local potatoBorder = Theme.Border or Theme.Accent or Color3.fromRGB(0, 255, 0)
 		for _, object in ipairs(ScreenGui:GetDescendants()) do
-			if object:IsA("UICorner") then
+			if object:IsA("UICorner") or object:IsA("UIStroke") then
+				-- Native square borders replace rounded/stroke decorators.
+				if object:IsA("UIStroke") then
+					local parent = object.Parent
+					if parent and parent:IsA("GuiObject") then parent:SetAttribute("PDDEV_NativeBorder", true) end
+				end
 				object:Destroy()
-			elseif object:IsA("UIStroke") then
-				object.Parent = nil
 			elseif object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 				object.TextColor3 = Color3.fromRGB(255, 255, 255)
 				object.TextStrokeTransparency = 1
@@ -3136,19 +3146,29 @@ function UI.CreateWindow(title, subtitle, version)
 			end
 			if object:IsA("GuiObject") then
 				local role = object:GetAttribute("ThemeRole")
-				if object.BackgroundTransparency < 1 then
+				if object:GetAttribute("PDDEV_NativeBorder") == true then
 					object.BorderSizePixel = 3
 					object.BorderColor3 = potatoBorder
 				else
 					object.BorderSizePixel = 0
 				end
-				-- Surfaces stay black. Toggle state is communicated by the square knob position.
+				-- Surfaces stay black. Text/transparent layout elements remain borderless.
 				if role == "Background" or role == "TitleBar" or role == "TabBackground"
 					or role == "TabSelected" or role == "Button" or role == "ToggleOn"
 					or role == "ToggleOff" or role == "Cooldown" or role == "DropdownHover" then
 					object.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 				end
-				if role == "TabSelected" then object.BorderColor3 = potatoBorder end
+			end
+		end
+		-- Reapply only explicitly marked borders after focus/theme changes.
+		for _, object in ipairs(ScreenGui:GetDescendants()) do
+			if object:IsA("GuiObject") then
+				if object:GetAttribute("PDDEV_NativeBorder") == true then
+					object.BorderSizePixel = 3
+					object.BorderColor3 = Theme.Border
+				else
+					object.BorderSizePixel = 0
+				end
 			end
 		end
 	end
