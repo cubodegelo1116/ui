@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.1          ║
+	║  Version: 4.8.3          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.1"
+local CURRENT_VERSION = "4.8.3"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -174,7 +174,6 @@ function UI.CreateWindow(title, subtitle, version)
 	local LocalPlayer = Players.LocalPlayer
 	local trackedConnections = {}
 	local activeColorPickerClose = nil
-	local themeRefreshQueued = false
 
 	local function ConnectGlobal(signal, callback)
 		local connection = signal:Connect(callback)
@@ -414,25 +413,45 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 
 
-	-- Text effects can be reintroduced by later-created controls or theme refreshes.
-	ScreenGui.DescendantAdded:Connect(function(object)
-		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+	-- Track only objects that can be affected by theme changes. This avoids
+	-- repeatedly walking every descendant (including layout objects and popups)
+	-- whenever a large hub changes theme or toggles Acrylic.
+	local TrackedThemeObjects = setmetatable({}, { __mode = "k" })
+	local function TrackThemeObject(object)
+		if not object then return end
+		local isText = object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")
+		local isStroke = object:IsA("UIStroke")
+		-- Ignore non-visual instances such as UIListLayout/UIPadding.
+		if not (isText or isStroke or object:IsA("GuiObject")) then return end
+		if TrackedThemeObjects[object] then return end
+		local role = object:GetAttribute("ThemeRole")
+		if isText or isStroke or role ~= nil then
+			TrackedThemeObjects[object] = true
+		end
+		if isText then
 			task.defer(function()
 				if object.Parent then RemoveTextHighlight(object) end
 			end)
 		end
-	end)
-
-	local function QueueThemeRefresh()
-		if themeRefreshQueued then return end
-		themeRefreshQueued = true
-		task.defer(function()
-			themeRefreshQueued = false
-			if ScreenGui.Parent and ApplyTheme then
-				ApplyTheme()
-			end
-		end)
+		if not object:GetAttribute("PDDEV_ThemeRoleTracker") then
+			object:SetAttribute("PDDEV_ThemeRoleTracker", true)
+			object:GetAttributeChangedSignal("ThemeRole"):Connect(function()
+				if object.Parent and object:GetAttribute("ThemeRole") ~= nil then
+					TrackedThemeObjects[object] = true
+				end
+			end)
+		end
 	end
+
+	-- DescendantAdded also catches controls created later by the hub script.
+	ScreenGui.DescendantAdded:Connect(TrackThemeObject)
+	for _, object in ipairs(ScreenGui:GetDescendants()) do
+		TrackThemeObject(object)
+	end
+
+	-- Constructors still create controls synchronously to preserve the existing
+	-- API and return values. Expensive theme refreshes now touch only tracked
+	-- text/stroke/theme-role instances instead of the entire UI tree.
 
 	-- Wrap by measured pixel width, including very long words without spaces.
 	local function WrapTextToWidth(value, font, textSize, maxWidth)
@@ -560,7 +579,6 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 	ScreenGui.DescendantAdded:Connect(function(object)
 		RemoveTextHighlight(object)
-		QueueThemeRefresh()
 	end)
 
 	ScreenGui.Destroying:Connect(function()
@@ -2959,7 +2977,10 @@ function UI.CreateWindow(title, subtitle, version)
 	-- ════════════════════════════════════════════════════════════
 
 	ApplyTheme = function()
-		for _, object in ipairs(ScreenGui:GetDescendants()) do
+		for object in pairs(TrackedThemeObjects) do
+			if not object.Parent then
+				TrackedThemeObjects[object] = nil
+			else
 			if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 				object.TextStrokeTransparency = 1
 				RemoveTextHighlight(object)
@@ -3067,6 +3088,7 @@ function UI.CreateWindow(title, subtitle, version)
 						object.TextStrokeTransparency = 1
 					end
 				end
+			end
 			end
 		end
 		
