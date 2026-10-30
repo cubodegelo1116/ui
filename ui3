@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.3          ║
+	║  Version: 4.8.4          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.3"
+local CURRENT_VERSION = "4.8.4"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -422,10 +422,12 @@ function UI.CreateWindow(title, subtitle, version)
 		local isText = object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")
 		local isStroke = object:IsA("UIStroke")
 		-- Ignore non-visual instances such as UIListLayout/UIPadding.
+		local isScrollingFrame = object:IsA("ScrollingFrame")
 		if not (isText or isStroke or object:IsA("GuiObject")) then return end
 		if TrackedThemeObjects[object] then return end
 		local role = object:GetAttribute("ThemeRole")
-		if isText or isStroke or role ~= nil then
+		-- ScrollingFrames need theme tracking even when they have no ThemeRole.
+		if isText or isStroke or isScrollingFrame or role ~= nil then
 			TrackedThemeObjects[object] = true
 		end
 		if isText then
@@ -2981,7 +2983,10 @@ function UI.CreateWindow(title, subtitle, version)
 			if not object.Parent then
 				TrackedThemeObjects[object] = nil
 			else
-			if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+			if object:IsA("ScrollingFrame") then
+				-- Scrollbar tint is independent from the frame background.
+				object.ScrollBarImageColor3 = Theme.Border
+			elseif object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 				object.TextStrokeTransparency = 1
 				RemoveTextHighlight(object)
 			elseif object:IsA("UIStroke") then
