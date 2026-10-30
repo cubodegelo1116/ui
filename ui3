@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.4          ║
+	║  Version: 4.8.5          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.4"
+local CURRENT_VERSION = "4.8.5"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -2703,6 +2703,15 @@ function UI.CreateWindow(title, subtitle, version)
 		Tab.AddToggle = function(a, b, c, d)
 			local text, default, callback = UnpackTabArgs(a, b, c, d)
 			return AddToggle(Page, text, default, callback)
+		end
+		-- Dedicated Acrylic toggle: starts from the value loaded from config,
+		-- and keeps the visual state synchronized with the actual Acrylic setting.
+		Tab.AddAcrylicToggle = function(a, b)
+			local text = (a == Tab) and b or a
+			local toggle = AddToggle(Page, text or "Acrylic", AcrylicEnabled, function(enabled)
+				SetAcrilic(enabled)
+			end)
+			return toggle
 		end
 		Tab.AddSlider = function(a, b, c, d, e, f)
 			local text, min, max, default, callback
