@@ -2,14 +2,13 @@
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
 	║  Edition: POTATO         ║
-	║  Version: 4.8.1          ║
+	║  Base: 4.8.5             ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
--- PDDEV UI POTATO: visual-only fork of v4.8.1. Public API intentionally retained.
 local UI = {}
-local CURRENT_VERSION = "4.8.1"
+local CURRENT_VERSION = "4.8.5-potato"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -170,27 +169,16 @@ function UI.CreateWindow(title, subtitle, version)
 	version = ValidateString(version, true) or ""
 
 	local UIS = game:GetService("UserInputService")
-	-- POTATO: tweens are applied immediately; preserve the call shape/API, remove animation.
 	local TweenService = {
-		Create = function(_, instance, _tweenInfo, goals)
-			return {
-				Play = function()
-					for property, value in pairs(goals) do
-						pcall(function() instance[property] = value end)
-					end
-				end,
-				Cancel = function() end,
-				Destroy = function() end,
-			}
+		Create = function(_, instance, _info, goals)
+			return { Play = function() for property, value in pairs(goals) do pcall(function() instance[property] = value end) end end }
 		end,
 	}
 	local TextService = game:GetService("TextService")
 	local Players = game:GetService("Players")
 	local LocalPlayer = Players.LocalPlayer
 	local trackedConnections = {}
-	local potatoToggleRefreshers = {}
 	local activeColorPickerClose = nil
-	local themeRefreshQueued = false
 
 	local function ConnectGlobal(signal, callback)
 		local connection = signal:Connect(callback)
@@ -203,7 +191,7 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 
 	-- ════════════════════════════════════════════════════════════
-	-- POTATO EDITION | SAME V4.8.1 API, VISUALS SIMPLIFIED
+	-- POTATO EDITION | minimal black/white surfaces, theme-colored native borders
 	-- ════════════════════════════════════════════════════════════
 
 	local Theme = {
@@ -272,6 +260,24 @@ function UI.CreateWindow(title, subtitle, version)
 
 	local ApplyTheme
 
+	local function NormalizePotatoTheme()
+		local border = Theme.Accent or Theme.Border or Color3.fromRGB(0, 255, 0)
+		Theme.Background = Color3.fromRGB(0, 0, 0)
+		Theme.TitleBar = Color3.fromRGB(0, 0, 0)
+		Theme.TabBackground = Color3.fromRGB(0, 0, 0)
+		Theme.TabSelected = Color3.fromRGB(0, 0, 0)
+		Theme.Button = Color3.fromRGB(0, 0, 0)
+		Theme.ButtonHover = Color3.fromRGB(0, 0, 0)
+		Theme.Text = Color3.fromRGB(255, 255, 255)
+		Theme.TextDark = Color3.fromRGB(255, 255, 255)
+		Theme.ToggleOn = Color3.fromRGB(0, 0, 0)
+		Theme.ToggleOff = Color3.fromRGB(0, 0, 0)
+		Theme.Border = border
+		Theme.TabBorder = border
+		Theme.DropdownHover = Color3.fromRGB(0, 0, 0)
+		AcrylicEnabled = false
+	end
+
 	local function SetTheme(themeName)
 		if typeof(themeName) == "string" then
 			if not Themes[themeName] then
@@ -304,28 +310,7 @@ function UI.CreateWindow(title, subtitle, version)
 			return false
 		end
 
-		-- Normalize palette values for Potato: the selected theme contributes only
-		-- its accent hue, which becomes the border color. Everything else stays black/white.
-		local potatoThemeBorder = Theme.Accent or Theme.Border or Color3.fromRGB(0, 255, 0)
-		Theme.Border = potatoThemeBorder
-		Theme.TabBorder = potatoThemeBorder
-		Theme.Background = Color3.fromRGB(0, 0, 0)
-		Theme.TitleBar = Color3.fromRGB(0, 0, 0)
-		Theme.TabBackground = Color3.fromRGB(0, 0, 0)
-		Theme.TabSelected = Color3.fromRGB(0, 0, 0)
-		Theme.Button = Color3.fromRGB(0, 0, 0)
-		Theme.ButtonHover = Color3.fromRGB(0, 0, 0)
-		Theme.Text = Color3.fromRGB(255, 255, 255)
-		Theme.TextDark = Color3.fromRGB(255, 255, 255)
-		Theme.Accent = Color3.fromRGB(0, 0, 0)
-		Theme.ToggleOn = Color3.fromRGB(0, 0, 0)
-		Theme.ToggleOff = Color3.fromRGB(0, 0, 0)
-		Theme.Cooldown = Color3.fromRGB(0, 0, 0)
-		Theme.DropdownHover = Color3.fromRGB(0, 0, 0)
-		Theme.Error = Color3.fromRGB(0, 0, 0)
-		Theme.Success = Color3.fromRGB(0, 0, 0)
-		Theme.Warning = Color3.fromRGB(0, 0, 0)
-
+		NormalizePotatoTheme()
 		ApplyTheme()
 		if AutoSaveConfig and SaveConfig then SaveConfig() end
 		return true
@@ -333,7 +318,7 @@ function UI.CreateWindow(title, subtitle, version)
 
 	local function SetAcrilic(enabled)
 		-- Acrylic only affects the library's own panels; never blur Lighting/the whole game.
-		AcrylicEnabled = false -- Potato edition intentionally disables acrylic/transparency
+		AcrylicEnabled = false
 		if ApplyTheme then ApplyTheme() end
 		if AutoSaveConfig and SaveConfig then SaveConfig() end
 		return false
@@ -377,6 +362,30 @@ function UI.CreateWindow(title, subtitle, version)
 
 	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
+
+	-- POTATO 4.8.5: square geometry and native borders only where the original
+	-- library explicitly created a UIStroke. Never blanket-border every GuiObject.
+	local function ApplyPotatoPrimitive(instance)
+		if instance:IsA("UICorner") then
+			instance:Destroy()
+		elseif instance:IsA("UIStroke") then
+			local parent = instance.Parent
+			if parent and parent:IsA("GuiObject") then
+				parent.BorderSizePixel = 1
+				parent.BorderColor3 = Theme.Border
+			end
+			instance:Destroy()
+		elseif instance:IsA("TextLabel") or instance:IsA("TextButton") or instance:IsA("TextBox") then
+			instance.TextColor3 = Color3.fromRGB(255, 255, 255)
+			instance.TextStrokeTransparency = 1
+			if instance:IsA("TextBox") then instance.PlaceholderColor3 = Color3.fromRGB(255, 255, 255) end
+		end
+	end
+	ScreenGui.DescendantAdded:Connect(function(instance)
+		task.defer(function() if instance.Parent then ApplyPotatoPrimitive(instance) end end)
+	end)
+
+	for _, instance in ipairs(ScreenGui:GetDescendants()) do ApplyPotatoPrimitive(instance) end
 
 	-- Normalize text styling immediately; don't remove ordinary UIStroke borders from buttons/tabs.
 	local function RemoveTextHighlight(object)
@@ -452,25 +461,47 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 
 
-	-- Text effects can be reintroduced by later-created controls or theme refreshes.
-	ScreenGui.DescendantAdded:Connect(function(object)
-		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+	-- Track only objects that can be affected by theme changes. This avoids
+	-- repeatedly walking every descendant (including layout objects and popups)
+	-- whenever a large hub changes theme or toggles Acrylic.
+	local TrackedThemeObjects = setmetatable({}, { __mode = "k" })
+	local function TrackThemeObject(object)
+		if not object then return end
+		local isText = object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")
+		local isStroke = object:IsA("UIStroke")
+		-- Ignore non-visual instances such as UIListLayout/UIPadding.
+		local isScrollingFrame = object:IsA("ScrollingFrame")
+		if not (isText or isStroke or object:IsA("GuiObject")) then return end
+		if TrackedThemeObjects[object] then return end
+		local role = object:GetAttribute("ThemeRole")
+		-- ScrollingFrames need theme tracking even when they have no ThemeRole.
+		if isText or isStroke or isScrollingFrame or role ~= nil then
+			TrackedThemeObjects[object] = true
+		end
+		if isText then
 			task.defer(function()
 				if object.Parent then RemoveTextHighlight(object) end
 			end)
 		end
-	end)
-
-	local function QueueThemeRefresh()
-		if themeRefreshQueued then return end
-		themeRefreshQueued = true
-		task.defer(function()
-			themeRefreshQueued = false
-			if ScreenGui.Parent and ApplyTheme then
-				ApplyTheme()
-			end
-		end)
+		if not object:GetAttribute("PDDEV_ThemeRoleTracker") then
+			object:SetAttribute("PDDEV_ThemeRoleTracker", true)
+			object:GetAttributeChangedSignal("ThemeRole"):Connect(function()
+				if object.Parent and object:GetAttribute("ThemeRole") ~= nil then
+					TrackedThemeObjects[object] = true
+				end
+			end)
+		end
 	end
+
+	-- DescendantAdded also catches controls created later by the hub script.
+	ScreenGui.DescendantAdded:Connect(TrackThemeObject)
+	for _, object in ipairs(ScreenGui:GetDescendants()) do
+		TrackThemeObject(object)
+	end
+
+	-- Constructors still create controls synchronously to preserve the existing
+	-- API and return values. Expensive theme refreshes now touch only tracked
+	-- text/stroke/theme-role instances instead of the entire UI tree.
 
 	-- Wrap by measured pixel width, including very long words without spaces.
 	local function WrapTextToWidth(value, font, textSize, maxWidth)
@@ -598,7 +629,6 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 	ScreenGui.DescendantAdded:Connect(function(object)
 		RemoveTextHighlight(object)
-		QueueThemeRefresh()
 	end)
 
 	ScreenGui.Destroying:Connect(function()
@@ -622,47 +652,16 @@ function UI.CreateWindow(title, subtitle, version)
 	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
 
-	-- Potato geometry: borders are opt-in, never applied to every GuiObject.
-	-- Existing UIStroke borders are converted to the parent's native pixel border.
-	local function EnforcePotatoGeometry(object)
-		if object:IsA("UICorner") then
-			object:Destroy()
-			return
-		elseif object:IsA("UIStroke") then
-			local parent = object.Parent
-			if parent and parent:IsA("GuiObject") then
-				parent:SetAttribute("PDDEV_NativeBorder", true)
-				parent.BorderSizePixel = 3
-				parent.BorderColor3 = Theme.Border
-			end
-			object:Destroy()
-			return
-		elseif object:IsA("GuiObject") then
-			if object:GetAttribute("PDDEV_NativeBorder") == true then
-				object.BorderSizePixel = 3
-				object.BorderColor3 = Theme.Border
-			else
-				object.BorderSizePixel = 0
-			end
-		end
-	end
-	for _, object in ipairs(ScreenGui:GetDescendants()) do EnforcePotatoGeometry(object) end
-	ScreenGui.DescendantAdded:Connect(function(object)
-		task.defer(function()
-			if object.Parent and ScreenGui.Parent then EnforcePotatoGeometry(object) end
-		end)
-	end)
-
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
-	MainCorner.CornerRadius = UDim.new(0, 0)
+	MainCorner.CornerRadius = UDim.new(0, 8)
 	MainCorner.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Theme.Border
-	MainStroke.Thickness = 3
-	MainStroke.Transparency = 0
+	MainStroke.Thickness = 1
+	MainStroke.Transparency = 0.12
 	MainStroke.Parent = Main
 	MainStroke:SetAttribute("ThemeRole", "Border")
 
@@ -675,10 +674,9 @@ function UI.CreateWindow(title, subtitle, version)
 	TopAccent.BorderSizePixel = 0
 	TopAccent.ZIndex = 5
 	TopAccent.Parent = Main
-	TopAccent.Visible = false -- Potato: no decorative accent line
 	TopAccent:SetAttribute("ThemeRole", "Accent")
 	local TopAccentCorner = Instance.new("UICorner")
-	TopAccentCorner.CornerRadius = UDim.new(0, 0)
+	TopAccentCorner.CornerRadius = UDim.new(1, 0)
 	TopAccentCorner.Parent = TopAccent
 
 	-- ════════════════════════════════════════════════════════════
@@ -694,7 +692,7 @@ function UI.CreateWindow(title, subtitle, version)
 	TitleBar:SetAttribute("ThemeRole", "TitleBar")
 
 	local TitleCorner = Instance.new("UICorner")
-	TitleCorner.CornerRadius = UDim.new(0, 0)
+	TitleCorner.CornerRadius = UDim.new(0, 8)
 	TitleCorner.Parent = TitleBar
 
 	local TitleBottom = Instance.new("Frame")
@@ -869,14 +867,33 @@ function UI.CreateWindow(title, subtitle, version)
 		Dot.Parent = Resize
 
 		local DotCorner = Instance.new("UICorner")
-		DotCorner.CornerRadius = UDim.new(0, 0)
+		DotCorner.CornerRadius = UDim.new(1, 0)
 		DotCorner.Parent = Dot
 		table.insert(ResizeDots, Dot)
 	end
 
-	-- Hover effects disabled in Potato edition.
-	Resize.MouseEnter:Connect(function() end)
-	Resize.MouseLeave:Connect(function() end)
+	Resize.MouseEnter:Connect(function()
+		TweenService:Create(Resize, TweenInfo.new(0.15), {
+			BackgroundTransparency = 0.45,
+			BackgroundColor3 = Theme.ButtonHover,
+		}):Play()
+		for _, Dot in ipairs(ResizeDots) do
+			TweenService:Create(Dot, TweenInfo.new(0.15), {
+				BackgroundColor3 = Theme.Accent,
+			}):Play()
+		end
+	end)
+
+	Resize.MouseLeave:Connect(function()
+		TweenService:Create(Resize, TweenInfo.new(0.15), {
+			BackgroundTransparency = 1,
+		}):Play()
+		for _, Dot in ipairs(ResizeDots) do
+			TweenService:Create(Dot, TweenInfo.new(0.15), {
+				BackgroundColor3 = Theme.TextDark,
+			}):Play()
+		end
+	end)
 
 	local resizing = false
 	local resizeStart
@@ -949,7 +966,7 @@ function UI.CreateWindow(title, subtitle, version)
 	SidebarDivider:SetAttribute("ThemeRole", "Border")
 
 	local TabCorner = Instance.new("UICorner")
-	TabCorner.CornerRadius = UDim.new(0, 0)
+	TabCorner.CornerRadius = UDim.new(0, 5)
 	TabCorner.Parent = TabFrame
 
 	local Content = Instance.new("Frame")
@@ -962,7 +979,7 @@ function UI.CreateWindow(title, subtitle, version)
 	Content:SetAttribute("ThemeRole", "Background")
 
 	local ContentCorner = Instance.new("UICorner")
-	ContentCorner.CornerRadius = UDim.new(0, 0)
+	ContentCorner.CornerRadius = UDim.new(0, 6)
 	ContentCorner.Parent = Content
 
 	-- ════════════════════════════════════════════════════════════
@@ -1042,19 +1059,25 @@ function UI.CreateWindow(title, subtitle, version)
 		Padding.Parent = Btn
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 0)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
-		Stroke.Thickness = 3
+		Stroke.Thickness = 1
 		Stroke.Transparency = 0.28
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
-		-- Hover effects disabled in Potato edition.
-		Btn.MouseEnter:Connect(function() end)
-		Btn.MouseLeave:Connect(function() end)
+		Btn.MouseEnter:Connect(function()
+			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
+			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Accent or Theme.Border, Transparency = 0}):Play()
+		end)
+
+		Btn.MouseLeave:Connect(function()
+			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.Button}):Play()
+			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.28}):Play()
+		end)
 
 		if callback and typeof(callback) == "function" then
 			Btn.MouseButton1Click:Connect(callback)
@@ -1096,15 +1119,16 @@ function UI.CreateWindow(title, subtitle, version)
 		local Toggle = Instance.new("TextButton")
 		Toggle.Size = UDim2.new(0, 44, 0, 22)
 		Toggle.Position = UDim2.new(1, -44, 0.5, -11)
-		Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		Toggle:SetAttribute("PDDEV_NativeBorder", true)
-		Toggle.BorderSizePixel = 3
-		Toggle.BorderColor3 = Theme.Border
+		Toggle.BackgroundColor3 = state and Theme.ToggleOn or Theme.ToggleOff
+		Toggle.BorderSizePixel = 0
 		Toggle.Text = ""
 		Toggle.AutoButtonColor = false
 		Toggle.Parent = Frame
 		Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
 
+		local ToggleCorner = Instance.new("UICorner")
+		ToggleCorner.CornerRadius = UDim.new(1, 0)
+		ToggleCorner.Parent = Toggle
 
 		local Circle = Instance.new("Frame")
 		Circle.Size = UDim2.new(0, 16, 0, 16)
@@ -1113,16 +1137,9 @@ function UI.CreateWindow(title, subtitle, version)
 		Circle.BorderSizePixel = 0
 		Circle.Parent = Toggle
 
-
-		local function RefreshToggleVisual()
-			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-			Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
-			Circle.Position = goalPos
-			Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-			Toggle.BorderSizePixel = 3
-			Toggle.BorderColor3 = Theme.Border
-		end
-		table.insert(potatoToggleRefreshers, RefreshToggleVisual)
+		local CircleCorner = Instance.new("UICorner")
+		CircleCorner.CornerRadius = UDim.new(1, 0)
+		CircleCorner.Parent = Circle
 
 		local function SetState(newState)
 			if typeof(newState) ~= "boolean" or newState == state then
@@ -1131,12 +1148,10 @@ function UI.CreateWindow(title, subtitle, version)
 
 			state = newState
 			local goalPos = state and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+			local goalColor = state and Theme.ToggleOn or Theme.ToggleOff
 			Toggle:SetAttribute("ThemeRole", state and "ToggleOn" or "ToggleOff")
-			-- No animation: update only the square knob position; keep the track visible.
-			Circle.Position = goalPos
-			Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-			Toggle.BorderSizePixel = 3
-			Toggle.BorderColor3 = Theme.Border
+			TweenService:Create(Circle, TweenInfo.new(ANIMATION_SPEED), {Position = goalPos}):Play()
+			TweenService:Create(Toggle, TweenInfo.new(ANIMATION_SPEED), {BackgroundColor3 = goalColor}):Play()
 
 			if typeof(callback) == "function" then
 				callback(state)
@@ -1202,7 +1217,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Bar:SetAttribute("ThemeRole", "ToggleOff")
 
 		local BarCorner = Instance.new("UICorner")
-		BarCorner.CornerRadius = UDim.new(0, 0)
+		BarCorner.CornerRadius = UDim.new(0, 5)
 		BarCorner.Parent = Bar
 
 		-- Calculate initial percent (safe from division by zero)
@@ -1222,7 +1237,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Fill:SetAttribute("ThemeRole", "Accent")
 
 		local FillCorner = Instance.new("UICorner")
-		FillCorner.CornerRadius = UDim.new(0, 0)
+		FillCorner.CornerRadius = UDim.new(0, 5)
 		FillCorner.Parent = Fill
 
 		local Handle = Instance.new("Frame")
@@ -1234,7 +1249,7 @@ function UI.CreateWindow(title, subtitle, version)
 		Handle.Parent = Bar
 
 		local HandleCorner = Instance.new("UICorner")
-		HandleCorner.CornerRadius = UDim.new(0, 0)
+		HandleCorner.CornerRadius = UDim.new(0, 5)
 		HandleCorner.Parent = Handle
 
 		local draggingSlider = false
@@ -1362,12 +1377,12 @@ function UI.CreateWindow(title, subtitle, version)
 		Box:SetAttribute("ThemeRole", "Button")
 
 		local BoxCorner = Instance.new("UICorner")
-		BoxCorner.CornerRadius = UDim.new(0, 0)
+		BoxCorner.CornerRadius = UDim.new(0, 5)
 		BoxCorner.Parent = Box
 
 		local BoxStroke = Instance.new("UIStroke")
 		BoxStroke.Color = Theme.Border
-		BoxStroke.Thickness = 3
+		BoxStroke.Thickness = 1
 		BoxStroke.Transparency = 0.12
 		BoxStroke.Parent = Box
 		BoxStroke:SetAttribute("ThemeRole", "Border")
@@ -1450,12 +1465,12 @@ function UI.CreateWindow(title, subtitle, version)
 		Btn.TextStrokeTransparency = 1
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 0)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
-		Stroke.Thickness = 3
+		Stroke.Thickness = 1
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
@@ -1491,12 +1506,12 @@ function UI.CreateWindow(title, subtitle, version)
 		List:SetAttribute("ThemeRole", "TitleBar")
 
 		local ListCorner = Instance.new("UICorner")
-		ListCorner.CornerRadius = UDim.new(0, 0)
+		ListCorner.CornerRadius = UDim.new(0, 5)
 		ListCorner.Parent = List
 
 		local ListStroke = Instance.new("UIStroke")
 		ListStroke.Color = Theme.Border
-		ListStroke.Thickness = 3
+		ListStroke.Thickness = 1
 		ListStroke.Parent = List
 		ListStroke:SetAttribute("ThemeRole", "Border")
 
@@ -1549,9 +1564,13 @@ function UI.CreateWindow(title, subtitle, version)
 				OptBtn:SetAttribute("ThemeRole", "Text")
 				OptBtn.TextStrokeTransparency = 1
 
-				-- Hover effects disabled in Potato edition.
-				OptBtn.MouseEnter:Connect(function() end)
-				OptBtn.MouseLeave:Connect(function() end)
+				OptBtn.MouseEnter:Connect(function()
+					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundColor3 = Theme.DropdownHover, BackgroundTransparency = 0}):Play()
+				end)
+
+				OptBtn.MouseLeave:Connect(function()
+					TweenService:Create(OptBtn, TweenInfo.new(0.1), {BackgroundTransparency = 1}):Play()
+				end)
 
 				OptBtn.MouseButton1Click:Connect(function()
 					currentValue = opt
@@ -1705,19 +1724,26 @@ function UI.CreateWindow(title, subtitle, version)
 		Padding.Parent = Btn
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 0)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = Btn
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
-		Stroke.Thickness = 3
+		Stroke.Thickness = 1
 		Stroke.Transparency = 0.28
 		Stroke.Parent = Btn
 		Stroke:SetAttribute("ThemeRole", "Border")
 
-		-- Hover effects disabled in Potato edition.
-		Btn.MouseEnter:Connect(function() end)
-		Btn.MouseLeave:Connect(function() end)
+		Btn.MouseEnter:Connect(function()
+			TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
+			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Accent or Theme.Border, Transparency = 0}):Play()
+		end)
+		Btn.MouseLeave:Connect(function()
+			if not onCooldown then
+				TweenService:Create(Btn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.Button}):Play()
+			end
+			TweenService:Create(Stroke, TweenInfo.new(0.12), {Color = Theme.Border, Transparency = 0.28}):Play()
+		end)
 
 		local onCooldown = false
 		local cooldownToken = 0
@@ -1782,9 +1808,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox.Name = "Input"
 		TextBox.Size = UDim2.new(1, 0, 1, 0)
 		TextBox.BackgroundColor3 = Theme.Button
-		TextBox:SetAttribute("PDDEV_NativeBorder", true)
-		TextBox.BorderSizePixel = 3
-		TextBox.BorderColor3 = Theme.Border
+		TextBox.BorderSizePixel = 0
 		TextBox.Text = ""
 		TextBox.TextColor3 = Theme.Text
 		TextBox.TextSize = 12
@@ -1800,7 +1824,7 @@ function UI.CreateWindow(title, subtitle, version)
 		TextBox:SetAttribute("ThemeRole", "Button")
 
 		local Corner = Instance.new("UICorner")
-		Corner.CornerRadius = UDim.new(0, 0)
+		Corner.CornerRadius = UDim.new(0, 5)
 		Corner.Parent = TextBox
 
 		local Padding = Instance.new("UIPadding")
@@ -1810,16 +1834,23 @@ function UI.CreateWindow(title, subtitle, version)
 
 		local Stroke = Instance.new("UIStroke")
 		Stroke.Color = Theme.Border
-		Stroke.Thickness = 3
+		Stroke.Thickness = 1
 		Stroke.Transparency = 0.28
 		Stroke.Parent = TextBox
 		Stroke:SetAttribute("ThemeRole", "Border")
 
 		local function SetFocusStyle(focused)
-			-- Keep a native, persistent border while focused and unfocused.
-			TextBox.BorderSizePixel = 3
-			TextBox.BorderColor3 = Theme.Border
-			TextBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+			local targetColor = focused and Theme.Accent or Theme.Border
+			local targetThickness = 1
+			local targetBackground = focused and Theme.ButtonHover or Theme.Button
+			TweenService:Create(Stroke, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Color = targetColor,
+				Thickness = targetThickness,
+				Transparency = focused and 0 or 0.28,
+			}):Play()
+			TweenService:Create(TextBox, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = targetBackground,
+			}):Play()
 		end
 
 		TextBox.Focused:Connect(function()
@@ -1900,12 +1931,12 @@ function UI.CreateWindow(title, subtitle, version)
         PickerButton:SetAttribute("ThemeRole", "Button")
 
         local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 0)
+        ButtonCorner.CornerRadius = UDim.new(0, 5)
         ButtonCorner.Parent = PickerButton
 
         local ButtonStroke = Instance.new("UIStroke")
         ButtonStroke.Color = Theme.Border
-        ButtonStroke.Thickness = 3
+        ButtonStroke.Thickness = 1
         ButtonStroke.Parent = PickerButton
         ButtonStroke:SetAttribute("ThemeRole", "Border")
 
@@ -1919,7 +1950,7 @@ function UI.CreateWindow(title, subtitle, version)
         Swatch.ZIndex = PickerButton.ZIndex + 1
 
         local SwatchCorner = Instance.new("UICorner")
-        SwatchCorner.CornerRadius = UDim.new(0, 0)
+        SwatchCorner.CornerRadius = UDim.new(0, 5)
         SwatchCorner.Parent = Swatch
 
         local HexLabel = Instance.new("TextLabel")
@@ -1965,12 +1996,12 @@ function UI.CreateWindow(title, subtitle, version)
         Popup:SetAttribute("ThemeRole", "TitleBar")
 
         local PopupCorner = Instance.new("UICorner")
-        PopupCorner.CornerRadius = UDim.new(0, 0)
+        PopupCorner.CornerRadius = UDim.new(0, 5)
         PopupCorner.Parent = Popup
 
         local PopupStroke = Instance.new("UIStroke")
         PopupStroke.Color = Theme.Border
-        PopupStroke.Thickness = 3
+        PopupStroke.Thickness = 1
         PopupStroke.Parent = Popup
         PopupStroke:SetAttribute("ThemeRole", "Border")
 
@@ -2059,7 +2090,7 @@ function UI.CreateWindow(title, subtitle, version)
         SVMarker.ZIndex = 64
         SVMarker.Parent = SVField
         local SVMarkerCorner = Instance.new("UICorner")
-        SVMarkerCorner.CornerRadius = UDim.new(0, 0)
+        SVMarkerCorner.CornerRadius = UDim.new(1, 0)
         SVMarkerCorner.Parent = SVMarker
         local SVMarkerStroke = Instance.new("UIStroke")
         SVMarkerStroke.Color = Color3.new(1, 1, 1)
@@ -2100,7 +2131,7 @@ function UI.CreateWindow(title, subtitle, version)
         HueHandle.Parent = HueBar
         local HueHandleStroke = Instance.new("UIStroke")
         HueHandleStroke.Color = Color3.new(0, 0, 0)
-        HueHandleStroke.Thickness = 3
+        HueHandleStroke.Thickness = 1
         HueHandleStroke.Parent = HueHandle
 
         local Preview = Instance.new("Frame")
@@ -2113,7 +2144,7 @@ function UI.CreateWindow(title, subtitle, version)
         Preview.Parent = Popup
         local PreviewStroke = Instance.new("UIStroke")
         PreviewStroke.Color = Theme.Border
-        PreviewStroke.Thickness = 3
+        PreviewStroke.Thickness = 1
         PreviewStroke.Parent = Preview
         PreviewStroke:SetAttribute("ThemeRole", "Border")
 
@@ -2365,12 +2396,12 @@ function UI.CreateWindow(title, subtitle, version)
 		Toast.Parent = notificationContainer
 
 		local ToastCorner = Instance.new("UICorner")
-		ToastCorner.CornerRadius = UDim.new(0, 0)
+		ToastCorner.CornerRadius = UDim.new(0, 5)
 		ToastCorner.Parent = Toast
 
 		local ToastStroke = Instance.new("UIStroke")
 		ToastStroke.Color = accentColor
-		ToastStroke.Thickness = 3
+		ToastStroke.Thickness = 1
 		ToastStroke.Parent = Toast
 
 		local Accent = Instance.new("Frame")
@@ -2601,14 +2632,14 @@ function UI.CreateWindow(title, subtitle, version)
 		RemoveTextHighlight(TabBtn)
 
 		local TabBtnCorner = Instance.new("UICorner")
-		TabBtnCorner.CornerRadius = UDim.new(0, 0)
+		TabBtnCorner.CornerRadius = UDim.new(0, 5)
 		TabBtnCorner.Parent = TabBtn
 
 		local TabStroke = Instance.new("UIStroke")
 		TabStroke.Name = "TabBorder"
 		TabStroke.Color = Theme.TabBorder
-		TabStroke.Thickness = 3
-		TabStroke.Transparency = 0
+		TabStroke.Thickness = 1
+		TabStroke.Transparency = 0.48
 		TabStroke.Parent = TabBtn
 		TabStroke:SetAttribute("ThemeRole", "TabBorder")
 
@@ -2616,14 +2647,14 @@ function UI.CreateWindow(title, subtitle, version)
 		ActiveMarker.Name = "ActiveMarker"
 		ActiveMarker.Size = UDim2.new(0, 3, 1, -10)
 		ActiveMarker.Position = UDim2.new(0, 3, 0, 5)
-		ActiveMarker.BackgroundColor3 = Theme.Border
+		ActiveMarker.BackgroundColor3 = Theme.Accent
 		ActiveMarker.BorderSizePixel = 0
 		ActiveMarker.Visible = false
 		ActiveMarker.ZIndex = 3
 		ActiveMarker.Parent = TabBtn
 		ActiveMarker:SetAttribute("ThemeRole", "Accent")
 		local ActiveMarkerCorner = Instance.new("UICorner")
-		ActiveMarkerCorner.CornerRadius = UDim.new(0, 0)
+		ActiveMarkerCorner.CornerRadius = UDim.new(1, 0)
 		ActiveMarkerCorner.Parent = ActiveMarker
 
 		local iconWidget
@@ -2721,6 +2752,15 @@ function UI.CreateWindow(title, subtitle, version)
 			local text, default, callback = UnpackTabArgs(a, b, c, d)
 			return AddToggle(Page, text, default, callback)
 		end
+		-- Dedicated Acrylic toggle: starts from the value loaded from config,
+		-- and keeps the visual state synchronized with the actual Acrylic setting.
+		Tab.AddAcrylicToggle = function(a, b)
+			local text = (a == Tab) and b or a
+			local toggle = AddToggle(Page, text or "Acrylic", AcrylicEnabled, function(enabled)
+				SetAcrilic(enabled)
+			end)
+			return toggle
+		end
 		Tab.AddSlider = function(a, b, c, d, e, f)
 			local text, min, max, default, callback
 			if a == Tab then text, min, max, default, callback = b, c, d, e, f
@@ -2806,9 +2846,18 @@ function UI.CreateWindow(title, subtitle, version)
 			TabFrame.CanvasSize = UDim2.new(0, 0, 0, nextY + 4)
 		end
 
-		-- Hover effects disabled; selection remains indicated by the border.
-		TabBtn.MouseEnter:Connect(function() end)
-		TabBtn.MouseLeave:Connect(function() end)
+		TabBtn.MouseEnter:Connect(function()
+			if CurrentTab ~= Tab then
+				TweenService:Create(TabBtn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
+				TabStroke.Transparency = 0.25
+			end
+		end)
+		TabBtn.MouseLeave:Connect(function()
+			if CurrentTab ~= Tab then
+				TweenService:Create(TabBtn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.TabBackground}):Play()
+				TabStroke.Transparency = 0.48
+			end
+		end)
 
 		TabBtn.MouseButton1Click:Connect(function()
 			if CurrentTab then
@@ -2820,19 +2869,18 @@ function UI.CreateWindow(title, subtitle, version)
 				CurrentTab.Label.TextColor3 = Theme.TextDark
 				if CurrentTab.Icon and CurrentTab.Icon:IsA("TextLabel") then CurrentTab.Icon.TextColor3 = Theme.TextDark end
 				local oldStroke = CurrentTab.Button:FindFirstChild("TabBorder")
-				if oldStroke then oldStroke.Color = Theme.Border; oldStroke.Thickness = 3; oldStroke.Transparency = 0.55 end
+				if oldStroke then oldStroke.Color = Theme.TabBorder end
 			end
 
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
-			ActiveMarker.Visible = false
-			ActiveMarker.BackgroundColor3 = Theme.Border
-			TabStroke.Transparency = 0
-			TabStroke.Thickness = 3
+			ActiveMarker.Visible = true
+			ActiveMarker.BackgroundColor3 = Theme.Accent
+			TabStroke.Transparency = 0.08
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
-			TabStroke.Color = Theme.Border
+			TabStroke.Color = Theme.Accent
 			CurrentTab = Tab
 		end)
 
@@ -2848,13 +2896,12 @@ function UI.CreateWindow(title, subtitle, version)
 			Page.Visible = true
 			TabBtn.BackgroundColor3 = Theme.TabSelected
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
-			ActiveMarker.Visible = false
-			ActiveMarker.BackgroundColor3 = Theme.Border
-			TabStroke.Transparency = 0
-			TabStroke.Thickness = 3
+			ActiveMarker.Visible = true
+			ActiveMarker.BackgroundColor3 = Theme.Accent
+			TabStroke.Transparency = 0.08
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
-			TabStroke.Color = Theme.Border
+			TabStroke.Color = Theme.Accent
 			CurrentTab = Tab
 		end
 
@@ -2906,12 +2953,12 @@ function UI.CreateWindow(title, subtitle, version)
 		Ball:SetAttribute("ThemeRole", "TitleBar")
 
 		local BallCorner = Instance.new("UICorner")
-		BallCorner.CornerRadius = UDim.new(0, 0)
+		BallCorner.CornerRadius = UDim.new(corner, 0)
 		BallCorner.Parent = Ball
 
 		local BallStroke = Instance.new("UIStroke")
 		BallStroke.Color = Theme.Border
-		BallStroke.Thickness = 3.2
+		BallStroke.Thickness = 1.2
 		BallStroke.Parent = Ball
 		BallStroke:SetAttribute("ThemeRole", "Border")
 
@@ -2979,14 +3026,6 @@ function UI.CreateWindow(title, subtitle, version)
 		Ball.MouseButton1Click:Connect(function()
 			guiVisible = not guiVisible
 			Main.Visible = guiVisible
-			if guiVisible then
-				task.defer(function()
-					if not ScreenGui.Parent or not Main.Visible then return end
-					for _, refreshToggle in ipairs(potatoToggleRefreshers) do
-						pcall(refreshToggle)
-					end
-				end)
-			end
 		end)
 
 		return Ball
@@ -2997,17 +3036,21 @@ function UI.CreateWindow(title, subtitle, version)
 	-- ════════════════════════════════════════════════════════════
 
 	ApplyTheme = function()
-		for _, object in ipairs(ScreenGui:GetDescendants()) do
-			if object:IsA("UICorner") then
-				-- Potato: every corner stays square, including after theme refresh.
-				object.CornerRadius = UDim.new(0, 0)
+		NormalizePotatoTheme()
+		for object in pairs(TrackedThemeObjects) do
+			if not object.Parent then
+				TrackedThemeObjects[object] = nil
+			else
+			if object:IsA("ScrollingFrame") then
+				-- Scrollbar tint is independent from the frame background.
+				object.ScrollBarImageColor3 = Theme.Border
 			elseif object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 				object.TextStrokeTransparency = 1
 				RemoveTextHighlight(object)
 			elseif object:IsA("UIStroke") then
-				-- Potato: thick, crisp 3px borders.
-				object.Thickness = 3
-				object.Transparency = 0
+				-- Keep borders crisp and subtle; never use thick/glowing-looking strokes.
+				object.Thickness = math.min(object.Thickness, 1)
+				object.Transparency = math.max(object.Transparency, 0.12)
 			end
 			local role = object:GetAttribute("ThemeRole")
 
@@ -3022,6 +3065,10 @@ function UI.CreateWindow(title, subtitle, version)
 					local originalTransparency = object:GetAttribute("PDDEV_PreAcrylicTransparency")
 					if typeof(originalTransparency) == "number" then object.BackgroundTransparency = originalTransparency end
 				end
+			end
+
+			if object:IsA("GuiObject") and object.BorderSizePixel > 0 then
+				object.BorderColor3 = Theme.Border
 			end
 
 			if role then
@@ -3109,6 +3156,7 @@ function UI.CreateWindow(title, subtitle, version)
 					end
 				end
 			end
+			end
 		end
 		
 		-- Atualiza a cor do texto das tabs mesmo quando não estão selecionadas
@@ -3121,53 +3169,9 @@ function UI.CreateWindow(title, subtitle, version)
 				end
 				local tabStroke = tab.Button:FindFirstChild("TabBorder")
 				if tabStroke then
-					tabStroke.Thickness = 3
-					tabStroke.Transparency = (tab == CurrentTab) and 0 or 0.25
-					tabStroke.Color = Theme.Border
-				end
-			end
-		end
-
-		-- POTATO OVERRIDE: black surfaces, white text, and opt-in native borders only.
-		-- Never put borders on labels, icons, transparent layout frames, or text containers.
-		local potatoBorder = Theme.Border or Theme.Accent or Color3.fromRGB(0, 255, 0)
-		for _, object in ipairs(ScreenGui:GetDescendants()) do
-			if object:IsA("UICorner") or object:IsA("UIStroke") then
-				-- Native square borders replace rounded/stroke decorators.
-				if object:IsA("UIStroke") then
-					local parent = object.Parent
-					if parent and parent:IsA("GuiObject") then parent:SetAttribute("PDDEV_NativeBorder", true) end
-				end
-				object:Destroy()
-			elseif object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
-				object.TextColor3 = Color3.fromRGB(255, 255, 255)
-				object.TextStrokeTransparency = 1
-				if object:IsA("TextBox") then object.PlaceholderColor3 = Color3.fromRGB(255, 255, 255) end
-			end
-			if object:IsA("GuiObject") then
-				local role = object:GetAttribute("ThemeRole")
-				if object:GetAttribute("PDDEV_NativeBorder") == true then
-					object.BorderSizePixel = 3
-					object.BorderColor3 = potatoBorder
-				else
-					object.BorderSizePixel = 0
-				end
-				-- Surfaces stay black. Text/transparent layout elements remain borderless.
-				if role == "Background" or role == "TitleBar" or role == "TabBackground"
-					or role == "TabSelected" or role == "Button" or role == "ToggleOn"
-					or role == "ToggleOff" or role == "Cooldown" or role == "DropdownHover" then
-					object.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-				end
-			end
-		end
-		-- Reapply only explicitly marked borders after focus/theme changes.
-		for _, object in ipairs(ScreenGui:GetDescendants()) do
-			if object:IsA("GuiObject") then
-				if object:GetAttribute("PDDEV_NativeBorder") == true then
-					object.BorderSizePixel = 3
-					object.BorderColor3 = Theme.Border
-				else
-					object.BorderSizePixel = 0
+					tabStroke.Thickness = 1
+					tabStroke.Transparency = 0.12
+					tabStroke.Color = (tab == CurrentTab) and Theme.Accent or Theme.TabBorder
 				end
 			end
 		end
@@ -3640,11 +3644,11 @@ function UI.CreateWindow(title, subtitle, version)
 		Button.Parent = Row
 		Button:SetAttribute("ThemeRole", "Button")
 		local ButtonCorner = Instance.new("UICorner")
-		ButtonCorner.CornerRadius = UDim.new(0, 0)
+		ButtonCorner.CornerRadius = UDim.new(0, 5)
 		ButtonCorner.Parent = Button
 		local ButtonStroke = Instance.new("UIStroke")
 		ButtonStroke.Color = Theme.Border
-		ButtonStroke.Thickness = 3
+		ButtonStroke.Thickness = 1
 		ButtonStroke.Parent = Button
 		ButtonStroke:SetAttribute("ThemeRole", "Border")
 
@@ -3660,11 +3664,11 @@ function UI.CreateWindow(title, subtitle, version)
 		Panel.Parent = Row
 		Panel:SetAttribute("ThemeRole", "TitleBar")
 		local PanelCorner = Instance.new("UICorner")
-		PanelCorner.CornerRadius = UDim.new(0, 0)
+		PanelCorner.CornerRadius = UDim.new(0, 5)
 		PanelCorner.Parent = Panel
 		local PanelStroke = Instance.new("UIStroke")
 		PanelStroke.Color = Theme.Border
-		PanelStroke.Thickness = 3
+		PanelStroke.Thickness = 1
 		PanelStroke.Parent = Panel
 		PanelStroke:SetAttribute("ThemeRole", "Border")
 
@@ -3690,11 +3694,11 @@ function UI.CreateWindow(title, subtitle, version)
 		SearchPadding.PaddingLeft = UDim.new(0, 8)
 		SearchPadding.Parent = SearchBox
 		local SearchCorner = Instance.new("UICorner")
-		SearchCorner.CornerRadius = UDim.new(0, 0)
+		SearchCorner.CornerRadius = UDim.new(0, 5)
 		SearchCorner.Parent = SearchBox
 		local SearchStroke = Instance.new("UIStroke")
 		SearchStroke.Color = Theme.Border
-		SearchStroke.Thickness = 3
+		SearchStroke.Thickness = 1
 		SearchStroke.Parent = SearchBox
 		SearchStroke:SetAttribute("ThemeRole", "Border")
 
@@ -3760,7 +3764,7 @@ function UI.CreateWindow(title, subtitle, version)
 				Option.Parent = List
 				Option:SetAttribute("ThemeRole", "Button")
 				local OptionCorner = Instance.new("UICorner")
-				OptionCorner.CornerRadius = UDim.new(0, 0)
+				OptionCorner.CornerRadius = UDim.new(0, 5)
 				OptionCorner.Parent = Option
 				optionButtons[value] = Option
 				Option.MouseButton1Click:Connect(function()
