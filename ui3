@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.5          ║
+	║  Version: 4.8.6          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.5"
+local CURRENT_VERSION = "4.8.6"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -2997,6 +2997,11 @@ function UI.CreateWindow(title, subtitle, version)
 				object.ScrollBarImageColor3 = Theme.Border
 			elseif object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
 				object.TextStrokeTransparency = 1
+				-- Placeholder text has its own color property; keep it in sync with
+				-- the active theme instead of leaving the color from creation time.
+				if object:IsA("TextBox") then
+					object.PlaceholderColor3 = Theme.TextDark
+				end
 				RemoveTextHighlight(object)
 			elseif object:IsA("UIStroke") then
 				-- Keep borders crisp and subtle; never use thick/glowing-looking strokes.
