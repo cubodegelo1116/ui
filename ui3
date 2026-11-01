@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.7          ║
+	║  Version: 4.8.8          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.7"
+local CURRENT_VERSION = "4.8.8"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3366,6 +3366,25 @@ function UI.CreateWindow(title, subtitle, version)
 		Accent = Color3.fromRGB(255, 45, 160), ToggleOn = Color3.fromRGB(255, 45, 160),
 		ToggleOff = Color3.fromRGB(82, 46, 66), Border = Color3.fromRGB(165, 25, 100),
 		TabBorder = Color3.fromRGB(165, 25, 100), DropdownHover = Color3.fromRGB(72, 15, 49),
+	})
+
+	-- MI Team: peach-puff tribute theme, dedicated to the dev team that inspired the project.
+	RegisterTheme("MI Team", {
+		Background = Color3.fromRGB(42, 27, 24),
+		TitleBar = Color3.fromRGB(58, 36, 31),
+		TabBackground = Color3.fromRGB(35, 23, 21),
+		TabSelected = Color3.fromRGB(104, 65, 54),
+		Button = Color3.fromRGB(76, 48, 41),
+		ButtonHover = Color3.fromRGB(96, 60, 50),
+		Text = Color3.fromRGB(255, 244, 232),
+		TextDark = Color3.fromRGB(220, 174, 151),
+		Accent = Color3.fromRGB(255, 218, 185),
+		ToggleOn = Color3.fromRGB(255, 190, 145),
+		ToggleOff = Color3.fromRGB(104, 75, 66),
+		Border = Color3.fromRGB(170, 111, 88),
+		Cooldown = Color3.fromRGB(177, 78, 75),
+		TabBorder = Color3.fromRGB(170, 111, 88),
+		DropdownHover = Color3.fromRGB(96, 60, 50),
 	})
 
 	RegisterTheme("Monochrome", {
