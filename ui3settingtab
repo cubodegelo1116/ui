@@ -1,85 +1,94 @@
 --[[
-    PDDEV / RCCDEV
-    SettingsTab V4.8.5
-    Compatível com PDDEV UI Library V4.8.5.
-    Inclui seleção de tema e toggle Acrylic sincronizado com a configuração salva.
+    ╔══════════════════════════════════════╗
+    ║       PDDEV / RCCDEV - SETTINGS       ║
+    ║              Version 4.8.8            ║
+    ╚══════════════════════════════════════╝
+
+    Compatível com PDDEV UI Library V4.8.8.
+    - Lista os temas diretamente da biblioteca (inclui MI Team).
+    - Acrylic sincronizado com o estado carregado pela biblioteca.
+    - Mantém compatibilidade com chamadas usando ponto ou dois-pontos.
 ]]
 
 local SettingsTab = {}
 
-local THEMES = {
-    "Graphite", "Emerald", "Green", "Ocean", "Aqua", "Purple",
-    "Red", "Crimson", "c00l", "Troll", "Brainrot", "Barbie",
-    "Rose", "Amber", "Monochrome", "Minimal", "Default",
+local FALLBACK_THEMES = {
+    "Aqua", "Amber", "Barbie", "Brainrot", "c00l", "Crimson",
+    "Default", "Emerald", "Graphite", "Green", "MI Team", "Minimal",
+    "Monochrome", "Ocean", "Purple", "Red", "Rose", "Troll",
 }
+
+local function CallWindowMethod(Window, methodName, ...)
+    local method = Window and Window[methodName]
+    if type(method) ~= "function" then
+        return false, "Método " .. methodName .. " não encontrado."
+    end
+
+    local args = table.pack(...)
+    local ok, result = pcall(function()
+        return method(table.unpack(args, 1, args.n))
+    end)
+    if ok then return true, result end
+
+    -- Compatibilidade com implementações que exigem Window como self.
+    local okWithSelf, resultWithSelf = pcall(function()
+        return method(Window, table.unpack(args, 1, args.n))
+    end)
+    if okWithSelf then return true, resultWithSelf end
+    return false, resultWithSelf or result
+end
 
 function SettingsTab.Create(a, b)
     local Window = (a == SettingsTab) and b or a
     assert(type(Window) == "table", "[PDDEV SettingsTab] Janela ausente.")
 
+    local createTab = Window.CreateTab or Window.NewTab
+    assert(type(createTab) == "function",
+        "[PDDEV SettingsTab] A janela não possui CreateTab/NewTab.")
+
+    local ok, Settings = CallWindowMethod(Window, Window.CreateTab and "CreateTab" or "NewTab",
+        "Settings", "settings")
+    assert(ok and Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings: " .. tostring(Settings))
+
+    -- Pega os temas registrados na própria biblioteca. O fallback mantém
+    -- compatibilidade com versões antigas que ainda não expõem GetAllThemes.
+    local themes = FALLBACK_THEMES
+    local themesOK, registeredThemes = CallWindowMethod(Window, "GetAllThemes")
+    if themesOK and type(registeredThemes) == "table" and #registeredThemes > 0 then
+        themes = registeredThemes
+    end
+
     local function ApplyTheme(themeName)
-        if type(Window.SetTheme) == "function" then
-            local ok, result = pcall(Window.SetTheme, themeName)
-            if not ok then
-                ok, result = pcall(Window.SetTheme, Window, themeName)
-            end
-            if not ok then
-                warn("[PDDEV SettingsTab] Falha ao aplicar tema: " .. tostring(result))
-                return false
-            end
-            return result ~= false
-        elseif type(Window.ChangeTheme) == "function" then
-            return Window.ChangeTheme(themeName)
+        local applied, result = CallWindowMethod(Window, "SetTheme", themeName)
+        if not applied or result == false then
+            warn("[PDDEV SettingsTab] Falha ao aplicar tema '" .. tostring(themeName) .. "': " .. tostring(result))
         end
-        warn("[PDDEV SettingsTab] A janela não oferece SetTheme/ChangeTheme.")
-        return false
     end
 
-    local Settings
-    if type(Window.CreateTab) == "function" then
-        Settings = Window.CreateTab("Settings", "settings")
-    elseif type(Window.NewTab) == "function" then
-        Settings = Window.NewTab("Settings", "settings")
-    else
-        error("[PDDEV SettingsTab] A janela não possui CreateTab nem NewTab.", 2)
-    end
-    assert(Settings, "[PDDEV SettingsTab] Não foi possível criar a aba Settings.")
-
-    -- Tema
     if type(Settings.AddDropdown) == "function" then
-        Settings.AddDropdown("Theme", THEMES, ApplyTheme)
-    elseif type(Settings.NewSection) == "function" then
-        local section = Settings.NewSection()
-        assert(section and type(section.NewDropdown) == "function",
-            "[PDDEV SettingsTab] Não encontrei NewDropdown na seção.")
-        section.NewDropdown("Theme", "Choose the UI theme", THEMES, ApplyTheme)
+        Settings.AddDropdown("Theme", themes, ApplyTheme)
     elseif type(Settings.NewDropdown) == "function" then
-        Settings.NewDropdown("Theme", "Choose the UI theme", THEMES, ApplyTheme)
+        Settings.NewDropdown("Theme", "Choose the UI theme", themes, ApplyTheme)
     else
         warn("[PDDEV SettingsTab] Esta aba não oferece AddDropdown/NewDropdown.")
     end
 
-    -- Acrylic: V4.8.5 possui AddAcrylicToggle, que lê AcrylicEnabled já restaurado
-    -- pelo LoadConfig. Assim o estado visual do toggle começa igual ao efeito real.
+    -- O método dedicado já inicia o toggle com AcrylicEnabled restaurado do config.
     if type(Settings.AddAcrylicToggle) == "function" then
         Settings.AddAcrylicToggle("Acrylic (fundo translúcido)")
     elseif type(Settings.AddToggle) == "function" then
-        -- Compatibilidade com bibliotecas antigas (sem sincronização automática).
-        local getter = Window.GetAcrylic or Window.GetAcrilic
         local initial = false
-        if type(getter) == "function" then
-            local ok, value = pcall(getter)
-            if not ok then ok, value = pcall(getter, Window) end
-            if ok and type(value) == "boolean" then initial = value end
+        local getterName = type(Window.GetAcrylic) == "function" and "GetAcrylic" or "GetAcrilic"
+        local getterOK, getterValue = CallWindowMethod(Window, getterName)
+        if getterOK and type(getterValue) == "boolean" then
+            initial = getterValue
         end
-        local setter = Window.SetAcrylic or Window.SetAcrilic
+
         Settings.AddToggle("Acrylic (fundo translúcido)", initial, function(enabled)
-            if type(setter) == "function" then
-                local ok, err = pcall(setter, enabled)
-                if not ok then ok, err = pcall(setter, Window, enabled) end
-                if not ok then warn("[PDDEV SettingsTab] Falha ao alternar Acrylic: " .. tostring(err)) end
-            else
-                warn("[PDDEV SettingsTab] Esta versão não oferece SetAcrylic/SetAcrilic.")
+            local setterName = type(Window.SetAcrylic) == "function" and "SetAcrylic" or "SetAcrilic"
+            local changed, result = CallWindowMethod(Window, setterName, enabled)
+            if not changed then
+                warn("[PDDEV SettingsTab] Falha ao alternar Acrylic: " .. tostring(result))
             end
         end)
     else
