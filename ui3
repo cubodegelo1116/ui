@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.8          ║
+	║  Version: 4.8.9          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.8"
+local CURRENT_VERSION = "4.8.9"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -2950,8 +2950,17 @@ function UI.CreateWindow(title, subtitle, version)
 		else
 			local Icon = Instance.new("ImageLabel")
 			Icon.Name = "MinimizeIcon"
-			Icon.Size = UDim2.new(0, imageSize, 0, imageSize)
-			Icon.Position = UDim2.new(0.5, -imageSize / 2, 0.5, -imageSize / 2)
+			-- Fill the entire floating button and stretch the image to its bounds.
+			-- ImageSize can still be supplied to opt into a centered icon instead.
+			if config.ImageSize ~= nil then
+				Icon.Size = UDim2.new(0, imageSize, 0, imageSize)
+				Icon.Position = UDim2.new(0.5, -imageSize / 2, 0.5, -imageSize / 2)
+				Icon.ScaleType = Enum.ScaleType.Fit
+			else
+				Icon.Size = UDim2.fromScale(1, 1)
+				Icon.Position = UDim2.fromScale(0, 0)
+				Icon.ScaleType = Enum.ScaleType.Stretch
+			end
 			Icon.BackgroundTransparency = 1
 			Icon.Image = imageId
 			Icon.ImageColor3 = Theme.Text
