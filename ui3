@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.8.6          ║
+	║  Version: 4.8.7          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.8.6"
+local CURRENT_VERSION = "4.8.7"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -325,8 +325,25 @@ function UI.CreateWindow(title, subtitle, version)
 	-- SCREEN GUI SETUP
 	-- ════════════════════════════════════════════════════════════
 
+	-- Anti-duplicate: remove the previous instance of this library before
+	-- creating a new window. The stable UI3 name keeps compatibility with
+	-- older library versions that did not have the ownership attribute.
+	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	for _, existingGui in ipairs(PlayerGui:GetChildren()) do
+		if existingGui:IsA("ScreenGui") and (
+			existingGui.Name == "UI3"
+			or existingGui:GetAttribute("PDDEV_UI_Library") == true
+		) then
+			pcall(function()
+				existingGui:Destroy()
+			end)
+		end
+	end
+
 	local ScreenGui = Instance.new("ScreenGui")
 	ScreenGui.Name = "UI3"
+	ScreenGui:SetAttribute("PDDEV_UI_Library", true)
+	ScreenGui:SetAttribute("PDDEV_UI_Version", CURRENT_VERSION)
 	ScreenGui.ResetOnSpawn = false
 	ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 	-- Keep this library above ordinary PlayerGui ScreenGuis. Other GUIs can still
@@ -336,7 +353,6 @@ function UI.CreateWindow(title, subtitle, version)
 	-- (for example, converting "seconds" into "segundos").
 	pcall(function() ScreenGui.AutoLocalize = false end)
 
-	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 	ScreenGui.Parent = PlayerGui
 
 	-- Normalize text styling immediately; don't remove ordinary UIStroke borders from buttons/tabs.
