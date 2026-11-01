@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.9.0          ║
+	║  Version: 4.9.1          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.9.0"
+local CURRENT_VERSION = "4.9.1"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3360,23 +3360,24 @@ function UI.CreateWindow(title, subtitle, version)
 		TabBorder = Color3.fromRGB(165, 25, 100), DropdownHover = Color3.fromRGB(72, 15, 49),
 	})
 
-	-- MI Team: peach-puff tribute theme, dedicated to the dev team that inspired the project.
+	-- MI Team: paleta clara PeachPuff, com superfícies em tons de pêssego
+	-- e textos escuros para manter o contraste e a legibilidade.
 	RegisterTheme("MI Team", {
-		Background = Color3.fromRGB(42, 27, 24),
-		TitleBar = Color3.fromRGB(58, 36, 31),
-		TabBackground = Color3.fromRGB(35, 23, 21),
-		TabSelected = Color3.fromRGB(104, 65, 54),
-		Button = Color3.fromRGB(76, 48, 41),
-		ButtonHover = Color3.fromRGB(96, 60, 50),
-		Text = Color3.fromRGB(255, 244, 232),
-		TextDark = Color3.fromRGB(220, 174, 151),
-		Accent = Color3.fromRGB(255, 218, 185),
-		ToggleOn = Color3.fromRGB(255, 190, 145),
-		ToggleOff = Color3.fromRGB(104, 75, 66),
-		Border = Color3.fromRGB(170, 111, 88),
-		Cooldown = Color3.fromRGB(177, 78, 75),
-		TabBorder = Color3.fromRGB(170, 111, 88),
-		DropdownHover = Color3.fromRGB(96, 60, 50),
+		Background = Color3.fromRGB(255, 239, 224),
+		TitleBar = Color3.fromRGB(255, 218, 185),
+		TabBackground = Color3.fromRGB(255, 232, 211),
+		TabSelected = Color3.fromRGB(255, 204, 166),
+		Button = Color3.fromRGB(255, 226, 198),
+		ButtonHover = Color3.fromRGB(255, 213, 177),
+		Text = Color3.fromRGB(66, 43, 34),
+		TextDark = Color3.fromRGB(126, 91, 72),
+		Accent = Color3.fromRGB(205, 125, 83),
+		ToggleOn = Color3.fromRGB(205, 125, 83),
+		ToggleOff = Color3.fromRGB(218, 190, 169),
+		Border = Color3.fromRGB(210, 158, 126),
+		Cooldown = Color3.fromRGB(190, 82, 75),
+		TabBorder = Color3.fromRGB(210, 158, 126),
+		DropdownHover = Color3.fromRGB(255, 213, 177),
 	})
 
 	RegisterTheme("Monochrome", {
