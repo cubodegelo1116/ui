@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.9.2          ║
+	║  Version: 4.9.3          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.9.2"
+local CURRENT_VERSION = "4.9.3"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -3360,23 +3360,23 @@ function UI.CreateWindow(title, subtitle, version)
 		TabBorder = Color3.fromRGB(165, 25, 100), DropdownHover = Color3.fromRGB(72, 15, 49),
 	})
 
-	-- MI Team: PeachPuff mais presente, sem deixar a interface quase branca.
+	-- MI Team: base marrom/pessego escura; PeachPuff fica nos detalhes.
 	RegisterTheme("MI Team", {
-		Background = Color3.fromRGB(235, 190, 157),
-		TitleBar = Color3.fromRGB(255, 218, 185), -- PeachPuff
-		TabBackground = Color3.fromRGB(242, 202, 174),
-		TabSelected = Color3.fromRGB(224, 166, 128),
-		Button = Color3.fromRGB(247, 207, 178),
-		ButtonHover = Color3.fromRGB(232, 181, 145),
-		Text = Color3.fromRGB(67, 43, 34),
-		TextDark = Color3.fromRGB(112, 75, 56),
-		Accent = Color3.fromRGB(184, 105, 69),
-		ToggleOn = Color3.fromRGB(184, 105, 69),
-		ToggleOff = Color3.fromRGB(190, 151, 126),
-		Border = Color3.fromRGB(174, 119, 88),
+		Background = Color3.fromRGB(68, 45, 38),
+		TitleBar = Color3.fromRGB(142, 91, 66),
+		TabBackground = Color3.fromRGB(82, 55, 46),
+		TabSelected = Color3.fromRGB(132, 82, 59),
+		Button = Color3.fromRGB(99, 65, 52),
+		ButtonHover = Color3.fromRGB(124, 79, 58),
+		Text = Color3.fromRGB(255, 239, 224),
+		TextDark = Color3.fromRGB(211, 177, 153),
+		Accent = Color3.fromRGB(255, 218, 185), -- PeachPuff
+		ToggleOn = Color3.fromRGB(255, 196, 151),
+		ToggleOff = Color3.fromRGB(112, 82, 68),
+		Border = Color3.fromRGB(177, 119, 87),
 		Cooldown = Color3.fromRGB(190, 82, 75),
-		TabBorder = Color3.fromRGB(174, 119, 88),
-		DropdownHover = Color3.fromRGB(232, 181, 145),
+		TabBorder = Color3.fromRGB(177, 119, 87),
+		DropdownHover = Color3.fromRGB(124, 79, 58),
 	})
 
 	RegisterTheme("Monochrome", {
