@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.9.4          ║
+	║  Version: 4.9.5          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.9.4"
+local CURRENT_VERSION = "4.9.5"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -980,6 +980,62 @@ function UI.CreateWindow(title, subtitle, version)
 	ContentCorner.CornerRadius = UDim.new(0, 6)
 	ContentCorner.Parent = Content
 
+	-- Drag the divider between the tab list and content to change the sidebar X width.
+	local TABBAR_MIN_WIDTH = 76
+	local TABBAR_MAX_WIDTH = 220
+	local TABBAR_DEFAULT_WIDTH = 110
+	local TabBarResizeHandle = Instance.new("TextButton")
+	TabBarResizeHandle.Name = "TabBarResizeHandle"
+	TabBarResizeHandle.Text = ""
+	TabBarResizeHandle.AutoButtonColor = false
+	TabBarResizeHandle.BackgroundColor3 = Theme.Accent
+	TabBarResizeHandle.BackgroundTransparency = 1
+	TabBarResizeHandle.BorderSizePixel = 0
+	TabBarResizeHandle.Size = UDim2.new(0, 8, 1, -36)
+	TabBarResizeHandle.Position = UDim2.new(0, TABBAR_DEFAULT_WIDTH - 4, 0, 36)
+	TabBarResizeHandle.ZIndex = 20
+	TabBarResizeHandle.Active = true
+	TabBarResizeHandle.Parent = Main
+
+	local TabBarResizing = false
+	local TabBarResizeStartX = 0
+	local TabBarStartWidth = TABBAR_DEFAULT_WIDTH
+	local function ApplyTabBarWidth(width)
+		width = Clamp(width, TABBAR_MIN_WIDTH, math.min(TABBAR_MAX_WIDTH, Main.AbsoluteSize.X - 150))
+		TabFrame.Size = UDim2.new(0, width, 1, -36)
+		SidebarDivider.Position = UDim2.new(0, width - 1, 0, 42)
+		Content.Position = UDim2.new(0, width, 0, 36)
+		Content.Size = UDim2.new(1, -width, 1, -36)
+		TabBarResizeHandle.Position = UDim2.new(0, width - 4, 0, 36)
+	end
+	TabBarResizeHandle.MouseEnter:Connect(function()
+		TweenService:Create(TabBarResizeHandle, TweenInfo.new(0.12), {BackgroundTransparency = 0.35}):Play()
+	end)
+	TabBarResizeHandle.MouseLeave:Connect(function()
+		if not TabBarResizing then
+			TweenService:Create(TabBarResizeHandle, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
+		end
+	end)
+	TabBarResizeHandle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			TabBarResizing = true
+			TabBarResizeStartX = input.Position.X
+			TabBarStartWidth = TabFrame.AbsoluteSize.X
+		end
+	end)
+	ConnectGlobal(UIS.InputChanged, function(input)
+		if TabBarResizing and input.UserInputType == Enum.UserInputType.MouseMovement then
+			ApplyTabBarWidth(TabBarStartWidth + (input.Position.X - TabBarResizeStartX))
+		end
+	end)
+	ConnectGlobal(UIS.InputEnded, function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and TabBarResizing then
+			TabBarResizing = false
+			TweenService:Create(TabBarResizeHandle, TweenInfo.new(0.12), {BackgroundTransparency = 1}):Play()
+			if AutoSaveConfig and SaveConfig then SaveConfig() end
+		end
+	end)
+
 	-- ════════════════════════════════════════════════════════════
 	-- MINIMIZE/MAXIMIZE LOGIC
 	-- ════════════════════════════════════════════════════════════
@@ -997,30 +1053,33 @@ function UI.CreateWindow(title, subtitle, version)
 			TabFrame.Visible = false
 			Content.Visible = false
 			Resize.Visible = false
+			TabBarResizeHandle.Visible = false
 			TitleBottom.Visible = false
 		else
 			Main.Size = oldSize
 			TabFrame.Visible = true
 			Content.Visible = true
 			Resize.Visible = true
+			TabBarResizeHandle.Visible = true
 			TitleBottom.Visible = true
 		end
 	end
 
 	Minimize.MouseButton1Click:Connect(ToggleMinimize)
 
-	-- Close confirmation modal. It is intentionally parented to ScreenGui so
-	-- it remains centered even when the main window is moved or resized.
+	-- Close confirmation modal: contained inside the hub window (never the game viewport).
+	-- A translucent theme-colored veil gives a localized frosted/dimmed effect without
+	-- using BlurEffect, which would blur the entire Roblox screen.
 	local CloseOverlay = Instance.new("Frame")
 	CloseOverlay.Name = "CloseConfirmationOverlay"
 	CloseOverlay.Size = UDim2.fromScale(1, 1)
-	CloseOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
-	CloseOverlay.BackgroundTransparency = 0.42
+	CloseOverlay.BackgroundColor3 = Theme.Background
+	CloseOverlay.BackgroundTransparency = 0.28
 	CloseOverlay.BorderSizePixel = 0
 	CloseOverlay.Visible = false
 	CloseOverlay.Active = true
 	CloseOverlay.ZIndex = 200
-	CloseOverlay.Parent = ScreenGui
+	CloseOverlay.Parent = Main
 
 	local CloseDialog = Instance.new("Frame")
 	CloseDialog.Name = "CloseConfirmation"
@@ -1092,7 +1151,7 @@ function UI.CreateWindow(title, subtitle, version)
 		corner.Parent = button
 		button.MouseEnter:Connect(function()
 			TweenService:Create(button, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-				BackgroundColor3 = name == "Confirm" and Theme.Error or Theme.ButtonHover
+				BackgroundColor3 = Theme.ButtonHover
 			}):Play()
 		end)
 		button.MouseLeave:Connect(function()
@@ -1103,7 +1162,7 @@ function UI.CreateWindow(title, subtitle, version)
 		return button
 	end
 
-	local ConfirmClose = CreateCloseDialogButton("Confirm", "Sim", 18, Theme.Error)
+	local ConfirmClose = CreateCloseDialogButton("Confirm", "Sim", 18, Theme.Button)
 	local CancelClose = CreateCloseDialogButton("Cancel", "Não", 180, Theme.Button)
 	local CloseDialogScale = Instance.new("UIScale")
 	CloseDialogScale.Scale = 0.94
@@ -1115,7 +1174,7 @@ function UI.CreateWindow(title, subtitle, version)
 		CloseOverlay.BackgroundTransparency = 1
 		CloseDialogScale.Scale = 0.94
 		TweenService:Create(CloseOverlay, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-			BackgroundTransparency = 0.42
+			BackgroundTransparency = 0.28
 		}):Play()
 		TweenService:Create(CloseDialogScale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 			Scale = 1
