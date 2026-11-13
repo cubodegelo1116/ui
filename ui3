@@ -1,13 +1,13 @@
 --[[
 	╔══════════════════════════╗
 	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.9.3          ║
+	║  Version: 4.9.4          ║
 	║  Last Updated: 2026      ║
 	╚══════════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.9.3"
+local CURRENT_VERSION = "4.9.4"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -213,6 +213,13 @@ function UI.CreateWindow(title, subtitle, version)
 	local Themes = {}
 	Themes.Default = CopyTable(Theme)
 	local AcrylicEnabled = false
+	local Background3CEnabled = false
+	local Background3CColors = {
+		Color3.fromRGB(20, 21, 24),
+		Color3.fromRGB(30, 48, 68),
+		Color3.fromRGB(22, 139, 255),
+	}
+	local Background3CGradient
 	local CurrentThemeName = "Default"
 	local SaveConfig -- assigned after the window exists
 	local AutoSaveConfig = true
@@ -354,7 +361,6 @@ function UI.CreateWindow(title, subtitle, version)
 	pcall(function() ScreenGui.AutoLocalize = false end)
 
 	ScreenGui.Parent = PlayerGui
-
 	-- Normalize text styling immediately; don't remove ordinary UIStroke borders from buttons/tabs.
 	local function RemoveTextHighlight(object)
 		if not (object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox")) then
@@ -620,11 +626,31 @@ function UI.CreateWindow(title, subtitle, version)
 	Main.ClipsDescendants = true
 	Main.Parent = ScreenGui
 
+	-- Subtle one-time entrance; no looping animations or permanent render work.
+	local WindowScale = Instance.new("UIScale")
+	WindowScale.Scale = 0.97
+	WindowScale.Parent = Main
+	TweenService:Create(WindowScale, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Scale = 1
+	}):Play()
+
 	Main:SetAttribute("ThemeRole", "Background")
 
 	local MainCorner = Instance.new("UICorner")
 	MainCorner.CornerRadius = UDim.new(0, 8)
 	MainCorner.Parent = Main
+
+	-- Optional three-color diagonal background (top-left -> bottom-right).
+	Background3CGradient = Instance.new("UIGradient")
+	Background3CGradient.Name = "PDDEV_Background3C"
+	Background3CGradient.Rotation = 45
+	Background3CGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Background3CColors[1]),
+		ColorSequenceKeypoint.new(0.5, Background3CColors[2]),
+		ColorSequenceKeypoint.new(1, Background3CColors[3]),
+	})
+	Background3CGradient.Enabled = false
+	Background3CGradient.Parent = Main
 
 	local MainStroke = Instance.new("UIStroke")
 	MainStroke.Color = Theme.Border
@@ -756,11 +782,15 @@ function UI.CreateWindow(title, subtitle, version)
 		Btn.TextStrokeTransparency = 1
 
 		Btn.MouseEnter:Connect(function()
-			Btn.TextColor3 = Theme.Text
+			TweenService:Create(Btn, TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TextColor3 = Theme.Text
+			}):Play()
 		end)
 
 		Btn.MouseLeave:Connect(function()
-			Btn.TextColor3 = Theme.TextDark
+			TweenService:Create(Btn, TweenInfo.new(0.13, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TextColor3 = Theme.TextDark
+			}):Play()
 		end)
 
 		return Btn
@@ -978,7 +1008,127 @@ function UI.CreateWindow(title, subtitle, version)
 	end
 
 	Minimize.MouseButton1Click:Connect(ToggleMinimize)
-	Close.MouseButton1Click:Connect(function()
+
+	-- Close confirmation modal. It is intentionally parented to ScreenGui so
+	-- it remains centered even when the main window is moved or resized.
+	local CloseOverlay = Instance.new("Frame")
+	CloseOverlay.Name = "CloseConfirmationOverlay"
+	CloseOverlay.Size = UDim2.fromScale(1, 1)
+	CloseOverlay.BackgroundColor3 = Color3.new(0, 0, 0)
+	CloseOverlay.BackgroundTransparency = 0.42
+	CloseOverlay.BorderSizePixel = 0
+	CloseOverlay.Visible = false
+	CloseOverlay.Active = true
+	CloseOverlay.ZIndex = 200
+	CloseOverlay.Parent = ScreenGui
+
+	local CloseDialog = Instance.new("Frame")
+	CloseDialog.Name = "CloseConfirmation"
+	CloseDialog.AnchorPoint = Vector2.new(0.5, 0.5)
+	CloseDialog.Position = UDim2.fromScale(0.5, 0.5)
+	CloseDialog.Size = UDim2.fromOffset(340, 148)
+	CloseDialog.BackgroundColor3 = Theme.Background
+	CloseDialog.BorderSizePixel = 0
+	CloseDialog.ZIndex = 201
+	CloseDialog.Parent = CloseOverlay
+	CloseDialog:SetAttribute("ThemeRole", "Background")
+	local CloseDialogCorner = Instance.new("UICorner")
+	CloseDialogCorner.CornerRadius = UDim.new(0, 8)
+	CloseDialogCorner.Parent = CloseDialog
+	local CloseDialogStroke = Instance.new("UIStroke")
+	CloseDialogStroke.Color = Theme.Border
+	CloseDialogStroke.Thickness = 1
+	CloseDialogStroke.Parent = CloseDialog
+	CloseDialogStroke:SetAttribute("ThemeRole", "Border")
+
+	local CloseDialogTitle = Instance.new("TextLabel")
+	CloseDialogTitle.Name = "Title"
+	CloseDialogTitle.BackgroundTransparency = 1
+	CloseDialogTitle.Position = UDim2.fromOffset(16, 13)
+	CloseDialogTitle.Size = UDim2.new(1, -32, 0, 22)
+	CloseDialogTitle.Font = Enum.Font.GothamBold
+	CloseDialogTitle.Text = "Aviso"
+	CloseDialogTitle.TextSize = 15
+	CloseDialogTitle.TextColor3 = Theme.Text
+	CloseDialogTitle.TextXAlignment = Enum.TextXAlignment.Left
+	CloseDialogTitle.ZIndex = 202
+	CloseDialogTitle.Parent = CloseDialog
+	CloseDialogTitle:SetAttribute("ThemeRole", "Text")
+	RemoveTextHighlight(CloseDialogTitle)
+
+	local CloseDialogMessage = Instance.new("TextLabel")
+	CloseDialogMessage.Name = "Message"
+	CloseDialogMessage.BackgroundTransparency = 1
+	CloseDialogMessage.Position = UDim2.fromOffset(16, 41)
+	CloseDialogMessage.Size = UDim2.new(1, -32, 0, 42)
+	CloseDialogMessage.Font = Enum.Font.Gotham
+	CloseDialogMessage.Text = 'Realmente deseja fechar "' .. (title ~= "" and title or "esta hub") .. '"?'
+	CloseDialogMessage.TextSize = 12
+	CloseDialogMessage.TextColor3 = Theme.TextDark
+	CloseDialogMessage.TextWrapped = true
+	CloseDialogMessage.TextXAlignment = Enum.TextXAlignment.Left
+	CloseDialogMessage.TextYAlignment = Enum.TextYAlignment.Center
+	CloseDialogMessage.ZIndex = 202
+	CloseDialogMessage.Parent = CloseDialog
+	CloseDialogMessage:SetAttribute("ThemeRole", "TextDark")
+	RemoveTextHighlight(CloseDialogMessage)
+
+	local function CreateCloseDialogButton(name, text, x, color)
+		local button = Instance.new("TextButton")
+		button.Name = name
+		button.Size = UDim2.fromOffset(142, 30)
+		button.Position = UDim2.new(0, x, 1, -43)
+		button.BackgroundColor3 = color
+		button.BorderSizePixel = 0
+		button.AutoButtonColor = false
+		button.Font = Enum.Font.GothamMedium
+		button.Text = text
+		button.TextSize = 12
+		button.TextColor3 = Theme.Text
+		button.ZIndex = 202
+		button.Parent = CloseDialog
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 5)
+		corner.Parent = button
+		button.MouseEnter:Connect(function()
+			TweenService:Create(button, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = name == "Confirm" and Theme.Error or Theme.ButtonHover
+			}):Play()
+		end)
+		button.MouseLeave:Connect(function()
+			TweenService:Create(button, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				BackgroundColor3 = color
+			}):Play()
+		end)
+		return button
+	end
+
+	local ConfirmClose = CreateCloseDialogButton("Confirm", "Sim", 18, Theme.Error)
+	local CancelClose = CreateCloseDialogButton("Cancel", "Não", 180, Theme.Button)
+	local CloseDialogScale = Instance.new("UIScale")
+	CloseDialogScale.Scale = 0.94
+	CloseDialogScale.Parent = CloseDialog
+
+	local function OpenCloseConfirmation()
+		if not ScreenGui.Parent then return end
+		CloseOverlay.Visible = true
+		CloseOverlay.BackgroundTransparency = 1
+		CloseDialogScale.Scale = 0.94
+		TweenService:Create(CloseOverlay, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 0.42
+		}):Play()
+		TweenService:Create(CloseDialogScale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Scale = 1
+		}):Play()
+	end
+
+	local function CloseCloseConfirmation()
+		CloseOverlay.Visible = false
+	end
+
+	Close.MouseButton1Click:Connect(OpenCloseConfirmation)
+	CancelClose.MouseButton1Click:Connect(CloseCloseConfirmation)
+	ConfirmClose.MouseButton1Click:Connect(function()
 		ScreenGui:Destroy()
 	end)
 
@@ -1770,11 +1920,15 @@ function UI.CreateWindow(title, subtitle, version)
 		Frame.Name = "TextBox"
 		Frame.Size = UDim2.new(1, -24, 0, 30)
 		Frame.BackgroundTransparency = 1
+		Frame.ClipsDescendants = true
 		Frame.Parent = page
 
 		local TextBox = Instance.new("TextBox")
 		TextBox.Name = "Input"
-		TextBox.Size = UDim2.new(1, 0, 1, 0)
+		TextBox.Position = UDim2.fromOffset(1, 1)
+		TextBox.Size = UDim2.new(1, -2, 1, -2)
+		TextBox.ClipsDescendants = true
+		TextBox.TextWrapped = false
 		TextBox.BackgroundColor3 = Theme.Button
 		TextBox.BorderSizePixel = 0
 		TextBox.Text = ""
@@ -2816,14 +2970,18 @@ function UI.CreateWindow(title, subtitle, version)
 
 		TabBtn.MouseEnter:Connect(function()
 			if CurrentTab ~= Tab then
-				TweenService:Create(TabBtn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.ButtonHover}):Play()
-				TabStroke.Transparency = 0.25
+				TweenService:Create(TabBtn, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					BackgroundColor3 = Theme.ButtonHover
+				}):Play()
+				TweenService:Create(TabStroke, TweenInfo.new(0.14), {Transparency = 0.25}):Play()
 			end
 		end)
 		TabBtn.MouseLeave:Connect(function()
 			if CurrentTab ~= Tab then
-				TweenService:Create(TabBtn, TweenInfo.new(0.12), {BackgroundColor3 = Theme.TabBackground}):Play()
-				TabStroke.Transparency = 0.48
+				TweenService:Create(TabBtn, TweenInfo.new(0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					BackgroundColor3 = Theme.TabBackground
+				}):Play()
+				TweenService:Create(TabStroke, TweenInfo.new(0.14), {Transparency = 0.48}):Play()
 			end
 		end)
 
@@ -2845,7 +3003,11 @@ function UI.CreateWindow(title, subtitle, version)
 			TabBtn:SetAttribute("ThemeRole", "TabSelected")
 			ActiveMarker.Visible = true
 			ActiveMarker.BackgroundColor3 = Theme.Accent
-			TabStroke.Transparency = 0.08
+			ActiveMarker.Size = UDim2.new(0, 1, 1, -10)
+			TweenService:Create(ActiveMarker, TweenInfo.new(0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = UDim2.new(0, 3, 1, -10)
+			}):Play()
+			TweenService:Create(TabStroke, TweenInfo.new(0.14), {Transparency = 0.08}):Play()
 			TabLabel.TextColor3 = Theme.Text
 			if iconWidget and iconWidget:IsA("TextLabel") then iconWidget.TextColor3 = Theme.Text end
 			TabStroke.Color = Theme.Accent
@@ -3390,6 +3552,36 @@ function UI.CreateWindow(title, subtitle, version)
 	})
 
 	-- ════════════════════════════════════════════════════════════
+	-- THREE-COLOR BACKGROUND API
+	-- ════════════════════════════════════════════════════════════
+	local function SetBackground3C(enabled, color1, color2, color3)
+		if typeof(enabled) ~= "boolean" then
+			warn("UI: SetBackground3C - enabled must be a boolean")
+			return false
+		end
+		local proposed = { color1 or Background3CColors[1], color2 or Background3CColors[2], color3 or Background3CColors[3] }
+		for index, color in ipairs(proposed) do
+			if typeof(color) ~= "Color3" then
+				warn("UI: SetBackground3C - color" .. tostring(index) .. " must be Color3")
+				return false
+			end
+		end
+		Background3CColors = proposed
+		Background3CGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Background3CColors[1]),
+			ColorSequenceKeypoint.new(0.5, Background3CColors[2]),
+			ColorSequenceKeypoint.new(1, Background3CColors[3]),
+		})
+		Background3CEnabled = enabled
+		Background3CGradient.Enabled = enabled
+		return true
+	end
+
+	local function GetBackground3C()
+		return Background3CEnabled, table.unpack(Background3CColors)
+	end
+
+	-- ════════════════════════════════════════════════════════════
 	-- CONFIG PERSISTENCE (executor file APIs, when available)
 	-- Saves built-in theme, acrylic state, and window dimensions.
 	-- In ordinary Roblox scripts, writefile/readfile are unavailable; the UI
@@ -3494,6 +3686,10 @@ function UI.CreateWindow(title, subtitle, version)
 		GetAcrilic = GetAcrilic,
 		SetAcrylic = SetAcrilic,
 		GetAcrylic = GetAcrilic,
+		SetBackground3C = SetBackground3C,
+		GetBackground3C = GetBackground3C,
+		Set3CBackground = SetBackground3C,
+		Get3CBackground = GetBackground3C,
 		SaveConfig = function() return SaveConfig() end,
 		LoadConfig = function() local loaded = LoadConfig(); ApplyTheme(); return loaded end,
 		SetAutoSaveConfig = function(enabled) AutoSaveConfig = enabled == true; return AutoSaveConfig end,
@@ -3544,6 +3740,13 @@ function UI.CreateWindow(title, subtitle, version)
 	WindowAPI.GetAcrilic = function() return GetAcrilic() end
 	WindowAPI.SetAcrylic = WindowAPI.SetAcrilic
 	WindowAPI.GetAcrylic = WindowAPI.GetAcrilic
+	WindowAPI.SetBackground3C = function(a, b, c, d, e)
+		if a == WindowAPI then return SetBackground3C(b, c, d, e) end
+		return SetBackground3C(a, b, c, d)
+	end
+	WindowAPI.GetBackground3C = function() return GetBackground3C() end
+	WindowAPI.Set3CBackground = WindowAPI.SetBackground3C
+	WindowAPI.Get3CBackground = WindowAPI.GetBackground3C
 	WindowAPI.ApplyTheme = function()
 		return ApplyTheme()
 	end
