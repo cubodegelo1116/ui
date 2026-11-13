@@ -1,13 +1,13 @@
 --[[
-	╔══════════════════════════╗
-	║  Author: PDDEV / RCCDEV  ║
-	║  Version: 4.9.5          ║
-	║  Last Updated: 2026      ║
-	╚══════════════════════════╝
+	╔══════════════════════╗
+	║  Author: RCCDEV      ║
+	║  Version: 4.9.6      ║
+	║  Last Updated: 2026  ║
+	╚══════════════════════╝
 ]]
 
 local UI = {}
-local CURRENT_VERSION = "4.9.5"
+local CURRENT_VERSION = "4.9.6"
 
 -- ════════════════════════════════════════════════════════════
 -- TYPE DEFINITIONS & CONSTANTS
@@ -1076,10 +1076,14 @@ function UI.CreateWindow(title, subtitle, version)
 	CloseOverlay.BackgroundColor3 = Theme.Background
 	CloseOverlay.BackgroundTransparency = 0.28
 	CloseOverlay.BorderSizePixel = 0
+	CloseOverlay.ClipsDescendants = true
 	CloseOverlay.Visible = false
 	CloseOverlay.Active = true
 	CloseOverlay.ZIndex = 200
 	CloseOverlay.Parent = Main
+	local CloseOverlayCorner = Instance.new("UICorner")
+	CloseOverlayCorner.CornerRadius = UDim.new(0, 8) -- acompanha o arredondamento da janela principal
+	CloseOverlayCorner.Parent = CloseOverlay
 
 	local CloseDialog = Instance.new("Frame")
 	CloseDialog.Name = "CloseConfirmation"
